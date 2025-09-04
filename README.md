@@ -128,7 +128,7 @@ java -jar magicians-vs-trolls.jar
 | Ruolo                | Membro               | GitHub                                                           |
 |----------------------|----------------------|------------------------------------------------------------------|
 | 💡 **Commissioner**  | [Giovanni Pisoni]    | [@GiovanniPisoni](https://github.com/GiovanniPisoni)             |
-| 🎯 **Product Owner** | [Gioavnni Rinchiuso] | [@giovannirinchiuso02](https://github.com/giovannirinchiuso02)   |
+| 🎯 **Product Owner** | [Giovanni Rinchiuso] | [@giovannirinchiuso02](https://github.com/giovannirinchiuso02)   |
 | ⚙️ **Developer**     | [Giacomo Foschi]     | [@giacomofoschii](https://github.com/giacomofoschii)             |
 
 ## 📚 Documentazione
