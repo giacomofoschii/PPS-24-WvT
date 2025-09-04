@@ -33,7 +33,7 @@
 
 ```bash
 # Clona il repository
-git clone https://github.com/yourusername/PPS-24-mnt.git
+git clone https://github.com/yourusername/Wizards_vs_Trolls_PPS.git
 cd PPS-24-mnt
 
 # Compila il progetto
