@@ -1,4 +1,4 @@
-package it.unibo.wvt.models
+package it.unibo.pps.wvt.model
 
 sealed trait EntityType
 object EntityType {

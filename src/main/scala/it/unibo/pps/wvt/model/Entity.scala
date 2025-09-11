@@ -1,5 +1,4 @@
-package it.unibo.wvt.models
-
+package it.unibo.pps.wvt.model
 
 case class Position private (row: Int, col: Int)
 
