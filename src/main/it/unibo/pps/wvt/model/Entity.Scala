@@ -11,6 +11,7 @@ object Position {
 }
 
 trait Entity {
+  def id: String
   def position: Position
   def health: Int
   def maxHealth: Int

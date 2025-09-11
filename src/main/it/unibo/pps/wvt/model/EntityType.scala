@@ -18,6 +18,7 @@ object EntityType {
 }
 
 case class Projectile(
+                       id: String,
                        damage: Int,
                        speed: Int,
                        source: Position,
