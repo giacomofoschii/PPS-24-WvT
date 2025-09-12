@@ -1,6 +1,7 @@
 package it.unibo.pps.wvt.model
 
 sealed trait EntityType
+
 object EntityType {
   sealed trait WizardType extends EntityType
   sealed trait TrollType extends EntityType
@@ -27,6 +28,7 @@ case class Projectile(
                      )
 
 sealed trait ProjectileType
+
 object ProjectileType {
   case object Wind extends ProjectileType
   case object Fire extends ProjectileType
