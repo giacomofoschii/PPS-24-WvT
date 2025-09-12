@@ -1,10 +1,7 @@
 package it.unibo.pps.wvt.engine.handlers
 
 import it.unibo.pps.wvt.engine.*
-import it.unibo.pps.wvt.engine.GameEvent.GameTick
-import it.unibo.pps.wvt.engine.GamePhase.*
 import it.unibo.pps.wvt.model.*
-import it.unibo.pps.wvt.model.CellType.*
 import it.unibo.pps.wvt.utilities.GameConstants._
 
 trait EntityManagement {
