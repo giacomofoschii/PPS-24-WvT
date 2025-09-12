@@ -52,4 +52,6 @@ object GameConstants {
   val ICE_WIZARD_COST: Int = 250
   val ICE_WIZARD_ATTACK_DAMAGE: Int = 30
   val ICE_WIZARD_RANGE: Int = 3
+  
+  val PROJECTILE_SPEED: Int = 3
 }
