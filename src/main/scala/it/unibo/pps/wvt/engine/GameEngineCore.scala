@@ -1,12 +1,13 @@
 package it.unibo.pps.wvt.engine
 
 import it.unibo.pps.wvt.model._
+import it.unibo.pps.wvt.utilities.GameConstants._
 
 // Events that can occur in the game
 sealed trait GameEvent
 
 object GameEvent {
-  case class SpawnTroll(troll: Troll, pos: Position) extends GameEvent
+  case class SpawnTroll(troll: Troll) extends GameEvent
   case class PlaceWizard(wizard: Wizard, pos: Position) extends GameEvent
   case class FireProjectile(sourceEntity: Entity with Attacker) extends GameEvent
   case class EntityDamaged(entityID: String, damage: Int) extends GameEvent
@@ -38,7 +39,7 @@ case class GameState(
                     trolls: List[Troll] = List.empty,
                     projectiles: List[Projectile] = List.empty,
                     // Starting elixir amount
-                    elixir: Int = 200,
+                    elixir: Int = INITIAL_ELIXIR,
                     waveNumber: Int = 1,
                     trollsToSpawn: List[Troll] = List.empty,
                     grid: Grid = Grid(),
