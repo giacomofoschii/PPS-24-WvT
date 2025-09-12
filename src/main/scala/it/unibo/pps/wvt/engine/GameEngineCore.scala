@@ -33,32 +33,32 @@ object GamePhase {
 
 // Game state representation
 case class GameState(
-  phase: GamePhase = GamePhase.Menu,
-  wizards: List[Wizard] = List.empty,
-  trolls: List[Troll] = List.empty,
-  projectiles: List[Projectile] = List.empty,
-  // Starting elixir amount
-  elixir: Int = 200,
-  waveNumber: Int = 1,
-  trollsToSpawn: List[Troll] = List.empty,
-  grid: Grid = Grid(),
-  elixirGenerationTimer: Int = 0
+                    phase: GamePhase = GamePhase.Menu,
+                    wizards: List[Wizard] = List.empty,
+                    trolls: List[Troll] = List.empty,
+                    projectiles: List[Projectile] = List.empty,
+                    // Starting elixir amount
+                    elixir: Int = 200,
+                    waveNumber: Int = 1,
+                    trollsToSpawn: List[Troll] = List.empty,
+                    grid: Grid = Grid(),
+                    elixirGenerationTimer: Int = 0
   ) {
-  def isWaveComplete: Boolean = trolls.isEmpty && trollsToSpawn.isEmpty
+    def isWaveComplete: Boolean = trolls.isEmpty && trollsToSpawn.isEmpty
 
-  def getEntity(id: String): Option[Entity] =
-    (wizards ++ trolls).find(_.id == id)
+    def getEntity(id: String): Option[Entity] =
+      (wizards ++ trolls).find(_.id == id)
 
-  def removeEnitity(id: String): GameState =
-    copy(
-      wizards = wizards.filterNot(_.id == id),
-      trolls = trolls.filterNot(_.id == id)
-    )
+    def removeEntity(id: String): GameState =
+      copy(
+        wizards = wizards.filterNot(_.id == id),
+        trolls = trolls.filterNot(_.id == id)
+      )
 
-  def updateEntity(entity: Entity): GameState = entity match {
-    case wiz: Wizard => copy(wizards = wizards.map(w => if (w.id == wiz.id) wiz else w))
-    case tr: Troll => copy(trolls = trolls.map(t => if (t.id == tr.id) tr else t))
-  }
+    def updateEntity(entity: Entity): GameState = entity match {
+      case wiz: Wizard => copy(wizards = wizards.map(w => if (w.id == wiz.id) wiz else w))
+      case tr: Troll => copy(trolls = trolls.map(t => if (t.id == tr.id) tr else t))
+    }
 }
 
 trait EventHandler {
