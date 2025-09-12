@@ -14,3 +14,26 @@ trait Entity {
   def takeDamage(damage: Int): Entity
   def entityType: EntityType
 }
+
+trait Attacker { this: Entity =>
+  def attackDamage: Int
+  def canAttack: Boolean
+  def projectileType: ProjectileType
+
+  def attack(): Option[Projectile] = {
+    if (canAttack) {
+      Some(Projectile(
+        id = s"${entityType.toString.toLowerCase}-proj-${System.currentTimeMillis()}",
+        damage = attackDamage,
+        speed = 5,
+        source = position,
+        projectileType = projectileType
+      ))
+    } else None
+  }
+}
+
+trait Moveable { this: Entity =>
+  def speed: Int
+  def updatePosition(newPosition: Position): Entity
+}

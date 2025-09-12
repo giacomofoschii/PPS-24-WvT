@@ -23,7 +23,6 @@ case class Projectile(
                        damage: Int,
                        speed: Int,
                        source: Position,
-                       target: Position,
                        projectileType: ProjectileType
                      )
 
