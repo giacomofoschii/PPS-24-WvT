@@ -1,5 +1,7 @@
 package it.unibo.pps.wvt.model
 
+import it.unibo.pps.wvt.utilities.GameConstants._
+
 sealed trait CellType
 object CellType {
   case object Empty extends CellType
@@ -17,7 +19,7 @@ case class Grid(cells: Array[Array[CellType]] = Array.fill(5, 9)(CellType.Empty)
   }
 
   def isValidPosition(pos: Position): Boolean =
-    pos.row >= 0 && pos.row < 5 && pos.col >= 0 && pos.col < 9
+    pos.row >= 0 && pos.row < GRID_ROWS && pos.col >= 0 && pos.col < GRID_COLS
 
   def isEmpty(pos: Position): Boolean = get(pos) == CellType.Empty
 }

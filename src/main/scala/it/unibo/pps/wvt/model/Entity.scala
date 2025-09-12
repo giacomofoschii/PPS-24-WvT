@@ -1,8 +1,10 @@
 package it.unibo.pps.wvt.model
 
+import it.unibo.pps.wvt.utilities.GameConstants._
+
 case class Position(row: Int, col: Int) {
-  require(row >= 0 && row < 5, "Row must be between 0 and 4")
-  require(col >= 0 && col < 9, "Column must be between 0 and 8")
+  require(row >= 0 && row < GRID_ROWS, "Row must be between 0 and 4")
+  require(col >= 0 && col < GRID_COLS, "Column must be between 0 and 8")
 }
 
 trait Entity {
