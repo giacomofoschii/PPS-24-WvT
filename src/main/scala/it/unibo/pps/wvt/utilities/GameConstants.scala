@@ -59,6 +59,7 @@ object ViewConstants {
   val GRID_COLS: Int = 9
   
   // Window's and menu's objects dimensions
-  val BG_SCALE_FACTOR = 0.6
-  val TITLE_SCALE_FACTOR = 0.3
+  val MENU_SCALE_FACTOR = 0.7
+  val GAME_MAP_SCALE_FACTOR = 0.4
+  val TITLE_SCALE_FACTOR = 0.4
 }
