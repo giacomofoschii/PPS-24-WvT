@@ -1,5 +1,7 @@
 package it.unibo.pps.wvt.model
 
+import it.unibo.pps.wvt.utilities.GameConstants._
+
 // Base Wizard trait
 trait Wizard extends Entity {
   def cost: Int
@@ -17,13 +19,13 @@ case class GeneratorWizard(
                             id: String,
                             position: Position,
                             health: Int,
-                            maxHealth: Int = 50
+                            maxHealth: Int = GENERATOR_WIZARD_HEALTH
                           ) extends Wizard {
-  val cost = 50
-  val range = 0
+  val cost = GENERATOR_WIZARD_COST
+  val range = GENERATOR_WIZARD_RANGE
 
   override def entityType = EntityType.Generator
-  override def generateElixir: Int = 25
+  override def generateElixir: Int = GENERATOR_WIZARD_ELIXIR
 
   def takeDamage(damage: Int): GeneratorWizard =
     takeDamageImpl(damage, newHealth => copy(health = newHealth)).asInstanceOf[GeneratorWizard]
@@ -34,11 +36,11 @@ case class WindWizard(
                        id: String,
                        position: Position,
                        health: Int,
-                       maxHealth: Int = 100
+                       maxHealth: Int = WIND_WIZARD_HEALTH
                      ) extends Wizard with Attacker {
-  val cost = 100
-  val attackDamage = 25
-  val range = 3
+  val cost = WIND_WIZARD_COST
+  val attackDamage: Int = WIND_WIZARD_ATTACK_DAMAGE
+  val range = WIND_WIZARD_RANGE
   val canAttack = true
   val projectileType = ProjectileType.Wind
 
@@ -53,10 +55,10 @@ case class BarrierWizard(
                           id: String,
                           position: Position,
                           health: Int,
-                          maxHealth: Int = 300
+                          maxHealth: Int = BARRIER_WIZARD_HEALTH
                         ) extends Wizard {
-  val cost = 50
-  val range = 0
+  val cost = BARRIER_WIZARD_COST
+  val range = BARRIER_WIZARD_RANGE
 
   override def entityType = EntityType.Barrier
 
@@ -69,11 +71,11 @@ case class FireWizard(
                        id: String,
                        position: Position,
                        health: Int,
-                       maxHealth: Int = 100
+                       maxHealth: Int = FIRE_WIZARD_HEALTH
                      ) extends Wizard with Attacker {
-  val cost = 150
-  val attackDamage = 50
-  val range = 4
+  val cost = FIRE_WIZARD_COST
+  val attackDamage = FIRE_WIZARD_ATTACK_DAMAGE
+  val range = FIRE_WIZARD_RANGE
   val canAttack = true
   val projectileType = ProjectileType.Fire
 
@@ -88,11 +90,11 @@ case class IceWizard(
                       id: String,
                       position: Position,
                       health: Int,
-                      maxHealth: Int = 100
+                      maxHealth: Int = ICE_WIZARD_HEALTH
                     ) extends Wizard with Attacker {
-  val cost = 175
-  val attackDamage = 15
-  val range = 3
+  val cost = ICE_WIZARD_COST
+  val attackDamage = ICE_WIZARD_ATTACK_DAMAGE
+  val range = ICE_WIZARD_RANGE
   val canAttack = true
   val projectileType = ProjectileType.Ice
 

@@ -27,7 +27,7 @@ trait Attacker { this: Entity =>
       Some(Projectile(
         id = s"${entityType.toString.toLowerCase}-proj-${System.currentTimeMillis()}",
         damage = attackDamage,
-        speed = 5,
+        speed = PROJECTILE_SPEED,
         source = position,
         projectileType = projectileType
       ))

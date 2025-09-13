@@ -1,5 +1,7 @@
 package it.unibo.pps.wvt.model
 
+import it.unibo.pps.wvt.utilities.GameConstants._
+
 // Base Troll trait
 trait Troll extends Entity with Attacker with Moveable {
   val canAttack = true
@@ -16,10 +18,10 @@ case class BaseTroll(
                       id: String,
                       position: Position,
                       health: Int,
-                      maxHealth: Int = 100,
-                      speed: Int = 1
+                      maxHealth: Int = BASE_TROLL_HEALTH,
+                      speed: Int = BASE_TROLL_SPEED
                     ) extends Troll {
-  val attackDamage = 20
+  val attackDamage: Int = BASE_TROLL_DAMAGE
 
   override def entityType: EntityType.TrollType = EntityType.Base
 
@@ -34,10 +36,10 @@ case class WarriorTroll(
                          id: String,
                          position: Position,
                          health: Int,
-                         maxHealth: Int = 200,
-                         speed: Int = 0
+                         maxHealth: Int = WARRIOR_TROLL_HEALTH,
+                         speed: Int = WARRIOR_TROLL_SPEED
                        ) extends Troll {
-  val attackDamage = 40
+  val attackDamage: Int = WARRIOR_TROLL_DAMAGE
 
   override def entityType: EntityType.TrollType = EntityType.Warrior
 
@@ -52,10 +54,10 @@ case class AssassinTroll(
                           id: String,
                           position: Position,
                           health: Int,
-                          maxHealth: Int = 30,
-                          speed: Int = 3
+                          maxHealth: Int = ASSASSIN_TROLL_HEALTH,
+                          speed: Int = ASSASSIN_TROLL_SPEED
                         ) extends Troll {
-  val attackDamage = 60
+  val attackDamage: Int = ASSASSIN_TROLL_DAMAGE
 
   override def entityType: EntityType.TrollType = EntityType.Assassin
 
@@ -70,10 +72,10 @@ case class ThrowerTroll(
                          id: String,
                          position: Position,
                          health: Int,
-                         maxHealth: Int = 60,
-                         speed: Int = 0
+                         maxHealth: Int = THROWER_TROLL_HEALTH,
+                         speed: Int = THROWER_TROLL_SPEED
                        ) extends Troll {
-  val attackDamage = 35
+  val attackDamage = THROWER_TROLL_DAMAGE
 
   override def entityType: EntityType.TrollType = EntityType.Thrower
 
