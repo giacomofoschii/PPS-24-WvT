@@ -1,6 +1,6 @@
 package it.unibo.pps.wvt.model
 
-import it.unibo.pps.wvt.utilities.GameConstants._
+import it.unibo.pps.wvt.utilities.ViewConstants._
 
 sealed trait CellType
 object CellType {

@@ -1,5 +1,6 @@
 package it.unibo.pps.wvt.model
 
+import it.unibo.pps.wvt.utilities.ViewConstants._
 import it.unibo.pps.wvt.utilities.GameConstants._
 
 case class Position(row: Int, col: Int) {

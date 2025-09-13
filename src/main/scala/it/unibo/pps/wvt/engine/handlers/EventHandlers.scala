@@ -1,8 +1,9 @@
 package it.unibo.pps.wvt.engine.handlers
 
-import it.unibo.pps.wvt.engine.*
-import it.unibo.pps.wvt.model.*
+import it.unibo.pps.wvt.engine._
+import it.unibo.pps.wvt.model._
 import it.unibo.pps.wvt.utilities.GameConstants._
+import it.unibo.pps.wvt.utilities.ViewConstants._
 
 trait EntityManagement {
   self: BaseEventHandler =>

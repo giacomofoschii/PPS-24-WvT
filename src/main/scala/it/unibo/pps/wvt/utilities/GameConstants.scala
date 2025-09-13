@@ -1,9 +1,6 @@
 package it.unibo.pps.wvt.utilities
 
 object GameConstants {
-  //Grid dimensions
-  val GRID_ROWS: Int = 5
-  val GRID_COLS: Int = 9
   // Elixir generation parameters
   val INITIAL_ELIXIR: Int = 200
   // Troll parameters
@@ -54,4 +51,14 @@ object GameConstants {
   val ICE_WIZARD_RANGE: Int = 3
   
   val PROJECTILE_SPEED: Int = 3
+}
+
+object ViewConstants {
+  //Grid dimensions
+  val GRID_ROWS: Int = 5
+  val GRID_COLS: Int = 9
+  
+  // Window's and menu's objects dimensions
+  val BG_SCALE_FACTOR = 0.6
+  val TITLE_SCALE_FACTOR = 0.3
 }

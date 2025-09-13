@@ -8,10 +8,12 @@ import scalafx.geometry._
 import scalafx.scene.text._
 import scalafx.scene.image._
 
+import it.unibo.pps.wvt.utilities.ViewConstants._
+
 case class ButtonConfig(text: String, width: Int, height: Int,
                         fontSize: Int, fontFamily: String)
 
-case class MenuConfig(windowScale: Double = 0.6, buttons: Map[String, ButtonConfig])
+case class MenuConfig(windowScale: Double = BG_SCALE_FACTOR, buttons: Map[String, ButtonConfig])
 
 sealed trait MenuAction
 case object StartGame extends MenuAction
@@ -22,7 +24,8 @@ object MainMenu extends JFXApp3 {
 
   override def start(): Unit = {
     lazy val backgroundImage = createBackgroundView("/main_menu.jpg")
-    lazy val logoImage = createImageView("/logo_title.png", (backgroundImage.get.fitWidth*0.3).toInt) match
+    lazy val logoImage = 
+      createImageView("/logo_title.png", (backgroundImage.get.fitWidth*TITLE_SCALE_FACTOR).toInt) match
       case Right(imageView) => imageView
       case Left(error) =>
         println(error)
@@ -81,8 +84,8 @@ object MainMenu extends JFXApp3 {
 
   private def createBackgroundView(path: String): Option[ImageView] =
     loadImage(path).map(myImage => new ImageView(myImage) {
-      fitWidth = myImage.width.value * 0.6
-      fitHeight = myImage.height.value * 0.6
+      fitWidth = myImage.width.value * BG_SCALE_FACTOR
+      fitHeight = myImage.height.value * BG_SCALE_FACTOR
       preserveRatio = true
     })
 
