@@ -28,7 +28,7 @@ object GamePhase {
   case object Menu extends GamePhase
   case object InGame extends GamePhase
   case object Paused extends GamePhase
-  case object WaveCompleted extends GamePhase
+  case object WaveComplete extends GamePhase
   case object GameOver extends GamePhase
 }
 
@@ -45,7 +45,7 @@ case class GameState(
                     grid: Grid = Grid(),
                     elixirGenerationTimer: Int = 0
   ) {
-    def isWaveComplete: Boolean = trolls.isEmpty && trollsToSpawn.isEmpty
+    def isWaveCompleted: Boolean = trolls.isEmpty && trollsToSpawn.isEmpty
 
     def getEntity(id: String): Option[Entity] =
       (wizards ++ trolls).find(_.id == id)

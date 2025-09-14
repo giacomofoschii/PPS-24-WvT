@@ -1,9 +1,10 @@
 package it.unibo.pps.wvt.engine.handlers
 
-import it.unibo.pps.wvt.engine._
-import it.unibo.pps.wvt.model._
-import it.unibo.pps.wvt.utilities.GameConstants._
-import it.unibo.pps.wvt.utilities.ViewConstants._
+import it.unibo.pps.wvt.engine.*
+import it.unibo.pps.wvt.engine.GamePhase.{InGame, Menu}
+import it.unibo.pps.wvt.model.*
+import it.unibo.pps.wvt.utilities.GameConstants.*
+import it.unibo.pps.wvt.utilities.ViewConstants.*
 
 trait EntityManagement {
   self: BaseEventHandler =>
@@ -41,12 +42,18 @@ trait CombatMechanics {
         if (damaged.isAlive)
           (state.updateEntity(damaged), None)
         else
-          val updatedState = state.removeEntity(entityID)
-          val updatedGrid = updatedState.copy(
-            grid = updatedState.grid.set(entity.position, CellType.Empty)
-          )
-          (updatedGrid, Some(GameEvent.EntityDestroyed(entityID)))
-      
+          val updatedGrid = state.grid.set(entity.position, CellType.Empty)
+          val updatedState = state.removeEntity(entityID).copy(grid = updatedGrid)
+
+          val finalState = entity match
+            case _: BaseTroll => updatedState.copy(elixir = updatedState.elixir + BASE_TROLL_REWARD)
+            case _: WarriorTroll => updatedState.copy(elixir = updatedState.elixir + WARRIOR_TROLL_REWARD)
+            case _: AssassinTroll => updatedState.copy(elixir = updatedState.elixir + ASSASSIN_TROLL_REWARD)
+            case _: ThrowerTroll => updatedState.copy(elixir = updatedState.elixir + THROWER_TROLL_REWARD)
+            case _ => updatedState
+
+          (finalState, Some(GameEvent.EntityDestroyed(entityID)))
+
       case None => (state, None)
 }
 
@@ -104,23 +111,17 @@ class CombatHandler extends BaseEventHandler with CombatMechanics {
 
       case GameEvent.EntityDamaged(entityID, damage) =>
         val (newState, maybeDestroyed) = applyDamage(entityID, damage, state)
-        (newState, maybeDestroyed.toList)
+        val events = maybeDestroyed.toList
+        if (newState.isWaveCompleted && events.nonEmpty)
+          (newState, events :+ GameEvent.WaveCompleted(newState.waveNumber))
+        else
+          (newState, events)
 
       case GameEvent.EntityDestroyed(entityID) =>
-        val elixirReward = state.getEntity(entityID) match
-          case Some(_: BaseTroll) => BASE_TROLL_REWARD
-          case Some(_: WarriorTroll) => WARRIOR_TROLL_REWARD
-          case Some(_: AssassinTroll) => ASSASSIN_TROLL_REWARD
-          case Some(_: ThrowerTroll) => THROWER_TROLL_REWARD
-          case _ => 0
-        val newState = if (elixirReward > 0)
-          state.copy(elixir = state.elixir + elixirReward)
-        else state
-
-        if (newState.isWaveComplete)
-          (newState, List(GameEvent.WaveCompleted(newState.waveNumber)))
+        if (state.isWaveCompleted)
+          (state, List(GameEvent.WaveCompleted(state.waveNumber)))
         else
-          (newState, List.empty)
+          (state, List.empty)
 
       case _ => (state, List.empty)
 }
@@ -135,30 +136,40 @@ class ElixirHandler extends BaseEventHandler {
       case _ => (state, List.empty)
 }
 
-//Phase Transition Handler
-class PhaseTransitionHandler extends BaseEventHandler {
+//Phase Handler
+class PhaseHandler extends BaseEventHandler {
   override protected def processEvent(event: GameEvent, state: GameState): (GameState, List[GameEvent]) =
     event match
       case GameEvent.PauseGame if state.phase == GamePhase.InGame =>
         (state.copy(phase = GamePhase.Paused), List.empty)
-      
+
       case GameEvent.ResumeGame if state.phase == GamePhase.Paused =>
         (state.copy(phase = GamePhase.InGame), List.empty)
-      
-      case GameEvent.StartWave if state.phase == GamePhase.Menu || state.phase == GamePhase.WaveCompleted =>
-        val nextWave = if(state.phase == GamePhase.WaveCompleted) state.waveNumber + 1 else 1
-        (state.copy(
-          phase = GamePhase.InGame,
-          waveNumber = nextWave,
-          trollsToSpawn = generateWaveTrolls(nextWave)
-        ), List.empty)
-      
+
+      case GameEvent.StartWave =>
+        state.phase match
+          case GamePhase.Menu =>
+            (state.copy(
+              phase = GamePhase.InGame,
+              trollsToSpawn = generateWaveTrolls(state.waveNumber)
+            ), List.empty)
+
+          case GamePhase.WaveComplete =>
+            val nextWave = state.waveNumber + 1
+            (state.copy(
+              phase = GamePhase.InGame,
+              waveNumber = nextWave,
+              trollsToSpawn = generateWaveTrolls(nextWave)
+            ), List.empty)
+
+          case _ => (state, List.empty)
+
       case GameEvent.WaveCompleted(_) =>
-        (state.copy(phase = GamePhase.WaveCompleted), List.empty)
-      
+        (state.copy(phase = GamePhase.WaveComplete), List.empty)
+
       case GameEvent.EndGame =>
         (state.copy(phase = GamePhase.GameOver), List.empty)
-      
+
       case _ => (state, List.empty)
 
   private def generateWaveTrolls(waveNum: Int): List[Troll] =

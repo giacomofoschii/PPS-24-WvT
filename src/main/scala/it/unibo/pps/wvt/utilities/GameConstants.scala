@@ -3,6 +3,12 @@ package it.unibo.pps.wvt.utilities
 object GameConstants {
   // Elixir generation parameters
   val INITIAL_ELIXIR: Int = 200
+  val PERIODIC_ELIXIR: Int = 100
+  val ELIXIR_GENERATION_INTERVAL: Long = 10000
+
+  // Troll spawn parameters
+  val INITIAL_SPAWN_INTERVAL: Long = 2000
+
   // Troll parameters
   val BASE_TROLL_HEALTH: Int = 100
   val BASE_TROLL_SPEED: Int = 2
