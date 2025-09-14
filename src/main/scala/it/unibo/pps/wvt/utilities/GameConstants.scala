@@ -1,6 +1,6 @@
 package it.unibo.pps.wvt.utilities
 
-object GameConstants {
+object GamePlayConstants {
   // Elixir generation parameters
   val INITIAL_ELIXIR: Int = 200
   val PERIODIC_ELIXIR: Int = 100

@@ -2,7 +2,7 @@ package it.unibo.pps.wvt.engine
 
 import it.unibo.pps.wvt.engine.handlers.*
 import it.unibo.pps.wvt.model.*
-import it.unibo.pps.wvt.utilities.GameConstants
+import it.unibo.pps.wvt.utilities.GamePlayConstants
 import it.unibo.pps.wvt.utilities.TestConstants._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -15,7 +15,7 @@ class GameEngineTest extends AnyFlatSpec with Matchers {
     state.wizards shouldBe empty
     state.trolls shouldBe empty
     state.projectiles shouldBe empty
-    state.elixir shouldBe GameConstants.INITIAL_ELIXIR
+    state.elixir shouldBe GamePlayConstants.INITIAL_ELIXIR
     state.waveNumber shouldBe INITIAL_WAVE_NUM
   }
 
@@ -24,19 +24,19 @@ class GameEngineTest extends AnyFlatSpec with Matchers {
     state.isWaveCompleted shouldBe true
 
     val stateWithTrolls = state.copy(trolls = List(
-      BaseTroll("t1", FIRST_POS, GameConstants.BASE_TROLL_HEALTH)
+      BaseTroll("t1", FIRST_POS, GamePlayConstants.BASE_TROLL_HEALTH)
     ))
     stateWithTrolls.isWaveCompleted shouldBe false
 
     val stateWithSpawnQueue = state.copy(trollsToSpawn = List(
-      BaseTroll("t2", SECOND_POS, GameConstants.BASE_TROLL_HEALTH)
+      BaseTroll("t2", SECOND_POS, GamePlayConstants.BASE_TROLL_HEALTH)
     ))
     stateWithSpawnQueue.isWaveCompleted shouldBe false
   }
 
   it should "find and update entities correctly" in {
-    val wiz = WindWizard("w1", SECOND_POS, GameConstants.WIND_WIZARD_HEALTH)
-    val troll = BaseTroll("t1", FIRST_POS, GameConstants.BASE_TROLL_HEALTH)
+    val wiz = WindWizard("w1", SECOND_POS, GamePlayConstants.WIND_WIZARD_HEALTH)
+    val troll = BaseTroll("t1", FIRST_POS, GamePlayConstants.BASE_TROLL_HEALTH)
 
     val state = GameState(
       wizards = List(wiz),
@@ -49,7 +49,7 @@ class GameEngineTest extends AnyFlatSpec with Matchers {
 
     val damagedWiz = wiz.takeDamage(DAMAGE)
     val updatedState = state.updateEntity(damagedWiz)
-    updatedState.wizards.head.health shouldBe (GameConstants.WIND_WIZARD_HEALTH - DAMAGE)
+    updatedState.wizards.head.health shouldBe (GamePlayConstants.WIND_WIZARD_HEALTH - DAMAGE)
   }
 }
 
@@ -57,7 +57,7 @@ class EventHandlersTest extends AnyFlatSpec with Matchers {
 
   "SpawnHandler" should "spawn trolls only during InGame phase" in {
     val handler = new SpawnHandler()
-    val troll = BaseTroll("t1", FIRST_POS, GameConstants.BASE_TROLL_HEALTH)
+    val troll = BaseTroll("t1", FIRST_POS, GamePlayConstants.BASE_TROLL_HEALTH)
     val event = GameEvent.SpawnTroll(troll)
 
     // Should not spawn in Menu phase
@@ -74,14 +74,14 @@ class EventHandlersTest extends AnyFlatSpec with Matchers {
 
   "PlacementHandler" should "place wizards with sufficient elixir" in {
     val handler = new PlacementHandler()
-    val wizard = WindWizard("w1", SECOND_POS, GameConstants.WIND_WIZARD_HEALTH)
+    val wizard = WindWizard("w1", SECOND_POS, GamePlayConstants.WIND_WIZARD_HEALTH)
     val event = GameEvent.PlaceWizard(wizard, SECOND_POS)
 
     // With sufficient elixir
-    val richState = GameState(phase = GamePhase.InGame, elixir = GameConstants.INITIAL_ELIXIR)
+    val richState = GameState(phase = GamePhase.InGame, elixir = GamePlayConstants.INITIAL_ELIXIR)
     val (newRichState, _) = handler.handle(event, richState)
     newRichState.wizards should have size 1
-    newRichState.elixir shouldBe (GameConstants.INITIAL_ELIXIR - wizard.cost)
+    newRichState.elixir shouldBe (GamePlayConstants.INITIAL_ELIXIR - wizard.cost)
     newRichState.grid.get(SECOND_POS) shouldBe CellType.Wizard
 
     // Without sufficient elixir
@@ -94,12 +94,12 @@ class EventHandlersTest extends AnyFlatSpec with Matchers {
   it should "not place wizards on occupied cells" in {
     val handler = new PlacementHandler()
     val pos = SECOND_POS
-    val wizard1 = WindWizard("w1", pos, GameConstants.WIND_WIZARD_HEALTH)
-    val wizard2 = BarrierWizard("w2", pos, GameConstants.BARRIER_WIZARD_HEALTH)
+    val wizard1 = WindWizard("w1", pos, GamePlayConstants.WIND_WIZARD_HEALTH)
+    val wizard2 = BarrierWizard("w2", pos, GamePlayConstants.BARRIER_WIZARD_HEALTH)
 
     val state = GameState(
       phase = GamePhase.InGame,
-      elixir = GameConstants.INITIAL_ELIXIR*2,
+      elixir = GamePlayConstants.INITIAL_ELIXIR*2,
       wizards = List(wizard1),
       grid = Grid().set(pos, CellType.Wizard)
     )
@@ -113,7 +113,7 @@ class EventHandlersTest extends AnyFlatSpec with Matchers {
 
   "CombatHandler" should "handle entity damage and destruction" in {
     val handler = new CombatHandler()
-    val wizard = WindWizard("w1", SECOND_POS, GameConstants.WIND_WIZARD_HEALTH)
+    val wizard = WindWizard("w1", SECOND_POS, GamePlayConstants.WIND_WIZARD_HEALTH)
     val state = GameState(
       phase = GamePhase.InGame,
       wizards = List(wizard)
@@ -122,7 +122,7 @@ class EventHandlersTest extends AnyFlatSpec with Matchers {
     // Damage but not destroy
     val damageEvent = GameEvent.EntityDamaged("w1", DAMAGE)
     val (damagedState, events1) = handler.handle(damageEvent, state)
-    damagedState.wizards.head.health shouldBe (GameConstants.WIND_WIZARD_HEALTH - DAMAGE)
+    damagedState.wizards.head.health shouldBe (GamePlayConstants.WIND_WIZARD_HEALTH - DAMAGE)
     events1 shouldBe empty
 
     // Damage and destroy
@@ -134,11 +134,11 @@ class EventHandlersTest extends AnyFlatSpec with Matchers {
 
   it should "reward elixir for destroying trolls" in {
     val handler = new CombatHandler()
-    val troll = BaseTroll("t1", FIRST_POS, GameConstants.BASE_TROLL_HEALTH)
+    val troll = BaseTroll("t1", FIRST_POS, GamePlayConstants.BASE_TROLL_HEALTH)
     val state = GameState(
       phase = GamePhase.InGame,
       trolls = List(troll),
-      elixir = GameConstants.INITIAL_ELIXIR
+      elixir = GamePlayConstants.INITIAL_ELIXIR
     )
 
     val damageEvent = GameEvent.EntityDamaged("t1", DAMAGE_AND_DESTROY)
@@ -148,7 +148,7 @@ class EventHandlersTest extends AnyFlatSpec with Matchers {
     events should contain(GameEvent.EntityDestroyed("t1"))
 
     val (finalState, _) = handler.handle(events.head, damagedState)
-    finalState.elixir shouldBe (GameConstants.INITIAL_ELIXIR + GameConstants.BASE_TROLL_REWARD)
+    finalState.elixir shouldBe (GamePlayConstants.INITIAL_ELIXIR + GamePlayConstants.BASE_TROLL_REWARD)
   }
 
   "PhaseHandler" should "handle game phase transitions" in {
@@ -182,12 +182,12 @@ class EventHandlersTest extends AnyFlatSpec with Matchers {
 
   "ElixirHandler" should "generate elixir correctly" in {
     val handler = new ElixirHandler()
-    val state = GameState(elixir = GameConstants.INITIAL_ELIXIR)
+    val state = GameState(elixir = GamePlayConstants.INITIAL_ELIXIR)
 
-    val event = GameEvent.ElixirGenerated(GameConstants.PERIODIC_ELIXIR)
+    val event = GameEvent.ElixirGenerated(GamePlayConstants.PERIODIC_ELIXIR)
     val (newState, _) = handler.handle(event, state)
 
-    newState.elixir shouldBe (GameConstants.INITIAL_ELIXIR + GameConstants.PERIODIC_ELIXIR)
+    newState.elixir shouldBe (GamePlayConstants.INITIAL_ELIXIR + GamePlayConstants.PERIODIC_ELIXIR)
   }
 }
 
@@ -213,12 +213,12 @@ class GameEngineImplSpec extends AnyFlatSpec with Matchers {
     engine.update(DELTA)
 
     // Place a wizard
-    val wizard = WindWizard("w1", POS, GameConstants.WIND_WIZARD_HEALTH)
+    val wizard = WindWizard("w1", POS, GamePlayConstants.WIND_WIZARD_HEALTH)
     engine.processEvent(GameEvent.PlaceWizard(wizard, POS))
     engine.update(DELTA)
 
     engine.currentState.wizards should have size 1
-    engine.currentState.elixir shouldBe (GameConstants.INITIAL_ELIXIR - GameConstants.WIND_WIZARD_COST) // Started with 200, spent 100
+    engine.currentState.elixir shouldBe (GamePlayConstants.INITIAL_ELIXIR - GamePlayConstants.WIND_WIZARD_COST) // Started with 200, spent 100
   }
 
   it should "handle pause and resume" in {

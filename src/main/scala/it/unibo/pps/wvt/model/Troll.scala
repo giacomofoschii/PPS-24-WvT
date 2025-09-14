@@ -1,6 +1,6 @@
 package it.unibo.pps.wvt.model
 
-import it.unibo.pps.wvt.utilities.GameConstants._
+import it.unibo.pps.wvt.utilities.GamePlayConstants._
 
 // Base Troll trait
 trait Troll extends Entity with Attacker with Moveable {

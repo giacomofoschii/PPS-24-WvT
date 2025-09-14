@@ -1,6 +1,6 @@
 package it.unibo.pps.wvt.model
 
-import it.unibo.pps.wvt.utilities.GameConstants._
+import it.unibo.pps.wvt.utilities.GamePlayConstants._
 
 // Base Wizard trait
 trait Wizard extends Entity {

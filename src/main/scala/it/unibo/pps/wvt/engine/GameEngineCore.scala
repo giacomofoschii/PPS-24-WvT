@@ -1,7 +1,7 @@
 package it.unibo.pps.wvt.engine
 
 import it.unibo.pps.wvt.model._
-import it.unibo.pps.wvt.utilities.GameConstants._
+import it.unibo.pps.wvt.utilities.GamePlayConstants._
 
 // Events that can occur in the game
 sealed trait GameEvent

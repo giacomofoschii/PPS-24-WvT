@@ -3,9 +3,9 @@ package it.unibo.pps.wvt.engine
 import it.unibo.pps.wvt.engine.*
 import it.unibo.pps.wvt.engine.GameEvent.ElixirGenerated
 import it.unibo.pps.wvt.engine.GamePhase.Paused
-import it.unibo.pps.wvt.engine.handlers.*
-import it.unibo.pps.wvt.model.*
-import it.unibo.pps.wvt.utilities.GameConstants.*
+import it.unibo.pps.wvt.engine.handlers._
+import it.unibo.pps.wvt.model._
+import it.unibo.pps.wvt.utilities.GamePlayConstants._
 
 import scala.collection.mutable
 
