@@ -9,15 +9,17 @@ trait EntityManagement {
   self: BaseEventHandler =>
 
   protected def spawnTroll(troll: Troll, state: GameState): GameState =
-    val updatedGrid = state.grid.set(troll.position, CellType.Troll)
+    val updatedGrid = state.grid.set(troll.position, Cell(troll.position, CellType.Troll))
     state.copy(
       trolls = troll :: state.trolls,
       grid = updatedGrid
     )
 
   protected def placeWizard(wizard: Wizard, state: GameState): Option[GameState] =
-    if (state.elixir >= wizard.cost && state.grid.isEmpty(wizard.position))
-      val updatedGrid = state.grid.set(wizard.position, CellType.Wizard)
+    if (state.elixir >= wizard.cost 
+      && state.grid.isCellEmpty(wizard.position) 
+      && state.grid.isValidPosition(wizard.position))
+      val updatedGrid = state.grid.set(wizard.position, Cell(wizard.position, CellType.Wizard))
       Some(
         state.copy(
           wizards = wizard :: state.wizards,
@@ -41,7 +43,7 @@ trait CombatMechanics {
         if (damaged.isAlive)
           (state.updateEntity(damaged), None)
         else
-          val updatedGrid = state.grid.set(entity.position, CellType.Empty)
+          val updatedGrid = state.grid.emptyCell(entity.position)
           val updatedState = state.removeEntity(entityID).copy(grid = updatedGrid)
 
           val finalState = entity match

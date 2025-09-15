@@ -1,7 +1,8 @@
 package it.unibo.pps.wvt.engine
 
-import it.unibo.pps.wvt.model._
-import it.unibo.pps.wvt.utilities.GamePlayConstants._
+import it.unibo.pps.wvt.model.*
+import it.unibo.pps.wvt.utilities.GamePlayConstants.*
+import it.unibo.pps.wvt.utilities.ViewConstants.{GRID_COLS, GRID_ROWS}
 
 // Events that can occur in the game
 sealed trait GameEvent
@@ -42,7 +43,7 @@ case class GameState(
                     elixir: Int = INITIAL_ELIXIR,
                     waveNumber: Int = 1,
                     trollsToSpawn: List[Troll] = List.empty,
-                    grid: Grid = Grid(),
+                    grid: Grid = Grid(Array.ofDim[Cell](GRID_ROWS, GRID_COLS)).emptyGrid,
                     elixirGenerationTimer: Int = 0
   ) {
     def isWaveCompleted: Boolean = trolls.isEmpty && trollsToSpawn.isEmpty

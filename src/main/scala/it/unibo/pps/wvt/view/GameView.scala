@@ -1,6 +1,6 @@
 package it.unibo.pps.wvt.view
 
-import it.unibo.pps.wvt.utilities.ViewConstants.GAME_MAP_SCALE_FACTOR
+import it.unibo.pps.wvt.utilities.ViewConstants._
 import scalafx.scene.Parent
 import scalafx.scene.image.ImageView
 import it.unibo.pps.wvt.view.ButtonFactory.*

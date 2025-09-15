@@ -160,9 +160,9 @@ class GameEngineImpl extends GameEngine {
     val updatedTrolls = _currentState.trolls.map { troll =>
       if(troll.position.col > 0)
         val newPos = Position(troll.position.row, troll.position.col - troll.speed)
-        if(_currentState.grid.isEmpty(newPos))
-          val oldGrid = _currentState.grid.set(troll.position, CellType.Empty)
-          val newGrid = oldGrid.set(newPos, CellType.Troll)
+        if(_currentState.grid.isCellEmpty(newPos))
+          val oldGrid = _currentState.grid.emptyCell(troll.position)
+          val newGrid = oldGrid.set(newPos, Cell(newPos, CellType.Troll))
           _currentState = _currentState.copy(grid = newGrid)
           troll.updatePosition(newPos).asInstanceOf[Troll]
         else 
