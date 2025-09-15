@@ -1,74 +1,134 @@
 package it.unibo.pps.wvt.engine
 
-import it.unibo.pps.wvt.utilities.GameConstants.*
-import it.unibo.pps.wvt.utilities.TestConstants._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.BeforeAndAfterEach
 
-class GameLoopTest extends AnyFlatSpec with Matchers {
+class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
-  "GameLoopConfig" should "have correct default values" in {
-    val engine = GameEngine.create()
-    val loop = new EventBasedGameLoop(engine)
+  var engine: GameEngine = _
+  var gameLoop: GameLoop = _
 
-    loop.targetFps shouldBe TARGET_FPS
-    loop.tickRate shouldBe (1000 / TARGET_FPS)
+  override def beforeEach(): Unit = {
+    engine = new TestGameEngine()
+    gameLoop = new GameLoopImpl(engine)
   }
 
-  it should "calculate tickRate from custom FPS" in {
-    val engine = GameEngine.create()
-    val loop = GameLoop.withCustomFPS(engine, TEST_FPS_LOW)
-
-    loop.targetFps shouldBe TEST_FPS_LOW
-    loop.tickRate shouldBe (1000 / TEST_FPS_LOW)
+  override def afterEach(): Unit = {
+    if (gameLoop.isRunning) {
+      gameLoop.stop()
+    }
   }
 
-  "EventBasedGameLoop" should "start and stop correctly" in {
+  "GameLoop" should "initialize in stopped state" in {
+    gameLoop.isRunning shouldBe false
+    gameLoop.getCurrentFps shouldBe 0
+  }
+
+  it should "start and stop correctly" in {
+    gameLoop.isRunning shouldBe false
+
+    gameLoop.start()
+    gameLoop.isRunning shouldBe true
+
+    Thread.sleep(100) // Let it run briefly
+
+    gameLoop.stop()
+    Thread.sleep(100) // Give time to stop
+    gameLoop.isRunning shouldBe false
+  }
+
+  it should "not start multiple times" in {
+    gameLoop.start()
+    gameLoop.isRunning shouldBe true
+
+    // Try to start again - should not create multiple threads
+    gameLoop.start()
+    gameLoop.isRunning shouldBe true
+
+    gameLoop.stop()
+  }
+
+  it should "update the engine periodically" in {
+    val testEngine = engine.asInstanceOf[TestGameEngine]
+    testEngine.updateCount shouldBe 0
+
+    gameLoop.start()
+    Thread.sleep(200) // Run for 200ms
+    gameLoop.stop()
+
+    // Should have multiple updates in 200ms (at 60 FPS, expect ~12 updates)
+    testEngine.updateCount should be > 5
+  }
+
+  it should "calculate FPS" in {
+    gameLoop.start()
+
+    // Wait for at least one second for FPS calculation
+    Thread.sleep(1100)
+
+    val fps = gameLoop.getCurrentFps
+    gameLoop.stop()
+
+    // Should be close to 60 FPS (allowing some variance)
+    fps should be > 50
+    fps should be < 70
+  }
+
+  it should "stop updating when engine stops" in {
+    val testEngine = engine.asInstanceOf[TestGameEngine]
+
+    gameLoop.start()
+    Thread.sleep(100)
+
+    val countBefore = testEngine.updateCount
+
+    // Stop the engine (not the loop)
+    testEngine.stop()
+    Thread.sleep(100)
+
+    val countAfter = testEngine.updateCount
+
+    gameLoop.stop()
+
+    // Updates should stop when engine stops
+    countAfter shouldBe countBefore
+  }
+
+  "GameLoop factory" should "create loop with engine" in {
     val engine = GameEngine.create()
     val loop = GameLoop.create(engine)
 
+    loop shouldBe a [GameLoopImpl]
     loop.isRunning shouldBe false
 
-    loop.start()
-    loop.isRunning shouldBe true
-
-    loop.stop()
-    Thread.sleep(SMALL_DELAY)
-    loop.isRunning shouldBe false
-  }
-
-  it should "update engine periodically" in {
-    val engine = GameEngine.create()
-    engine.processEvent(GameEvent.StartWave)
-
-    val initialState = engine.currentState
-    val loop = GameLoop.withCustomFPS(engine, TEST_FPS_VERY_LOW)
-
-    loop.start()
-    Thread.sleep(TEST_DURATION_HALF_SEC)
-    loop.stop()
-
-    // State should have changed
-    engine.currentState should not equal initialState
+    engine.stop()
   }
 }
 
-class GameLoopFactoryTest extends AnyFlatSpec with Matchers {
+// Helper class
+class TestGameEngine extends GameEngine {
+  private var _isRunning: Boolean = true
+  private var _gameState: GameState = GameState.initial()
+  var updateCount: Int = 0
 
-  "GameLoop object" should "create default game loop" in {
-    val engine = GameEngine.create()
-    val loop = GameLoop.create(engine)
+  override def initialize(): Unit = {}
 
-    loop shouldBe a [EventBasedGameLoop]
-    loop.targetFps shouldBe TARGET_FPS
+  override def start(): Unit = {
+    _isRunning = true
   }
 
-  it should "create loop with custom FPS" in {
-    val engine = GameEngine.create()
-    val loop = GameLoop.withCustomFPS(engine, TEST_FPS_MEDIUM)
-
-    loop shouldBe a [EventBasedGameLoop]
-    loop.targetFps shouldBe TEST_FPS_MEDIUM
-    loop.tickRate shouldBe (1000 / TEST_FPS_MEDIUM)
+  override def stop(): Unit = {
+    _isRunning = false
   }
+
+  override def update(deltaTime: Long): Unit = {
+    if (_isRunning) {
+      updateCount += 1
+      _gameState = _gameState.copy(elapsedTime = _gameState.elapsedTime + deltaTime)
+    }
+  }
+
+  override def isRunning: Boolean = _isRunning
+  override def currentState: GameState = _gameState
 }

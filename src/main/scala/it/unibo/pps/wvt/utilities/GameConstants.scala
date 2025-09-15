@@ -2,6 +2,8 @@ package it.unibo.pps.wvt.utilities
 
 object GameConstants {
   val TARGET_FPS: Int = 60
+  val FRAME_TIME_NANOS: Long = 1_000_000_000L / TARGET_FPS
+  val FRAME_TIME_MICROS: Long = 1000L / TARGET_FPS
   val THREAD_NUM: Int = 2
 }
 
@@ -68,10 +70,6 @@ object ViewConstants {
   //Grid dimensions
   val GRID_ROWS: Int = 5
   val GRID_COLS: Int = 9
-  val GRID_OFFSET_X: Double = 562
-  val GRID_OFFSET_Y: Double = 163
-  val CELL_WIDTH: Int = 66
-  val CELL_HEIGHT: Int = 77
   
   // Window's and menu's objects dimensions
   val MENU_SCALE_FACTOR = 0.7

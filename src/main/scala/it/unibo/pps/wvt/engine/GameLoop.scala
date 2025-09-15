@@ -1,155 +1,96 @@
 package it.unibo.pps.wvt.engine
 
-import it.unibo.pps.wvt.model._
-import it.unibo.pps.wvt.utilities.GameConstants._
+import it.unibo.pps.wvt.utilities.GameConstants.*
 
-import java.util.concurrent._
-import scala.util.{Failure, Success, Try}
+import java.util.concurrent.*
 
 trait GameLoop {
-  self: GameLoopConfig =>
-
   def start(): Unit
   def stop(): Unit
   def isRunning: Boolean
-
-  protected def tick(delta: Long): Unit
+  def getCurrentFps: Int
 }
 
-trait GameLoopConfig {
-  def targetFps: Int = TARGET_FPS
-  def tickRate: Long = 1000 / targetFps
-}
+class GameLoopImpl(engine: GameEngine) extends GameLoop {
 
-trait GameLoopStats {
-  self: GameLoop =>
-
-  private var frameCount: Long = 0
-  private var totalTime: Long = 0
-  private var lastFpsTime: Long = System.currentTimeMillis()
-  private var currentFps: Long = 0
-
-  protected def updateStats(delta: Long): Unit =
-    frameCount += 1
-    totalTime += delta
-
-    val currentTime = System.currentTimeMillis()
-    if (currentTime - lastFpsTime >= 1000)
-      currentFps = frameCount * 1000 / (currentTime - lastFpsTime)
-      frameCount = 0
-      lastFpsTime = currentTime
-}
-
-class EventBasedGameLoop(engine: GameEngine)
-  extends GameLoop
-  with GameLoopConfig
-  with GameLoopStats {
-
-  private val scheduler: ScheduledExecutorService = Executors.newScheduledThreadPool(THREAD_NUM)
+  private var scheduler: Option[ScheduledExecutorService] = None
   private var running: Boolean = false
-  private var lastUpdate: Long = System.nanoTime()
 
-  private val gameLoopTask: Runnable = () =>
-    if (running && engine.isRunning)
-      val currentTime = System.nanoTime()
-      val delta = (currentTime - lastUpdate) / 1_000_000
-      lastUpdate = currentTime
+  // Time tracking
+  private var lastUpdate: Long = 0L
+  private var delta: Long = 0L
 
-      tick(delta)
-      updateStats(delta)
-    else if (!engine.isRunning && running)
-      // Stop the loop if the engine is no longer running
-      stop()
+  // FPS tracking
+  private var frameCount: Int = 0
+  private var fpsTimer: Long = 0L
+  private var currentFps: Int = 0
+
 
   override def start(): Unit =
     if (!running)
       running = true
       lastUpdate = System.nanoTime()
+      fpsTimer = System.currentTimeMillis()
 
-      scheduler.scheduleAtFixedRate(
-        gameLoopTask,
+      val executor = Executors.newSingleThreadScheduledExecutor()
+      scheduler = Some(executor)
+
+      executor.scheduleAtFixedRate(
+        () => gameLoopTick(),
         0,
-        tickRate,
+        FRAME_TIME_MICROS,
         TimeUnit.MILLISECONDS
       )
 
-      println(s"Game loop started with target FPS: $targetFps and tick rate: $tickRate ms\n")
+      println(s"Game loop started with target FPS: $TARGET_FPS\n")
 
   override def stop(): Unit =
     if(running)
       running = false
-      scheduler.shutdown()
 
-      try
-        if (!scheduler.awaitTermination(5, TimeUnit.SECONDS))
-          scheduler.shutdownNow()
-      catch
-        case _: InterruptedException =>
-          scheduler.shutdownNow()
-          Thread.currentThread().interrupt()
+      scheduler.foreach { exec =>
+        exec.shutdown()
+        try {
+          if (!exec.awaitTermination(5, TimeUnit.SECONDS))
+            exec.shutdownNow()
+        } catch
+          case _: InterruptedException =>
+            exec.shutdownNow()
+            Thread.currentThread().interrupt()
+      }
+
+      scheduler = None
+      println("Game loop stopped")
 
   override def isRunning: Boolean = running
 
-  override protected def tick(delta: Long): Unit =
-    Try(engine.update(delta)) match
-        case Failure(ex) =>
-          println(s"Error in game loop: ${ex.getMessage}")
-          ex.printStackTrace()
-        case Success(_) => // Continue normally
-}
+  override def getCurrentFps: Int = currentFps
 
-class GameController(engineFactory: () => GameEngine = () => GameEngine.create()) {
+  private def gameLoopTick(): Unit =
+    if (running && engine.isRunning)
+      // Calculate delta time
+      val currentTime = System.nanoTime()
+      delta = (currentTime - lastUpdate) / 1_000_000L // Convert to milliseconds
+      lastUpdate = currentTime
 
-  private var engine: GameEngine = engineFactory()
-  private var gameLoop: Option[GameLoop] = None
+      // Update the engine with delta time
+      engine.update(delta)
 
-  def startNewGame(): Unit =
-    // Stop existing game if running
-    stopGame()
+      // Update FPS counter
+      updateFpsCounter()
 
-    // Create new engine and loop
-    engine = engineFactory()
-    val loop = new EventBasedGameLoop(engine)
-    gameLoop = Some(loop)
+  private def updateFpsCounter(): Unit =
+    frameCount += 1
 
-    engine.processEvent(GameEvent.StartWave)
-    loop.start()
-
-  def pauseGame(): Unit =
-    engine.processEvent(GameEvent.PauseGame)
-
-  def resumeGame(): Unit =
-    engine.processEvent(GameEvent.ResumeGame)
-
-  def stopGame(): Unit =
-    gameLoop.foreach(_.stop())
-    gameLoop = None
-    engine.processEvent(GameEvent.EndGame)
-
-  def placeWizard(wiz: Wizard, pos: Position): Unit =
-    engine.processEvent(GameEvent.PlaceWizard(wiz, pos))
-
-  def getGameState: GameState = engine.currentState
-
-  def isRunning: Boolean = gameLoop.exists(_.isRunning)
-
-  def continueToNextWave(): Unit =
-    if(engine.currentState.phase == GamePhase.WaveComplete)
-      engine.processEvent(GameEvent.StartWave)
-
-  def exitGame(): Unit =
-    stopGame()
+    val currentTimeMs = System.currentTimeMillis()
+    if (currentTimeMs - fpsTimer >= 1000)
+      currentFps = frameCount
+      frameCount = 0
+      fpsTimer = currentTimeMs
 }
 
 object GameLoop {
 
-  def create(engine: GameEngine): EventBasedGameLoop =
-    new EventBasedGameLoop(engine)
-
-  def withCustomFPS(engine: GameEngine, fps: Int): EventBasedGameLoop =
-    new EventBasedGameLoop(engine) {
-      override def targetFps: Int = fps
-      override def tickRate: Long = 1000 / targetFps
-    }
+  def create(engine: GameEngine): GameLoopImpl = new GameLoopImpl(engine)
 
 }
