@@ -1,5 +1,10 @@
 package it.unibo.pps.wvt.utilities
 
+object GameConstants {
+  val TARGET_FPS: Int = 60
+  val THREAD_NUM: Int = 2
+}
+
 object GamePlayConstants {
   // Elixir generation parameters
   val INITIAL_ELIXIR: Int = 200
