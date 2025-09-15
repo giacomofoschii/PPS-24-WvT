@@ -1,14 +1,15 @@
 package it.unibo.pps.wvt.view
 
-import it.unibo.pps.wvt.utilities.ViewConstants.*
 import scalafx.scene.Parent
 import scalafx.scene.image.ImageView
-import it.unibo.pps.wvt.view.ButtonFactory.*
-import it.unibo.pps.wvt.view.ImageFactory.*
-import it.unibo.pps.wvt.model.Position
 import scalafx.scene.layout.{Pane, StackPane}
 import scalafx.scene.paint.Color
 import scalafx.scene.shape.Rectangle
+
+import it.unibo.pps.wvt.utilities.ViewConstants.*
+import it.unibo.pps.wvt.view.ButtonFactory.*
+import it.unibo.pps.wvt.view.ImageFactory.*
+import it.unibo.pps.wvt.model.Position
 
 object GameView {
   def apply(): Parent = {
@@ -26,8 +27,7 @@ object GameView {
 
   /*
   mi torna utile per quando dovremo fare il posizionamento, possiamo usarlo con posizioni libere o occupate
-   */
-  def showGrid(pane: Pane): Unit = {
+  def redGrid(pane: Pane): Unit = {
     for {
       row <- 0 until GRID_ROWS
       col <- 0 until GRID_COLS
@@ -48,5 +48,5 @@ object GameView {
 
       pane.children.add(cellRect)
     }
-  }
+  }*/
 }

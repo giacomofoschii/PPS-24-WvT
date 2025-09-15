@@ -17,7 +17,7 @@ object ViewController extends JFXApp3 {
     
   def showGameInfo(): Unit = ???
 
-  private def createStandardStage(pRoot: Parent): PrimaryStage =
+  private def createStandardStage(pRoot: Parent): PrimaryStage = {
     new PrimaryStage {
       title = "Wizards vs Trolls"
       scene = new Scene {
@@ -31,4 +31,7 @@ object ViewController extends JFXApp3 {
       resizable = false
       centerOnScreen()
     }
+  }
+
+  def render(): Unit = None
 }
