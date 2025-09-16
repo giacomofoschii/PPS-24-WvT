@@ -3,10 +3,12 @@ package it.unibo.pps.wvt.model
 import it.unibo.pps.wvt.utilities.ViewConstants._
 import it.unibo.pps.wvt.utilities.GamePlayConstants._
 
-case class Position(row: Int, col: Int) {
-  require(row >= 0 && row < GRID_ROWS, "Row must be between 0 and 4")
-  require(col >= 0 && col < GRID_COLS, "Column must be between 0 and 8")
-}
+case class Position(row: Int, col: Int, allowInvalid: Boolean = false):
+  if !allowInvalid then
+    require(row >= 0 && row < GRID_HEIGHT, s"Row must be between 0 and ${GRID_HEIGHT - 1}")
+    require(col >= 0 && col < GRID_WIDTH, s"Col must be between 0 and ${GRID_WIDTH - 1}")
+
+  def isValid: Boolean = row >= 0 && row < GRID_HEIGHT && col >= 0 && col < GRID_WIDTH
 
 trait Entity {
   def id: String

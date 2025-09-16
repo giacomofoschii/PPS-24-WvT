@@ -36,10 +36,18 @@ class GameEngineImpl extends GameEngine {
       })
 
     eventProcessor.registerHandler(classOf[GameEvent.Start.type],
-      _ => start())
+      _ => {
+        if(!_isRunning)
+          _isRunning = true
+          gameLoop.foreach(_.start())
+      })
 
     eventProcessor.registerHandler(classOf[GameEvent.Stop.type],
-      _ => stop())
+      _ => {
+        if (!_isRunning)
+          _isRunning = false
+          gameLoop.foreach(_.stop())
+      })
 
     eventProcessor.registerHandler(classOf[GameEvent.Pause.type],
       _ => {
@@ -73,7 +81,9 @@ class GameEngineImpl extends GameEngine {
     eventProcessor.registerHandler(classOf[GameEvent.ExitGame.type],
       _ => {
           _gameState = _gameState.copy(phase = GamePhase.GameOver)
-          stop()
+          if(_isRunning)
+            _isRunning = false
+            gameLoop.foreach(_.stop())
       })
 
     // Update event
@@ -127,6 +137,7 @@ class GameEngineImpl extends GameEngine {
 
   override def processEvent(event: GameEvent): Unit =
     eventProcessor.postEvent(event)
+    eventProcessor.processEvents()
 }
 
 object GameEngine {
