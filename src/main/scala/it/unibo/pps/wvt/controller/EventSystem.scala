@@ -1,4 +1,4 @@
-package it.unibo.pps.wvt.engine
+package it.unibo.pps.wvt.controller
 
 import it.unibo.pps.wvt.model.Position
 
@@ -28,7 +28,7 @@ object GameEvent {
 
   // Render event
   case object Render extends GameEvent
-  
+
   // Input events
   case class GridClicked(pos: Position, screenX: Int, screenY: Int) extends GameEvent
   case class KeyPressed(keyCode: String) extends GameEvent
