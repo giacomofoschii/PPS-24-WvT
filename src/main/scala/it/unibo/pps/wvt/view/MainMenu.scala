@@ -37,24 +37,18 @@ object MainMenu {
     new BorderPane {
       top = new VBox {
         alignment = Pos.Center
-        padding = Insets(15)
+        padding = Insets(PADDING_MENU)
         children = logo
       }
       center = new VBox {
         alignment = Pos.Center
-        padding = Insets(15)
+        padding = Insets(PADDING_MENU)
         children = startButton
       }
       bottom = new BorderPane {
-        padding = Insets(15)
+        padding = Insets(PADDING_MENU)
         left = infoButton
         right = exitButton
       }
     }
-
-  private def handleAction(action: ButtonAction): Unit = action match {
-    case StartGame => ViewController.showGameView()
-    case ShowInfo => ViewController.showGameInfo()
-    case ExitGame => sys.exit(0)
-  }
 }

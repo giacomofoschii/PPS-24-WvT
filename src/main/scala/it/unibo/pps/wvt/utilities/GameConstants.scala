@@ -80,4 +80,6 @@ object ViewConstants {
   val MENU_SCALE_FACTOR = 0.7
   val GAME_MAP_SCALE_FACTOR = 0.4
   val TITLE_SCALE_FACTOR = 0.4
+  
+  val PADDING_MENU = 15
 }

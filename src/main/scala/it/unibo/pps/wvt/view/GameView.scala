@@ -1,21 +1,17 @@
 package it.unibo.pps.wvt.view
 
-import it.unibo.pps.wvt.model.Grid
 import it.unibo.pps.wvt.view.ButtonFactory.*
 import it.unibo.pps.wvt.view.ImageFactory.*
-import it.unibo.pps.wvt.utilities.ViewConstants._
+import it.unibo.pps.wvt.utilities.ViewConstants.*
 import it.unibo.pps.wvt.utilities.GridMapper.PhysicalCoords
-import it.unibo.pps.wvt.utilities.GridMapper
-
+import scalafx.geometry.Insets
 import scalafx.scene.Parent
 import scalafx.scene.image.ImageView
-import scalafx.scene.layout.{Pane, StackPane}
+import scalafx.scene.layout.{BorderPane, Pane, StackPane}
 import scalafx.scene.paint.Color
 import scalafx.scene.shape.Rectangle
-import scalafx.scene.layout.StackPane
 
 object GameView {
-  private var mainStackPane: Option[StackPane] = None
   private var gridPane: Option[Pane] = None
   private var entityPane: Option[Pane] = None
 
@@ -28,10 +24,11 @@ object GameView {
 
     val entityOverlay = new Pane()
 
+    val buttonOverlay = createButtonOverlay
+
     val stackPane = new StackPane {
-      children = Seq(backgroundImage, gridOverlay, entityOverlay)
+      children = Seq(backgroundImage, gridOverlay, entityOverlay, buttonOverlay)
     }
-    mainStackPane = Some(stackPane)
     entityPane = Some(entityOverlay)
     gridPane = Some(gridOverlay)
     stackPane
@@ -61,5 +58,18 @@ object GameView {
       fill = color
       opacity = CELL_OPACITY
       stroke = Color.White
+    }
+
+  private def createButtonOverlay: Pane =
+    val buttonConfigs = Map(
+      "pause" -> ButtonConfig("Pause", 200, 100, 20, "Times New Roman"),
+    )
+    val pauseButton = createStyledButton(buttonConfigs("pause"))(handleAction(PauseGame))
+
+    new BorderPane {
+      top = new BorderPane {
+        padding = Insets(5)
+        right = pauseButton
+      }
     }
 }

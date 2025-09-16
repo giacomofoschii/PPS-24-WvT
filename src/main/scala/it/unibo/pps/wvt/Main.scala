@@ -1,4 +1,6 @@
 package it.unibo.pps.wvt
 
+import it.unibo.pps.wvt.view.ViewController
+
 @main def main(): Unit =
-  println("Hello, World!")
+  ViewController.main(Array.empty)

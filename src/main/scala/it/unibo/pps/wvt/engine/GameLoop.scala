@@ -1,5 +1,6 @@
 package it.unibo.pps.wvt.engine
 
+import it.unibo.pps.wvt.input.InputSystem
 import it.unibo.pps.wvt.utilities.GameConstants.*
 
 import java.util.concurrent.*
@@ -18,7 +19,6 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
 
   // Time tracking
   private var lastUpdate: Long = 0L
-  private var delta: Long = 0L
   private var acc = 0L
 
   // FPS tracking
@@ -86,15 +86,13 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
         acc += frameTime
 
         while(acc >= fixedTimeStep)
+          // Update game state with fixed time step
           engine.update(fixedTimeStep)
           acc -= fixedTimeStep
 
         // Update FPS counter
         updateFpsCounter()
 
-        // Post render event after updates
-        // The actual rendering happens in the UI thread through the event system
-        engine.processEvent(GameEvent.Render)
       catch
         case ex: Exception =>
           println(s"Exception in game loop: ${ex.getMessage}")
@@ -111,7 +109,5 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
 }
 
 object GameLoop {
-
   def create(engine: GameEngine): GameLoopImpl = new GameLoopImpl(engine)
-
 }
