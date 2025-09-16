@@ -10,11 +10,7 @@ case class GameController() {
   private val eventHandler: EventHandler = EventHandler.create(gameEngine)
   private val inputSystem: InputSystem = InputSystem()
   private var renderSystem: Option[RenderSystem] = None
-  private var viewController: Option[ViewController.type] = None
-
-
-  def initialize(view: ViewController.type): Unit =
-    viewController = Some(view)
+  private var viewController = ViewController
   
   def update(state: GameState, deltaTime: Long): GameState = {
     // Process any pending events

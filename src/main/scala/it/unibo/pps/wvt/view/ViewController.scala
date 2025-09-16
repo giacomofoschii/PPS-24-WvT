@@ -16,7 +16,6 @@ object ViewController extends JFXApp3 {
 
   override def start(): Unit = {
     gameController = Some(GameController())
-    gameController.get.initialize(this)
     showMainMenu()
   }
 

@@ -45,8 +45,7 @@ class GameControllerTest extends AnyFlatSpec with Matchers with BeforeAndAfterEa
   var controller: GameController = _
 
   override def beforeEach(): Unit = 
-    controller = new GameController()
-    controller.initialize()
+    controller = GameController()
 
   override def afterEach(): Unit = 
     controller.stop()
@@ -253,8 +252,7 @@ class GameControllerIntegrationTest extends AnyFlatSpec with Matchers with Befor
   var controller: GameController = _
 
   override def beforeEach(): Unit =
-    controller = new GameController()
-    controller.initialize()
+    controller = GameController()
 
   override def afterEach(): Unit =
     controller.stop()
