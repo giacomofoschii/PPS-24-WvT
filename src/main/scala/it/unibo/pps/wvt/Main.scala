@@ -1,6 +1,6 @@
 package it.unibo.pps.wvt
 
-import it.unibo.pps.wvt.controller.GameController
+import it.unibo.pps.wvt.view.ViewController
 
 @main def main(): Unit =
-  GameController.apply()
+  ViewController.main(Array.empty)

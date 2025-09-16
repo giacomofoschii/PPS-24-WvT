@@ -9,14 +9,12 @@ case class GameController() {
   private val gameEngine: GameEngine = GameEngine.create(this)
   private val eventHandler: EventHandler = EventHandler.create(gameEngine)
   private val inputSystem: InputSystem = InputSystem()
-  private val viewController = ViewController
   private var renderSystem: Option[RenderSystem] = None
+  private var viewController: Option[ViewController.type] = None
 
-  def initialize(): Unit = {
-    // Engine is already initialized in create()
-    viewController.setController(this)
-    viewController.start()
-  }
+
+  def initialize(view: ViewController.type): Unit =
+    viewController = Some(view)
   
   def update(state: GameState, deltaTime: Long): GameState = {
     // Process any pending events
@@ -75,12 +73,6 @@ case class GameController() {
   def getInputSystem: InputSystem = inputSystem
 
   def getEventController: EventHandler = eventHandler
-}
-
-object GameController {
-  def apply(): Unit =
-    val controller = new GameController()
-    controller.initialize()
 }
 
 // Placeholder for render system interface

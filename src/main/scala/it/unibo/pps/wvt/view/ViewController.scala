@@ -15,24 +15,23 @@ object ViewController extends JFXApp3 {
   private var gameController: Option[GameController] = None
 
   override def start(): Unit = {
+    gameController = Some(GameController())
+    gameController.get.initialize(this)
     showMainMenu()
   }
 
-  def setController(controller: GameController): Unit =
-    this.gameController = Some(controller)
-
   def showMainMenu(): Unit = {
-    //gameController.get.postEvent(ShowMainMenu)
+    gameController.get.postEvent(ShowMainMenu)
     stage = createStandardStage(MainMenu())
   }
 
   def showGameView(): Unit =
-    //gameController.get.postEvent(ShowGameView)
+    gameController.get.postEvent(ShowGameView)
     initializeGrid()
     stage = createStandardStage(GameView())
 
   def showGameInfo(): Unit = {
-    //gameController.get.postEvent(ShowInfoMenu)
+    gameController.get.postEvent(ShowInfoMenu)
     stage = createStandardStage(InfoMenu())
   }
 

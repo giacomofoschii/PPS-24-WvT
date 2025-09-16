@@ -1,11 +1,9 @@
 package it.unibo.pps.wvt.view
 
-import it.unibo.pps.wvt.model.Grid
 import it.unibo.pps.wvt.view.ButtonFactory.*
 import it.unibo.pps.wvt.view.ImageFactory.*
 import it.unibo.pps.wvt.utilities.ViewConstants.*
 import it.unibo.pps.wvt.utilities.GridMapper.PhysicalCoords
-import it.unibo.pps.wvt.utilities.GridMapper
 import scalafx.geometry.Insets
 import scalafx.scene.Parent
 import scalafx.scene.image.ImageView
