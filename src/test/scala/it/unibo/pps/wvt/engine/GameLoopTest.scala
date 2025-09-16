@@ -131,4 +131,10 @@ class TestGameEngine extends GameEngine {
 
   override def isRunning: Boolean = _isRunning
   override def currentState: GameState = _gameState
+
+  override def processEvent(event: GameEvent): Unit =
+    event match {
+      case GameEvent.Stop => stop()
+      case _ => // Ignore other events for this test
+    }
 }

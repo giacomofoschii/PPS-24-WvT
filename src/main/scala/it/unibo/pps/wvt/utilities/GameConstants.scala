@@ -4,7 +4,6 @@ object GameConstants {
   val TARGET_FPS: Int = 60
   val FRAME_TIME_NANOS: Long = 1_000_000_000L / TARGET_FPS
   val FRAME_TIME_MICROS: Long = 1000L / TARGET_FPS
-  val THREAD_NUM: Int = 2
 }
 
 object GamePlayConstants {
