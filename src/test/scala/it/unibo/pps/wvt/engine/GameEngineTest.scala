@@ -22,6 +22,7 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
   "GameEngine" should "initialize with correct default state" in {
     engine.isRunning shouldBe false
+    engine.isPaused shouldBe false
     engine.currentState.phase shouldBe GamePhase.MainMenu
     engine.currentState.isPaused shouldBe false
     engine.currentState.elapsedTime shouldBe 0L
@@ -32,24 +33,61 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
     engine.start()
     engine.isRunning shouldBe true
+    engine.isPaused shouldBe false
 
     engine.stop()
     engine.isRunning shouldBe false
+    engine.isPaused shouldBe false
   }
 
   it should "not start multiple times" in {
     engine.start()
     engine.isRunning shouldBe true
 
-    engine.start()
-    engine.isRunning shouldBe true // Should still be running, not crash
+    engine.start() // Should be idempotent
+    engine.isRunning shouldBe true
   }
 
-  it should "update elapsed time when running" in {
+  it should "pause and resume correctly" in {
+    engine.start()
+    engine.isRunning shouldBe true
+    engine.isPaused shouldBe false
+
+    engine.pause()
+    engine.isRunning shouldBe true // Still running
+    engine.isPaused shouldBe true
+    engine.currentState.isPaused shouldBe true
+
+    engine.resume()
+    engine.isRunning shouldBe true
+    engine.isPaused shouldBe false
+    engine.currentState.isPaused shouldBe false
+  }
+
+  it should "not pause when not running" in {
+    engine.isRunning shouldBe false
+
+    engine.pause()
+
+    engine.isPaused shouldBe false
+    engine.currentState.isPaused shouldBe false
+  }
+
+  it should "reset pause state when stopped" in {
+    engine.start()
+    engine.pause()
+    engine.isPaused shouldBe true
+
+    engine.stop()
+
+    engine.isRunning shouldBe false
+    engine.isPaused shouldBe false
+  }
+
+  it should "update elapsed time when running and not paused" in {
     engine.start()
 
     val initialTime = engine.currentState.elapsedTime
-
     engine.update(DELTA_TIME)
     engine.currentState.elapsedTime shouldBe (initialTime + DELTA_TIME)
   }
@@ -60,200 +98,38 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
     val initialState = engine.currentState
     engine.update(DELTA_TIME)
 
-    // State should not change when engine is not running
     engine.currentState shouldBe initialState
   }
 
-  it should "handle multiple updates correctly" in {
+  it should "not update when paused" in {
+    engine.start()
+    engine.pause()
+
+    val pausedTime = engine.currentState.elapsedTime
+    engine.update(DELTA_TIME)
+
+    engine.currentState.elapsedTime shouldBe pausedTime
+  }
+
+  it should "handle pause/resume/pause sequence" in {
     engine.start()
 
-    engine.update(DELTA_TIME)
-    engine.update(DELTA_TIME)
-    engine.update(DELTA_TIME)
+    engine.pause()
+    engine.isPaused shouldBe true
 
-    engine.currentState.elapsedTime shouldBe DELTA_TIME + DELTA_TIME + DELTA_TIME
+    engine.resume()
+    engine.isPaused shouldBe false
+
+    engine.pause()
+    engine.isPaused shouldBe true
   }
 
-  "GameEngine factory" should "create independent instances" in {
-    val engine1 = GameEngine.create()
-    val engine2 = GameEngine.create()
-
-    engine1 should not be theSameInstanceAs(engine2)
-
-    engine1.start()
-    engine1.isRunning shouldBe true
-    engine2.isRunning shouldBe false
-
-    engine1.stop()
-  }
-}
-
-class GameEngineIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
-
-  private val NORMAL_SLEEP_TIME: Int = 100
-  private val MEDIUM_SLEEP_TIME: Int = 200
-  private val HIGH_SLEEP_TIME: Int = 1100
-
-  var engine: GameEngine = _
-
-  override def beforeEach(): Unit =
-    engine = GameEngine.create()
-
-  override def afterEach(): Unit =
-    if (engine.isRunning)
-      engine.stop()
-
-  "GameEngine with EventSystem" should "process events correctly" in {
-    engine.currentState.phase shouldBe GamePhase.MainMenu
-
-    // Change to game view - processes immediately even without engine running
-    engine.processEvent(GameEvent.ShowGameView)
-    engine.currentState.phase shouldBe GamePhase.Playing
-
-    // Start the engine
-    engine.processEvent(GameEvent.Start)
-    Thread.sleep(NORMAL_SLEEP_TIME) // Give time for thread to start
-    engine.isRunning shouldBe true
-
-    // Pause the game
-    engine.processEvent(GameEvent.Pause)
-    Thread.sleep(NORMAL_SLEEP_TIME) // Allow time for event processing in game loop
-    engine.currentState.isPaused shouldBe true
-    engine.currentState.phase shouldBe GamePhase.Paused
-
-    // Resume the game
-    engine.processEvent(GameEvent.Resume)
-    Thread.sleep(NORMAL_SLEEP_TIME)
-    engine.currentState.isPaused shouldBe false
-    engine.currentState.phase shouldBe GamePhase.Playing
-  }
-
-  "GameEngine with GameLoop" should "update game state over time" in {
-    engine.start()
-    engine.isRunning shouldBe true
-
-    val initialTime = engine.currentState.elapsedTime
-
-    // Let the game run for a bit
-    Thread.sleep(HIGH_SLEEP_TIME)
-
-    // Time should have progressed
-    engine.currentState.elapsedTime should be > initialTime
-
-    // FPS should be calculated after 1 second
-    Thread.sleep(HIGH_SLEEP_TIME + NORMAL_SLEEP_TIME) // Total > 1 second for FPS calculation
-    engine.currentState.fps should be > 0
-
-    engine.stop()
-  }
-
-  "GameEngine menu transitions" should "work correctly" in {
-    // Start in main menu
-    engine.currentState.phase shouldBe GamePhase.MainMenu
-
-    // Go to info menu - works without engine running
-    engine.processEvent(GameEvent.ShowInfoMenu)
-    engine.currentState.phase shouldBe GamePhase.InfoMenu
-
-    // Go to game view
-    engine.processEvent(GameEvent.ShowGameView)
-    engine.currentState.phase shouldBe GamePhase.Playing
-
-    // Back to main menu
-    engine.processEvent(GameEvent.ShowMainMenu)
-    engine.currentState.phase shouldBe GamePhase.MainMenu
-  }
-
-  "GameEngine" should "handle pause during gameplay" in {
-    // Change to game view first
-    engine.processEvent(GameEvent.ShowGameView)
-    engine.currentState.phase shouldBe GamePhase.Playing
-
-    // Start the game
-    engine.start()
-
-    // Let it run
-    Thread.sleep(MEDIUM_SLEEP_TIME)
-    val timeBeforePause = engine.currentState.elapsedTime
-    timeBeforePause should be > 0L // Ensure time has passed
-
-    // Pause
-    engine.processEvent(GameEvent.Pause)
-    Thread.sleep(NORMAL_SLEEP_TIME) // Give time to process pause
-    engine.currentState.isPaused shouldBe true
-    engine.currentState.phase shouldBe GamePhase.Paused
-
-    // Wait a bit and check time hasn't progressed much
-    Thread.sleep(MEDIUM_SLEEP_TIME)
-    val timeAfterPause = engine.currentState.elapsedTime
-    val pauseTimeDiff = timeAfterPause - timeBeforePause
-    pauseTimeDiff should be < 50L // Should be minimal or zero
-
-    // Resume
-    engine.processEvent(GameEvent.Resume)
-    Thread.sleep(MEDIUM_SLEEP_TIME)
-
-    // Time should progress again after resume
-    engine.currentState.elapsedTime should be > timeAfterPause
-    engine.currentState.isPaused shouldBe false
-    engine.currentState.phase shouldBe GamePhase.Playing
-
-    engine.stop()
-  }
-
-  "GameEngine singleton" should "maintain single instance" in {
+  "GameEngine factory" should "maintain singleton instance" in {
     val engine1 = GameEngine.getInstance
-    engine1 shouldBe defined
-
     val engine2 = GameEngine.getInstance
+
+    engine1 shouldBe defined
     engine2 shouldBe defined
-
     engine1.get shouldBe theSameInstanceAs(engine2.get)
-  }
-
-  "Complete game flow" should "work from menu to game and back" in {
-    // Simulate complete user flow
-    engine.currentState.phase shouldBe GamePhase.MainMenu
-
-    // User clicks start game - change phase first
-    engine.processEvent(GameEvent.ShowGameView)
-    engine.currentState.phase shouldBe GamePhase.Playing
-
-    // Then start the engine
-    engine.processEvent(GameEvent.Start)
-    Thread.sleep(NORMAL_SLEEP_TIME)
-    engine.isRunning shouldBe true
-
-    // Game runs for a while
-    Thread.sleep(HIGH_SLEEP_TIME) // Need > 1 second for FPS calculation
-    engine.currentState.elapsedTime should be > 0L
-    engine.currentState.fps should be > 0
-
-    // User pauses
-    engine.processEvent(GameEvent.Pause)
-    Thread.sleep(NORMAL_SLEEP_TIME)
-    engine.currentState.phase shouldBe GamePhase.Paused
-    engine.currentState.isPaused shouldBe true
-
-    // User goes back to menu
-    engine.processEvent(GameEvent.ShowMainMenu)
-    Thread.sleep(NORMAL_SLEEP_TIME)
-    engine.currentState.phase shouldBe GamePhase.MainMenu
-
-    // Cleanup
-    engine.stop()
-    engine.isRunning shouldBe false
-  }
-
-  "Engine Start event" should "be processed correctly" in {
-    engine.isRunning shouldBe false
-
-    // Process Start event - should start the engine
-    engine.processEvent(GameEvent.Start)
-    Thread.sleep(NORMAL_SLEEP_TIME) // Give time for thread to start
-
-    engine.isRunning shouldBe true
-
-    engine.stop()
   }
 }

@@ -10,7 +10,6 @@ trait GameLoop {
   def stop(): Unit
   def isRunning: Boolean
   def getCurrentFps: Int
-  def getInputSystem: InputSystem
 }
 
 class GameLoopImpl(engine: GameEngine) extends GameLoop {
@@ -18,11 +17,8 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
   private var scheduler: Option[ScheduledExecutorService] = None
   private var running: Boolean = false
 
-  private val inputSystem: InputSystem = InputSystem()
-
   // Time tracking
   private var lastUpdate: Long = 0L
-  private var delta: Long = 0L
   private var acc = 0L
 
   // FPS tracking
@@ -80,8 +76,6 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
 
   override def getCurrentFps: Int = currentFps
 
-  override def getInputSystem: InputSystem = inputSystem
-
   private def gameLoopTick(): Unit =
     if (running && engine.isRunning)
       try
@@ -92,9 +86,6 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
         acc += frameTime
 
         while(acc >= fixedTimeStep)
-          // Process inputs before update
-          processInputs()
-
           // Update game state with fixed time step
           engine.update(fixedTimeStep)
           acc -= fixedTimeStep
@@ -102,20 +93,10 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
         // Update FPS counter
         updateFpsCounter()
 
-        // Post render event after updates
-        // The actual rendering happens in the UI thread through the event system
-        engine.processEvent(GameEvent.Render)
       catch
         case ex: Exception =>
           println(s"Exception in game loop: ${ex.getMessage}")
           ex.printStackTrace()
-
-  private def processInputs(): Unit = {
-    // This is where input processing would happen
-    // For Sprint 1, we just have the integration ready
-    // Actual input handling will be implemented when UI is connected
-    // The InputSystem is ready to be used by UI components
-  }
 
   private def updateFpsCounter(): Unit =
     frameCount += 1
@@ -128,7 +109,5 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
 }
 
 object GameLoop {
-
   def create(engine: GameEngine): GameLoopImpl = new GameLoopImpl(engine)
-
 }
