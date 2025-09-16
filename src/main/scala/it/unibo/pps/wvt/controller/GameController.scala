@@ -6,7 +6,7 @@ import it.unibo.pps.wvt.view.ViewController
 
 case class GameController() {
   // Core systems
-  private val gameEngine: GameEngine = GameEngine.create()
+  private val gameEngine: GameEngine = GameEngine.create(this)
   private val eventHandler: EventHandler = EventHandler.create(gameEngine)
   private val inputSystem: InputSystem = InputSystem()
   private val viewController = ViewController
@@ -78,16 +78,9 @@ case class GameController() {
 }
 
 object GameController {
-  private var instance: Option[GameController] = None
-
-  def getInstance: GameController = {
-    instance.getOrElse {
-      val controller = new GameController()
-      controller.initialize()
-      instance = Some(controller)
-      controller
-    }
-  }
+  def apply(): Unit =
+    val controller = new GameController()
+    controller.initialize()
 }
 
 // Placeholder for render system interface

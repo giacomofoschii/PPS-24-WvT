@@ -3,7 +3,7 @@ package it.unibo.pps.wvt.engine
 import it.unibo.pps.wvt.controller.GameController
 
 trait GameEngine {
-  def initialize(): Unit
+  def initialize(controller: GameController): Unit
   def start(): Unit
   def stop(): Unit
   def pause(): Unit
@@ -24,8 +24,8 @@ class GameEngineImpl extends GameEngine {
   private var gameController: Option[GameController] = None
   private var gameLoop: Option[GameLoop] = None
 
-  override def initialize(): Unit = {
-    gameController = Some(new GameController())
+  override def initialize(controller: GameController): Unit = {
+    gameController = Some(controller)
     gameLoop = Some(GameLoop.create(this))
     println("Game Engine initialized")
   }
@@ -85,9 +85,9 @@ class GameEngineImpl extends GameEngine {
 object GameEngine {
   private var instance: Option[GameEngine] = None
 
-  def create(): GameEngine = {
+  def create(controller: GameController): GameEngine = {
     val engine = new GameEngineImpl()
-    engine.initialize()
+    engine.initialize(controller)
     instance = Some(engine)
     engine
   }

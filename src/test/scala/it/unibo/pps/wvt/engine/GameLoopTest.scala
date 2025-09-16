@@ -1,5 +1,6 @@
 package it.unibo.pps.wvt.engine
 
+import it.unibo.pps.wvt.controller.GameController
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterEach
@@ -129,7 +130,7 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
   }
 
   "GameLoop factory" should "create loop with engine" in {
-    val testEngine = GameEngine.create()
+    val testEngine = GameEngine.create(new GameController)
     val loop = GameLoop.create(testEngine)
 
     loop shouldBe a[GameLoopImpl]
@@ -146,7 +147,7 @@ class TestGameEngine extends GameEngine {
   private var _gameState: GameState = GameState.initial()
   var updateCount: Int = 0
 
-  override def initialize(): Unit = {}
+  override def initialize(controller: GameController): Unit = {}
 
   override def start(): Unit =
     _isRunning = true

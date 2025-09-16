@@ -1,5 +1,6 @@
 package it.unibo.pps.wvt.engine
 
+import it.unibo.pps.wvt.controller.GameController
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterEach
@@ -11,7 +12,7 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
   var engine: GameEngine = _
 
   override def beforeEach(): Unit = {
-    engine = GameEngine.create()
+    engine = GameEngine.create(new GameController)
   }
 
   override def afterEach(): Unit = {

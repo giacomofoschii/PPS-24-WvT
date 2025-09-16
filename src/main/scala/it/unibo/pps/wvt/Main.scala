@@ -1,4 +1,6 @@
 package it.unibo.pps.wvt
 
+import it.unibo.pps.wvt.controller.GameController
+
 @main def main(): Unit =
-  println("Hello, World!")
+  GameController.apply()
