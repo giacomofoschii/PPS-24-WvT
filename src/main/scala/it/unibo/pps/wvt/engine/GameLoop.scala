@@ -1,5 +1,6 @@
 package it.unibo.pps.wvt.engine
 
+import it.unibo.pps.wvt.input.InputSystem
 import it.unibo.pps.wvt.utilities.GameConstants.*
 
 import java.util.concurrent.*
@@ -9,12 +10,15 @@ trait GameLoop {
   def stop(): Unit
   def isRunning: Boolean
   def getCurrentFps: Int
+  def getInputSystem: InputSystem
 }
 
 class GameLoopImpl(engine: GameEngine) extends GameLoop {
 
   private var scheduler: Option[ScheduledExecutorService] = None
   private var running: Boolean = false
+
+  private val inputSystem: InputSystem = InputSystem()
 
   // Time tracking
   private var lastUpdate: Long = 0L
@@ -76,6 +80,8 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
 
   override def getCurrentFps: Int = currentFps
 
+  override def getInputSystem: InputSystem = inputSystem
+
   private def gameLoopTick(): Unit =
     if (running && engine.isRunning)
       try
@@ -86,6 +92,10 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
         acc += frameTime
 
         while(acc >= fixedTimeStep)
+          // Process inputs before update
+          processInputs()
+
+          // Update game state with fixed time step
           engine.update(fixedTimeStep)
           acc -= fixedTimeStep
 
@@ -99,6 +109,13 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
         case ex: Exception =>
           println(s"Exception in game loop: ${ex.getMessage}")
           ex.printStackTrace()
+
+  private def processInputs(): Unit = {
+    // This is where input processing would happen
+    // For Sprint 1, we just have the integration ready
+    // Actual input handling will be implemented when UI is connected
+    // The InputSystem is ready to be used by UI components
+  }
 
   private def updateFpsCounter(): Unit =
     frameCount += 1

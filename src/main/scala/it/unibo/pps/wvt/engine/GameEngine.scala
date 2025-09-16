@@ -1,6 +1,8 @@
 package it.unibo.pps.wvt.engine
 
 import it.unibo.pps.wvt.controller.GameController
+import it.unibo.pps.wvt.engine
+import it.unibo.pps.wvt.input.InputSystem
 
 trait GameEngine {
   def initialize(): Unit
@@ -10,6 +12,7 @@ trait GameEngine {
   def isRunning: Boolean
   def currentState: GameState
   def processEvent(event: GameEvent): Unit
+  def getInputSystem: Option[InputSystem]
 }
 
 // Main game engine implementation
@@ -72,7 +75,6 @@ class GameEngineImpl extends GameEngine {
         _gameState = _gameState.copy(phase = GamePhase.Playing)
       })
 
-
     eventProcessor.registerHandler(classOf[GameEvent.ShowInfoMenu.type],
       _ => {
         _gameState = _gameState.copy(phase = GamePhase.InfoMenu)
@@ -84,6 +86,14 @@ class GameEngineImpl extends GameEngine {
           if(_isRunning)
             _isRunning = false
             gameLoop.foreach(_.stop())
+      })
+
+    //Input events
+    eventProcessor.registerHandler(classOf[GameEvent.GridClicked],
+      event => {
+        val clickedEvent = event.asInstanceOf[GameEvent.GridClicked]
+        // For Sprint 1 we just log the click
+        println(s"Grid clicked at position: ${clickedEvent.pos}")
       })
 
     // Update event
@@ -138,6 +148,9 @@ class GameEngineImpl extends GameEngine {
   override def processEvent(event: GameEvent): Unit =
     eventProcessor.postEvent(event)
     eventProcessor.processEvents()
+
+  override def getInputSystem: Option[InputSystem] =
+    gameLoop.map(_.getInputSystem)
 }
 
 object GameEngine {
