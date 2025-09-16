@@ -25,7 +25,7 @@ class GameEngineImpl extends GameEngine {
   private var gameLoop: Option[GameLoop] = None
 
   override def initialize(): Unit = {
-    gameController = Some(new GameController(_gameState))
+    gameController = Some(new GameController())
     gameLoop = Some(GameLoop.create(this))
     println("Game Engine initialized")
   }
