@@ -25,13 +25,6 @@ case class Grid(cells: Array[Array[Cell]]):
   def emptyCell(position: Position): Grid =
     set(position, Cell(position, CellType.Empty))
 
-  def emptyGrid: Grid =
-    val cells = Vector.tabulate(GRID_ROWS, GRID_COLS) {
-      (row, col) =>
-        Cell(Position(row, col), CellType.Empty)
-    }
-    Grid(cells.map(_.toArray).toArray)
-
   def isValidPosition(pos: Position): Boolean =
     pos.row >= 0 && pos.row < GRID_ROWS && pos.col >= 0 && pos.col < GRID_COLS
   
@@ -48,3 +41,10 @@ case class Grid(cells: Array[Array[Cell]]):
     
   def getCellsByType(cellType: CellType): Seq[Cell] =
     allCells.filter(_.cellType == cellType)
+    
+object Grid:
+  def empty: Grid =
+    val data = Array.tabulate(GRID_ROWS, GRID_COLS) { (row, col) =>
+      Cell(Position(row, col), CellType.Empty)
+    }
+    Grid(data)

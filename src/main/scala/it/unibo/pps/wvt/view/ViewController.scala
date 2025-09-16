@@ -51,7 +51,5 @@ object ViewController extends JFXApp3 {
     }
 
   private def initializeGrid(): Unit =
-    currentGrid = Some(Grid(Array.tabulate(GRID_ROWS, GRID_COLS) { (row, col) =>
-      Cell(Position(row, col), CellType.Empty)
-    }))
+    currentGrid = Some(Grid.empty)
 }
