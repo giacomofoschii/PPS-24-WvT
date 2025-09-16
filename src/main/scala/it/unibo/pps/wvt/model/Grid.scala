@@ -1,25 +1,50 @@
 package it.unibo.pps.wvt.model
 
-import it.unibo.pps.wvt.utilities.ViewConstants._
+import it.unibo.pps.wvt.model.CellType.Troll
+import it.unibo.pps.wvt.utilities.ViewConstants.*
 
-sealed trait CellType
-object CellType {
-  case object Empty extends CellType
-  case object Wizard extends CellType
-  case object Troll extends CellType
-}
+enum CellType:
+  case Empty
+  case Wizard
+  case Troll
 
-case class Grid(cells: Array[Array[CellType]] = Array.fill(5, 9)(CellType.Empty)) {
-  def get(pos:Position): CellType = cells(pos.row)(pos.col)
+case class Cell(position: Position, cellType: CellType):
+  def isEmpty: Boolean = cellType == CellType.Empty
+  def isWizard: Boolean = cellType == CellType.Wizard
+  def isTroll: Boolean = cellType == CellType.Troll
 
-  def set(pos:Position, cellType: CellType): Grid = {
+case class Grid(cells: Array[Array[Cell]]):
+  def get(pos:Position): Cell = cells(pos.row)(pos.col)
+
+  def set(pos:Position, cell: Cell): Grid = {
     val newCells = cells.map(_.clone())
-    newCells(pos.row)(pos.col) = cellType
+    newCells(pos.row)(pos.col) = cell
     Grid(newCells)
   }
 
+  def emptyCell(position: Position): Grid =
+    set(position, Cell(position, CellType.Empty))
+
+  def emptyGrid: Grid =
+    val cells = Vector.tabulate(GRID_ROWS, GRID_COLS) {
+      (row, col) =>
+        Cell(Position(row, col), CellType.Empty)
+    }
+    Grid(cells.map(_.toArray).toArray)
+
   def isValidPosition(pos: Position): Boolean =
     pos.row >= 0 && pos.row < GRID_ROWS && pos.col >= 0 && pos.col < GRID_COLS
+  
+  private lazy val allCells: Seq[Cell] =
+    for
+      row <- 0 until GRID_ROWS
+      col <- 0 until GRID_COLS
+    yield cells(row)(col)
 
-  def isEmpty(pos: Position): Boolean = get(pos) == CellType.Empty
-}
+  private lazy val allPositions: Seq[Position] = allCells.map(_.position)
+
+  def getAvailablePositions: Seq[Position] =
+    allCells.filter(_.cellType != Troll).map(_.position)
+    
+  def getCellsByType(cellType: CellType): Seq[Cell] =
+    allCells.filter(_.cellType == cellType)
