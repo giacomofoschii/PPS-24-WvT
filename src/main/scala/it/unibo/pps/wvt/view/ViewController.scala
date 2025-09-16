@@ -1,9 +1,8 @@
 package it.unibo.pps.wvt.view
 
 import it.unibo.pps.wvt.model.CellType._
-import it.unibo.pps.wvt.model.{Cell, CellType, Grid, Position}
+import it.unibo.pps.wvt.model.{CellType, Grid, Position}
 import it.unibo.pps.wvt.utilities.GridMapper
-import it.unibo.pps.wvt.utilities.ViewConstants.*
 import scalafx.scene.*
 import scalafx.application.JFXApp3
 import scalafx.application.JFXApp3.PrimaryStage
@@ -22,7 +21,8 @@ object ViewController extends JFXApp3 {
     initializeGrid()
     stage = createStandardStage(GameView())
 
-  def showGameInfo(): Unit = ???
+  def showGameInfo(): Unit =
+    stage = createStandardStage(InfoMenu())
 
   def showGridStatus(grid: Grid): Unit =
     val greenPositions = grid.getAvailablePositions.map(GridMapper.logicalToPhysical)
