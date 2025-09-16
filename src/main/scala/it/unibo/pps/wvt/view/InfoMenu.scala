@@ -33,9 +33,4 @@ object InfoMenu {
         right = exitButton
       }
     }
-
-  private def handleAction(action: ButtonAction): Unit = action match {
-    case BackToMenu => ViewController.showMainMenu()
-    case _ => sys.exit(0)
-  }
 }

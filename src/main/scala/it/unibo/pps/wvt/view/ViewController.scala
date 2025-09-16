@@ -1,6 +1,7 @@
 package it.unibo.pps.wvt.view
 
-import it.unibo.pps.wvt.model.CellType._
+import it.unibo.pps.wvt.controller.GameController
+import it.unibo.pps.wvt.model.CellType.*
 import it.unibo.pps.wvt.model.{CellType, Grid, Position}
 import it.unibo.pps.wvt.utilities.GridMapper
 import scalafx.scene.*
@@ -10,10 +11,15 @@ import scalafx.scene.image.Image
 
 object ViewController extends JFXApp3 {
   private var currentGrid: Option[Grid] = None
+  private var gameController: Option[GameController] = None
 
-  override def start(): Unit =
+  override def start(): Unit = {
     showMainMenu()
-  
+  }
+
+  def setController(controller: GameController): Unit =
+    this.gameController = Some(controller)
+
   def showMainMenu(): Unit =
     stage = createStandardStage(MainMenu())
 
