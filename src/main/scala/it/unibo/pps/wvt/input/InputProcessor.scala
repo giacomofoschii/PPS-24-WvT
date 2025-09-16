@@ -28,7 +28,7 @@ case class InputProcessor():
             error = Some(s"Impossibile convertire coordinate (${click.x}, ${click.y}) in Position valida")
           )
 
-  def positionToScreen(position: Position): Option[(Int, Int)] =
+  def positionToScreen(position: Position): Option[(Double, Double)] =
     if converter.isValidPosition(position) then
       Some(converter.cellToScreen(position))
     else

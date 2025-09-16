@@ -25,7 +25,7 @@ case class InputSystem():
     logClick(click, result)
     result
   
-  def positionToScreen(position: Position): Option[(Int, Int)] =
+  def positionToScreen(position: Position): Option[(Double, Double)] =
     processor.positionToScreen(position)
   
   def isValidPosition(position: Position): Boolean =

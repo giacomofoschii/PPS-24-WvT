@@ -80,12 +80,4 @@ object ViewConstants {
   val MENU_SCALE_FACTOR = 0.7
   val GAME_MAP_SCALE_FACTOR = 0.4
   val TITLE_SCALE_FACTOR = 0.4
-  
-  val GRID_OFFSET_X: Int = 50
-  val GRID_OFFSET_Y: Int = 50
-  val CELL_SIZE: Int = 100
-  val GRID_WIDTH: Int = GRID_COLS
-  val GRID_HEIGHT: Int = GRID_ROWS
-  
-  
 }
