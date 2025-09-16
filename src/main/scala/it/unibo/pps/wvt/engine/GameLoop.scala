@@ -19,20 +19,30 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
   // Time tracking
   private var lastUpdate: Long = 0L
   private var delta: Long = 0L
+  private var acc = 0L
 
   // FPS tracking
   private var frameCount: Int = 0
   private var fpsTimer: Long = 0L
   private var currentFps: Int = 0
 
+  // Fixed time step for consistent updates
+  private val fixedTimeStep: Long = FRAME_TIME_MICROS
 
   override def start(): Unit =
     if (!running)
       running = true
       lastUpdate = System.nanoTime()
       fpsTimer = System.currentTimeMillis()
+      acc = 0L
 
-      val executor = Executors.newSingleThreadScheduledExecutor()
+      val executor = Executors.newSingleThreadScheduledExecutor(r => {
+        val thread = new Thread(r, "GameLoop-Thread")
+        thread.setDaemon(true)
+        thread.setPriority(Thread.MAX_PRIORITY)
+        thread
+      })
+
       scheduler = Some(executor)
 
       executor.scheduleAtFixedRate(
@@ -68,16 +78,27 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
 
   private def gameLoopTick(): Unit =
     if (running && engine.isRunning)
-      // Calculate delta time
-      val currentTime = System.nanoTime()
-      delta = (currentTime - lastUpdate) / 1_000_000L // Convert to milliseconds
-      lastUpdate = currentTime
+      try
+        // Calculate delta time
+        val currentTime = System.nanoTime()
+        val frameTime = (currentTime - lastUpdate) / 1_000_000L // Convert to milliseconds
+        lastUpdate = currentTime
+        acc += frameTime
 
-      // Update the engine with delta time
-      engine.update(delta)
+        while(acc >= fixedTimeStep)
+          engine.update(fixedTimeStep)
+          acc -= fixedTimeStep
 
-      // Update FPS counter
-      updateFpsCounter()
+        // Update FPS counter
+        updateFpsCounter()
+
+        // Post render event after updates
+        // The actual rendering happens in the UI thread through the event system
+        engine.processEvent(GameEvent.Render)
+      catch
+        case ex: Exception =>
+          println(s"Exception in game loop: ${ex.getMessage}")
+          ex.printStackTrace()
 
   private def updateFpsCounter(): Unit =
     frameCount += 1

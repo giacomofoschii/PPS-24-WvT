@@ -15,7 +15,7 @@ object GameEvent {
   case object Pause extends GameEvent
   case object Resume extends GameEvent
 
-  // Menu events (for Sprint 1 menu integration)
+  // Menu events
   case object ShowMainMenu extends GameEvent
   case object ShowGameView extends GameEvent
   case object ShowInfoMenu extends GameEvent
