@@ -4,138 +4,162 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import it.unibo.pps.wvt.model.*
 import it.unibo.pps.wvt.utilities.ViewConstants.*
+import it.unibo.pps.wvt.input.TestInputConstants.*
 
 class InputProcessorTest extends AnyFunSuite with Matchers:
 
   private val processor = InputProcessor()
 
-  test("processClick DEBUG - step by step"):
-    val outsideClick1 = MouseClick(10, 10)
-    println(s"Testing click: ${outsideClick1}")
-    println(s"GRID_OFFSET_X: $GRID_OFFSET_X, GRID_OFFSET_Y: $GRID_OFFSET_Y")
-
-    try {
-      val result1 = processor.processClick(outsideClick1)
-      println(s"Result isValid: ${result1.isValid}")
-      println(s"Result error: ${result1.error}")
-      if (result1.error.isDefined) {
-        println(s"Error message: ${result1.error.get}")
-      }
-    } catch {
-      case e: Exception =>
-        println(s"Exception: ${e.getMessage}")
-        e.printStackTrace()
-    }
+  test("processClick should return invalid result for coordinates outside grid"):
+    INVALID_COORDS.foreach: (x, y) =>
+      val outsideClick = MouseClick(x, y)
+      val result = processor.processClick(outsideClick)
+      result.isValid shouldBe false
+      result.error shouldBe defined
 
   test("processClick should return valid result for coordinates inside grid"):
-    // Test click all'inizio della griglia
-    val firstCellX = GRID_OFFSET_X + 10  // Dentro la prima cella
-    val firstCellY = GRID_OFFSET_Y + 10
-    val click1 = MouseClick(firstCellX, firstCellY)
+    val click1 = MouseClick(INSIDE_GRID_X, INSIDE_GRID_Y)
     val result1 = processor.processClick(click1)
     result1.isValid shouldBe true
-    result1.position shouldBe Position(0, 0)
+    result1.position shouldBe TOP_LEFT_POS
     result1.error shouldBe None
 
-    // Test click al centro di una cella specifica
-    val centerX = GRID_OFFSET_X + (2 * CELL_SIZE) + (CELL_SIZE / 2)  // Centro cella colonna 2
-    val centerY = GRID_OFFSET_Y + (1 * CELL_SIZE) + (CELL_SIZE / 2)  // Centro cella riga 1
-    val click2 = MouseClick(centerX, centerY)
+    val click2 = MouseClick(cellCenterX(2), cellCenterY(1))
     val result2 = processor.processClick(click2)
     result2.isValid shouldBe true
-    result2.position shouldBe Position(1, 2)
+    result2.position shouldBe SAMPLE_POS_1
     result2.error shouldBe None
 
-  test("processClick edge cases"):
-    val lastValidX = GRID_OFFSET_X + (GRID_WIDTH * CELL_SIZE) - 1  // 949
-    val lastValidY = GRID_OFFSET_Y + (GRID_HEIGHT * CELL_SIZE) - 1  // 549
-    val edgeClick1 = MouseClick(lastValidX, lastValidY)
+  test("processClick should handle edge cases correctly"):
+    val edgeClick1 = MouseClick(LAST_VALID_X, LAST_VALID_Y)
     val result1 = processor.processClick(edgeClick1)
     result1.isValid shouldBe true
-    result1.position shouldBe Position(GRID_HEIGHT - 1, GRID_WIDTH - 1)
+    result1.position shouldBe BOTTOM_RIGHT_POS
     result1.error shouldBe None
 
+    val edgeClick2 = MouseClick(FIRST_INVALID_X, FIRST_INVALID_Y)
+    val result2 = processor.processClick(edgeClick2)
+    result2.isValid shouldBe false
+    result2.position shouldBe INVALID_POS
+    result2.error shouldBe defined
+
   test("processClick should work for all corners of the grid"):
-    val topLeftClick = MouseClick(GRID_OFFSET_X + 1, GRID_OFFSET_Y + 1)
+    val topLeftClick = MouseClick(TOP_LEFT_X, TOP_LEFT_Y)
     val result1 = processor.processClick(topLeftClick)
     result1.isValid shouldBe true
-    result1.position shouldBe Position(0, 0)
-    val topRightX = GRID_OFFSET_X + ((GRID_WIDTH - 1) * CELL_SIZE) + 10
-    val topRightY = GRID_OFFSET_Y + 10
-    val topRightClick = MouseClick(topRightX, topRightY)
+    result1.position shouldBe TOP_LEFT_POS
+
+    val topRightClick = MouseClick(TOP_RIGHT_X, TOP_RIGHT_Y)
     val result2 = processor.processClick(topRightClick)
     result2.isValid shouldBe true
-    result2.position shouldBe Position(0, GRID_WIDTH - 1)
-    val bottomLeftX = GRID_OFFSET_X + 10
-    val bottomLeftY = GRID_OFFSET_Y + ((GRID_HEIGHT - 1) * CELL_SIZE) + 10
-    val bottomLeftClick = MouseClick(bottomLeftX, bottomLeftY)
+    result2.position shouldBe TOP_RIGHT_POS
+
+    val bottomLeftClick = MouseClick(BOTTOM_LEFT_X, BOTTOM_LEFT_Y)
     val result3 = processor.processClick(bottomLeftClick)
     result3.isValid shouldBe true
-    result3.position shouldBe Position(GRID_HEIGHT - 1, 0)
-    val bottomRightX = GRID_OFFSET_X + ((GRID_WIDTH - 1) * CELL_SIZE) + 10
-    val bottomRightY = GRID_OFFSET_Y + ((GRID_HEIGHT - 1) * CELL_SIZE) + 10
-    val bottomRightClick = MouseClick(bottomRightX, bottomRightY)
+    result3.position shouldBe BOTTOM_LEFT_POS
+
+    val bottomRightClick = MouseClick(BOTTOM_RIGHT_X, BOTTOM_RIGHT_Y)
     val result4 = processor.processClick(bottomRightClick)
     result4.isValid shouldBe true
-    result4.position shouldBe Position(GRID_HEIGHT - 1, GRID_WIDTH - 1)
+    result4.position shouldBe BOTTOM_RIGHT_POS
+
+  test("processClick should delegate correctly to converter for boundary detection"):
+    BOUNDARY_COORDS.foreach: (x, y) =>
+      val boundaryClick = MouseClick(x, y)
+      val result = processor.processClick(boundaryClick)
+      result.isValid shouldBe true
+      result.error shouldBe None
 
   test("positionToScreen should return Some for valid positions"):
-    val validPos1 = Position(0, 0)
-    val result1 = processor.positionToScreen(validPos1)
+    val result1 = processor.positionToScreen(TOP_LEFT_POS)
     result1 shouldBe defined
     val (screenX1, screenY1) = result1.get
-    screenX1 shouldBe (GRID_OFFSET_X + CELL_SIZE / 2)
-    screenY1 shouldBe (GRID_OFFSET_Y + CELL_SIZE / 2)
+    screenX1 shouldBe EXPECTED_TOP_LEFT_SCREEN_X
+    screenY1 shouldBe EXPECTED_TOP_LEFT_SCREEN_Y
 
-    val validPos2 = Position(2, 3)
-    val result2 = processor.positionToScreen(validPos2)
+    val result2 = processor.positionToScreen(SAMPLE_POS_2)
     result2 shouldBe defined
     val (screenX2, screenY2) = result2.get
-    screenX2 shouldBe (GRID_OFFSET_X + 3 * CELL_SIZE + CELL_SIZE / 2)
-    screenY2 shouldBe (GRID_OFFSET_Y + 2 * CELL_SIZE + CELL_SIZE / 2)
+    screenX2 shouldBe EXPECTED_SAMPLE_POS_2_SCREEN_X
+    screenY2 shouldBe EXPECTED_SAMPLE_POS_2_SCREEN_Y
 
-  test("positionToScreen should return None for invalid positions"):
+    val result3 = processor.positionToScreen(BOTTOM_RIGHT_POS)
+    result3 shouldBe defined
+
+    val result4 = processor.positionToScreen(CENTER_POS)
+    result4 shouldBe defined
+
+  test("positionToScreen should return None for positions outside processor bounds"):
     try {
-      val validButOutOfBoundsPos = Position(0, 0)
-      val result = processor.positionToScreen(validButOutOfBoundsPos)
+      val testPosition = TOP_LEFT_POS
+      val result = processor.positionToScreen(testPosition)
     } catch {
       case _: IllegalArgumentException =>
         succeed
     }
 
   test("isValidPosition should delegate to converter"):
-    val validPos = Position(2, 3)
-    processor.isValidPosition(validPos) shouldBe true
-    val edgePos = Position(GRID_HEIGHT - 1, GRID_WIDTH - 1)
-    processor.isValidPosition(edgePos) shouldBe true
+    processor.isValidPosition(SAMPLE_POS_2) shouldBe true
+    processor.isValidPosition(BOTTOM_RIGHT_POS) shouldBe true
+    processor.isValidPosition(TOP_LEFT_POS) shouldBe true
+    processor.isValidPosition(CENTER_POS) shouldBe true
+
+  test("isValidPosition should work for edge positions"):
+    processor.isValidPosition(TOP_RIGHT_POS) shouldBe true
+    processor.isValidPosition(BOTTOM_LEFT_POS) shouldBe true
 
   test("round trip: processClick -> positionToScreen should be consistent"):
-    val testClicks = List(
-      MouseClick(GRID_OFFSET_X + 50, GRID_OFFSET_Y + 50),
-      MouseClick(GRID_OFFSET_X + 250, GRID_OFFSET_Y + 150),
-      MouseClick(GRID_OFFSET_X + 450, GRID_OFFSET_Y + 350)
-    )
-
-    testClicks.foreach: click =>
-      val clickResult = processor.processClick(click)
+    TEST_CLICKS.foreach: (x, y) =>
+      val clickResult = processor.processClick(MouseClick(x, y))
       if clickResult.isValid then
         val backToScreen = processor.positionToScreen(clickResult.position)
         backToScreen shouldBe defined
-        // Le coordinate potrebbero non essere identiche perché positionToScreen
-        // restituisce il centro della cella, ma dovrebbero essere ragionevoli
         val (screenX, screenY) = backToScreen.get
         screenX should be >= GRID_OFFSET_X
-        screenX should be < (GRID_OFFSET_X + GRID_WIDTH * CELL_SIZE)
+        screenX should be < GRID_END_X.toDouble
         screenY should be >= GRID_OFFSET_Y
-        screenY should be < (GRID_OFFSET_Y + GRID_HEIGHT * CELL_SIZE)
+        screenY should be < GRID_END_Y.toDouble
 
   test("processClick should handle boundary pixels correctly"):
-    val boundaryClick = MouseClick(GRID_OFFSET_X, GRID_OFFSET_Y)
+    val boundaryClick = MouseClick(GRID_START_X, GRID_START_Y)
     val result1 = processor.processClick(boundaryClick)
     result1.isValid shouldBe true
-    result1.position shouldBe Position(0, 0)  
-    val beforeBoundaryClick = MouseClick(GRID_OFFSET_X - 1, GRID_OFFSET_Y - 1)
+    result1.position shouldBe TOP_LEFT_POS
+
+    val beforeBoundaryClick = MouseClick(BEFORE_BOUNDARY_X, BEFORE_BOUNDARY_Y)
     val result2 = processor.processClick(beforeBoundaryClick)
     result2.isValid shouldBe false
-    result2.position shouldBe Position(-1, -1, allowInvalid = true) 
+    result2.position shouldBe INVALID_POS
     result2.error shouldBe defined
+
+  test("processClick should be consistent across multiple calls with same input"):
+    TEST_CLICKS.foreach: (x, y) =>
+      val click = MouseClick(x, y)
+      val result1 = processor.processClick(click)
+      val result2 = processor.processClick(click)
+      val result3 = processor.processClick(click)
+
+      result1.isValid shouldBe result2.isValid
+      result1.position shouldBe result2.position
+      result1.error shouldBe result2.error
+
+      result2.isValid shouldBe result3.isValid
+      result2.position shouldBe result3.position
+      result2.error shouldBe result3.error
+
+  test("processClick should handle center positions correctly"):
+    val centerClick = MouseClick(cellCenterX(CENTER_POS.col), cellCenterY(CENTER_POS.row))
+    val result = processor.processClick(centerClick)
+    result.isValid shouldBe true
+    result.position shouldBe CENTER_POS
+    result.error shouldBe None
+
+  test("processClick should handle sample positions correctly"):
+    TEST_POSITIONS.foreach: position =>
+      val (screenX, screenY) = processor.positionToScreen(position).get
+      val click = MouseClick(screenX.toInt, screenY.toInt)
+      val result = processor.processClick(click)
+      result.isValid shouldBe true
+      result.position shouldBe position
+      result.error shouldBe None

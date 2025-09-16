@@ -4,82 +4,60 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import it.unibo.pps.wvt.model.*
 import it.unibo.pps.wvt.utilities.ViewConstants.*
+import it.unibo.pps.wvt.input.TestInputConstants.*
 import java.io.{ByteArrayOutputStream, PrintStream}
 
 class InputSystemTest extends AnyFunSuite with Matchers:
-
   private val inputSystem = InputSystem()
 
   test("handleMouseClick should return invalid result for coordinates outside grid"):
-    val result1 = inputSystem.handleMouseClick(10, 10)
-    result1.isValid shouldBe false
-    result1.error shouldBe defined
-    val result2 = inputSystem.handleMouseClick(-5, -5)
-    result2.isValid shouldBe false
-    result2.error shouldBe defined
-    val tooFarX = GRID_OFFSET_X + (GRID_WIDTH * CELL_SIZE) + 10
-    val tooFarY = GRID_OFFSET_Y + (GRID_HEIGHT * CELL_SIZE) + 10
-    val result3 = inputSystem.handleMouseClick(tooFarX, tooFarY)
-    result3.isValid shouldBe false
-    result3.error shouldBe defined
+    INVALID_COORDS.foreach: (x, y) =>
+      val result = inputSystem.handleMouseClick(x, y)
+      result.isValid shouldBe false
+      result.error shouldBe defined
 
   test("handleMouseClick should return valid result for coordinates inside grid"):
-    val firstCellX = GRID_OFFSET_X + 10
-    val firstCellY = GRID_OFFSET_Y + 10
-    val result1 = inputSystem.handleMouseClick(firstCellX, firstCellY)
+    val result1 = inputSystem.handleMouseClick(INSIDE_GRID_X, INSIDE_GRID_Y)
     result1.isValid shouldBe true
-    result1.position shouldBe Position(0, 0)
+    result1.position shouldBe TOP_LEFT_POS
     result1.error shouldBe None
-    val centerX = GRID_OFFSET_X + (2 * CELL_SIZE) + (CELL_SIZE / 2)  // Centro cella colonna 2
-    val centerY = GRID_OFFSET_Y + (1 * CELL_SIZE) + (CELL_SIZE / 2)  // Centro cella riga 1
-    val result2 = inputSystem.handleMouseClick(centerX, centerY)
+
+    val result2 = inputSystem.handleMouseClick(cellCenterX(2), cellCenterY(1))
     result2.isValid shouldBe true
-    result2.position shouldBe Position(1, 2)
+    result2.position shouldBe SAMPLE_POS_1
     result2.error shouldBe None
 
   test("handleMouseClick should handle edge cases correctly"):
-    val lastValidX = GRID_OFFSET_X + (GRID_WIDTH * CELL_SIZE) - 1
-    val lastValidY = GRID_OFFSET_Y + (GRID_HEIGHT * CELL_SIZE) - 1
-    val result1 = inputSystem.handleMouseClick(lastValidX, lastValidY)
+    val result1 = inputSystem.handleMouseClick(LAST_VALID_X, LAST_VALID_Y)
     result1.isValid shouldBe true
-    result1.position shouldBe Position(GRID_HEIGHT - 1, GRID_WIDTH - 1)
+    result1.position shouldBe BOTTOM_RIGHT_POS
     result1.error shouldBe None
-    val firstInvalidX = GRID_OFFSET_X + (GRID_WIDTH * CELL_SIZE)
-    val firstInvalidY = GRID_OFFSET_Y + (GRID_HEIGHT * CELL_SIZE)
-    val result2 = inputSystem.handleMouseClick(firstInvalidX, firstInvalidY)
+
+    val result2 = inputSystem.handleMouseClick(FIRST_INVALID_X, FIRST_INVALID_Y)
     result2.isValid shouldBe false
-    result2.position shouldBe Position(-1, -1, allowInvalid = true)
+    result2.position shouldBe INVALID_POS
     result2.error shouldBe defined
 
   test("handleMouseClick should work for all corners of the grid"):
-    val result1 = inputSystem.handleMouseClick(GRID_OFFSET_X + 1, GRID_OFFSET_Y + 1)
+    val result1 = inputSystem.handleMouseClick(TOP_LEFT_X, TOP_LEFT_Y)
     result1.isValid shouldBe true
-    result1.position shouldBe Position(0, 0)
-    val topRightX = GRID_OFFSET_X + ((GRID_WIDTH - 1) * CELL_SIZE) + 10
-    val topRightY = GRID_OFFSET_Y + 10
-    val result2 = inputSystem.handleMouseClick(topRightX, topRightY)
+    result1.position shouldBe TOP_LEFT_POS
+
+    val result2 = inputSystem.handleMouseClick(TOP_RIGHT_X, TOP_RIGHT_Y)
     result2.isValid shouldBe true
-    result2.position shouldBe Position(0, GRID_WIDTH - 1)
-    val bottomLeftX = GRID_OFFSET_X + 10
-    val bottomLeftY = GRID_OFFSET_Y + ((GRID_HEIGHT - 1) * CELL_SIZE) + 10
-    val result3 = inputSystem.handleMouseClick(bottomLeftX, bottomLeftY)
+    result2.position shouldBe TOP_RIGHT_POS
+
+    val result3 = inputSystem.handleMouseClick(BOTTOM_LEFT_X, BOTTOM_LEFT_Y)
     result3.isValid shouldBe true
-    result3.position shouldBe Position(GRID_HEIGHT - 1, 0)
-    val bottomRightX = GRID_OFFSET_X + ((GRID_WIDTH - 1) * CELL_SIZE) + 10
-    val bottomRightY = GRID_OFFSET_Y + ((GRID_HEIGHT - 1) * CELL_SIZE) + 10
-    val result4 = inputSystem.handleMouseClick(bottomRightX, bottomRightY)
+    result3.position shouldBe BOTTOM_LEFT_POS
+
+    val result4 = inputSystem.handleMouseClick(BOTTOM_RIGHT_X, BOTTOM_RIGHT_Y)
     result4.isValid shouldBe true
-    result4.position shouldBe Position(GRID_HEIGHT - 1, GRID_WIDTH - 1)
+    result4.position shouldBe BOTTOM_RIGHT_POS
 
   test("handleMouseClick should delegate correctly to InputProcessor"):
     val processor = InputProcessor()
-
-    val testCases = List(
-      (GRID_OFFSET_X + 50, GRID_OFFSET_Y + 50),
-      (GRID_OFFSET_X + 250, GRID_OFFSET_Y + 150),
-      (10, 10)
-    )
-    testCases.foreach: (x, y) =>
+    TEST_CLICKS.foreach: (x, y) =>
       val systemResult = inputSystem.handleMouseClick(x, y)
       val processorResult = processor.processClick(MouseClick(x, y))
       systemResult.isValid shouldBe processorResult.isValid
@@ -87,70 +65,63 @@ class InputSystemTest extends AnyFunSuite with Matchers:
       systemResult.error shouldBe processorResult.error
 
   test("positionToScreen should delegate to InputProcessor"):
-    val validPos = Position(2, 3)
-    val systemResult = inputSystem.positionToScreen(validPos)
+    val systemResult = inputSystem.positionToScreen(SAMPLE_POS_2)
     val processor = InputProcessor()
-    val processorResult = processor.positionToScreen(validPos)
+    val processorResult = processor.positionToScreen(SAMPLE_POS_2)
     systemResult shouldBe processorResult
 
   test("positionToScreen should return Some for valid positions"):
-    val validPos1 = Position(0, 0)
-    val result1 = inputSystem.positionToScreen(validPos1)
+    val result1 = inputSystem.positionToScreen(TOP_LEFT_POS)
     result1 shouldBe defined
     val (screenX1, screenY1) = result1.get
-    screenX1 shouldBe (GRID_OFFSET_X + CELL_SIZE / 2)
-    screenY1 shouldBe (GRID_OFFSET_Y + CELL_SIZE / 2)
-    val validPos2 = Position(2, 3)
-    val result2 = inputSystem.positionToScreen(validPos2)
+    screenX1 shouldBe EXPECTED_TOP_LEFT_SCREEN_X
+    screenY1 shouldBe EXPECTED_TOP_LEFT_SCREEN_Y
+
+    val result2 = inputSystem.positionToScreen(SAMPLE_POS_2)
     result2 shouldBe defined
     val (screenX2, screenY2) = result2.get
-    screenX2 shouldBe (GRID_OFFSET_X + 3 * CELL_SIZE + CELL_SIZE / 2)
-    screenY2 shouldBe (GRID_OFFSET_Y + 2 * CELL_SIZE + CELL_SIZE / 2)
+    screenX2 shouldBe EXPECTED_SAMPLE_POS_2_SCREEN_X
+    screenY2 shouldBe EXPECTED_SAMPLE_POS_2_SCREEN_Y
 
   test("isValidPosition should delegate to InputProcessor"):
-    val validPos = Position(2, 3)
-    val systemResult = inputSystem.isValidPosition(validPos)
+    val systemResult = inputSystem.isValidPosition(SAMPLE_POS_2)
     val processor = InputProcessor()
-    val processorResult = processor.isValidPosition(validPos)
+    val processorResult = processor.isValidPosition(SAMPLE_POS_2)
     systemResult shouldBe processorResult
     systemResult shouldBe true
 
   test("isValidPosition should work for edge positions"):
-    val topLeft = Position(0, 0)
-    inputSystem.isValidPosition(topLeft) shouldBe true
-    val bottomRight = Position(GRID_HEIGHT - 1, GRID_WIDTH - 1)
-    inputSystem.isValidPosition(bottomRight) shouldBe true
+    inputSystem.isValidPosition(TOP_LEFT_POS) shouldBe true
+    inputSystem.isValidPosition(BOTTOM_RIGHT_POS) shouldBe true
+
+
 
   test("round trip: handleMouseClick -> positionToScreen should be consistent"):
-    val testClicks = List(
-      (GRID_OFFSET_X + 50, GRID_OFFSET_Y + 50),
-      (GRID_OFFSET_X + 250, GRID_OFFSET_Y + 150),
-      (GRID_OFFSET_X + 450, GRID_OFFSET_Y + 350)
-    )
-
-    testClicks.foreach: (x, y) =>
+    TEST_CLICKS.foreach: (x, y) =>
       val clickResult = inputSystem.handleMouseClick(x, y)
       if clickResult.isValid then
         val backToScreen = inputSystem.positionToScreen(clickResult.position)
         backToScreen shouldBe defined
         val (screenX, screenY) = backToScreen.get
+        val maxX = GRID_END_X
+        val maxY = GRID_END_Y
         screenX should be >= GRID_OFFSET_X
-        screenX should be < (GRID_OFFSET_X + GRID_WIDTH * CELL_SIZE)
+        screenX should be < maxX.toDouble
         screenY should be >= GRID_OFFSET_Y
-        screenY should be < (GRID_OFFSET_Y + GRID_HEIGHT * CELL_SIZE)
+        screenY should be < maxY.toDouble
 
   test("handleMouseClick should handle boundary pixels correctly"):
-    val result1 = inputSystem.handleMouseClick(GRID_OFFSET_X, GRID_OFFSET_Y)
+    val result1 = inputSystem.handleMouseClick(GRID_START_X, GRID_START_Y)
     result1.isValid shouldBe true
-    result1.position shouldBe Position(0, 0)
-    val result2 = inputSystem.handleMouseClick(GRID_OFFSET_X - 1, GRID_OFFSET_Y - 1)
+    result1.position shouldBe TOP_LEFT_POS
+
+    val result2 = inputSystem.handleMouseClick(BEFORE_BOUNDARY_X, BEFORE_BOUNDARY_Y)
     result2.isValid shouldBe false
-    result2.position shouldBe Position(-1, -1, allowInvalid = true)
+    result2.position shouldBe INVALID_POS
     result2.error shouldBe defined
 
   test("InputSystem should be stateless"):
-    val x = GRID_OFFSET_X + 100
-    val y = GRID_OFFSET_Y + 100
+    val (x, y) = TEST_CLICKS.head
     val result1 = inputSystem.handleMouseClick(x, y)
     val result2 = inputSystem.handleMouseClick(x, y)
     val result3 = inputSystem.handleMouseClick(x, y)
