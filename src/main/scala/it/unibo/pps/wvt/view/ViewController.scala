@@ -1,7 +1,7 @@
 package it.unibo.pps.wvt.view
 
 import it.unibo.pps.wvt.controller.GameController
-import it.unibo.pps.wvt.engine.GameEvent._
+import it.unibo.pps.wvt.controller.GameEvent.*
 import it.unibo.pps.wvt.model.CellType.*
 import it.unibo.pps.wvt.model.{CellType, Grid, Position}
 import it.unibo.pps.wvt.utilities.GridMapper
