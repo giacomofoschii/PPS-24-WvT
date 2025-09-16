@@ -18,10 +18,9 @@ object ViewController extends JFXApp3 {
   def showMainMenu(): Unit =
     stage = createStandardStage(MainMenu())
 
-  def showGameView(): Unit = {
-    stage = createStandardStage(GameView())
+  def showGameView(): Unit =
     initializeGrid()
-  }
+    stage = createStandardStage(GameView())
 
   def showGameInfo(): Unit = ???
 
