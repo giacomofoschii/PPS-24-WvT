@@ -6,6 +6,8 @@ import org.scalatest.BeforeAndAfterEach
 
 class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
+  private val DELTA_TIME: Long = 100L
+
   var engine: GameEngine = _
 
   override def beforeEach(): Unit = {
@@ -48,15 +50,15 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
     val initialTime = engine.currentState.elapsedTime
 
-    engine.update(100L)
-    engine.currentState.elapsedTime shouldBe (initialTime + 100L)
+    engine.update(DELTA_TIME)
+    engine.currentState.elapsedTime shouldBe (initialTime + DELTA_TIME)
   }
 
   it should "not update when not running" in {
     engine.isRunning shouldBe false
 
     val initialState = engine.currentState
-    engine.update(100L)
+    engine.update(DELTA_TIME)
 
     // State should not change when engine is not running
     engine.currentState shouldBe initialState
@@ -65,11 +67,11 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
   it should "handle multiple updates correctly" in {
     engine.start()
 
-    engine.update(50L)
-    engine.update(75L)
-    engine.update(25L)
+    engine.update(DELTA_TIME)
+    engine.update(DELTA_TIME)
+    engine.update(DELTA_TIME)
 
-    engine.currentState.elapsedTime shouldBe 150L
+    engine.currentState.elapsedTime shouldBe DELTA_TIME + DELTA_TIME + DELTA_TIME
   }
 
   "GameEngine factory" should "create independent instances" in {
@@ -87,6 +89,10 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 }
 
 class GameEngineIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
+
+  private val NORMAL_SLEEP_TIME: Int = 100
+  private val MEDIUM_SLEEP_TIME: Int = 200
+  private val HIGH_SLEEP_TIME: Int = 1100
 
   var engine: GameEngine = _
 
@@ -106,18 +112,18 @@ class GameEngineIntegrationTest extends AnyFlatSpec with Matchers with BeforeAnd
 
     // Start the engine
     engine.processEvent(GameEvent.Start)
-    Thread.sleep(100) // Give time for thread to start
+    Thread.sleep(NORMAL_SLEEP_TIME) // Give time for thread to start
     engine.isRunning shouldBe true
 
     // Pause the game
     engine.processEvent(GameEvent.Pause)
-    Thread.sleep(100) // Allow time for event processing in game loop
+    Thread.sleep(NORMAL_SLEEP_TIME) // Allow time for event processing in game loop
     engine.currentState.isPaused shouldBe true
     engine.currentState.phase shouldBe GamePhase.Paused
 
     // Resume the game
     engine.processEvent(GameEvent.Resume)
-    Thread.sleep(100)
+    Thread.sleep(NORMAL_SLEEP_TIME)
     engine.currentState.isPaused shouldBe false
     engine.currentState.phase shouldBe GamePhase.Playing
   }
@@ -129,13 +135,13 @@ class GameEngineIntegrationTest extends AnyFlatSpec with Matchers with BeforeAnd
     val initialTime = engine.currentState.elapsedTime
 
     // Let the game run for a bit
-    Thread.sleep(500)
+    Thread.sleep(HIGH_SLEEP_TIME)
 
     // Time should have progressed
     engine.currentState.elapsedTime should be > initialTime
 
     // FPS should be calculated after 1 second
-    Thread.sleep(600) // Total > 1 second for FPS calculation
+    Thread.sleep(HIGH_SLEEP_TIME + NORMAL_SLEEP_TIME) // Total > 1 second for FPS calculation
     engine.currentState.fps should be > 0
 
     engine.stop()
@@ -167,25 +173,25 @@ class GameEngineIntegrationTest extends AnyFlatSpec with Matchers with BeforeAnd
     engine.start()
 
     // Let it run
-    Thread.sleep(200)
+    Thread.sleep(MEDIUM_SLEEP_TIME)
     val timeBeforePause = engine.currentState.elapsedTime
     timeBeforePause should be > 0L // Ensure time has passed
 
     // Pause
     engine.processEvent(GameEvent.Pause)
-    Thread.sleep(100) // Give time to process pause
+    Thread.sleep(NORMAL_SLEEP_TIME) // Give time to process pause
     engine.currentState.isPaused shouldBe true
     engine.currentState.phase shouldBe GamePhase.Paused
 
     // Wait a bit and check time hasn't progressed much
-    Thread.sleep(200)
+    Thread.sleep(MEDIUM_SLEEP_TIME)
     val timeAfterPause = engine.currentState.elapsedTime
     val pauseTimeDiff = timeAfterPause - timeBeforePause
     pauseTimeDiff should be < 50L // Should be minimal or zero
 
     // Resume
     engine.processEvent(GameEvent.Resume)
-    Thread.sleep(200)
+    Thread.sleep(MEDIUM_SLEEP_TIME)
 
     // Time should progress again after resume
     engine.currentState.elapsedTime should be > timeAfterPause
@@ -215,23 +221,23 @@ class GameEngineIntegrationTest extends AnyFlatSpec with Matchers with BeforeAnd
 
     // Then start the engine
     engine.processEvent(GameEvent.Start)
-    Thread.sleep(100)
+    Thread.sleep(NORMAL_SLEEP_TIME)
     engine.isRunning shouldBe true
 
     // Game runs for a while
-    Thread.sleep(1100) // Need > 1 second for FPS calculation
+    Thread.sleep(HIGH_SLEEP_TIME) // Need > 1 second for FPS calculation
     engine.currentState.elapsedTime should be > 0L
     engine.currentState.fps should be > 0
 
     // User pauses
     engine.processEvent(GameEvent.Pause)
-    Thread.sleep(100)
+    Thread.sleep(NORMAL_SLEEP_TIME)
     engine.currentState.phase shouldBe GamePhase.Paused
     engine.currentState.isPaused shouldBe true
 
     // User goes back to menu
     engine.processEvent(GameEvent.ShowMainMenu)
-    Thread.sleep(100)
+    Thread.sleep(NORMAL_SLEEP_TIME)
     engine.currentState.phase shouldBe GamePhase.MainMenu
 
     // Cleanup
@@ -244,7 +250,7 @@ class GameEngineIntegrationTest extends AnyFlatSpec with Matchers with BeforeAnd
 
     // Process Start event - should start the engine
     engine.processEvent(GameEvent.Start)
-    Thread.sleep(100) // Give time for thread to start
+    Thread.sleep(NORMAL_SLEEP_TIME) // Give time for thread to start
 
     engine.isRunning shouldBe true
 
