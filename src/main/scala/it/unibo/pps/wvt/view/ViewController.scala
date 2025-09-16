@@ -1,11 +1,11 @@
 package it.unibo.pps.wvt.view
 
 import it.unibo.pps.wvt.controller.GameController
-import it.unibo.pps.wvt.controller.GameEvent.*
-import it.unibo.pps.wvt.model.CellType.*
+import it.unibo.pps.wvt.controller.GameEvent._
+import it.unibo.pps.wvt.model.CellType._
 import it.unibo.pps.wvt.model.{CellType, Grid, Position}
 import it.unibo.pps.wvt.utilities.GridMapper
-import scalafx.scene.*
+import scalafx.scene._
 import scalafx.application.JFXApp3
 import scalafx.application.JFXApp3.PrimaryStage
 import scalafx.scene.image.Image
