@@ -1,6 +1,8 @@
 package it.unibo.pps.wvt.view
 
-import it.unibo.pps.wvt.model.CellType._
+import it.unibo.pps.wvt.controller.GameController
+import it.unibo.pps.wvt.controller.GameEvent.*
+import it.unibo.pps.wvt.model.CellType.*
 import it.unibo.pps.wvt.model.{CellType, Grid, Position}
 import it.unibo.pps.wvt.utilities.GridMapper
 import scalafx.scene.*
@@ -10,19 +12,29 @@ import scalafx.scene.image.Image
 
 object ViewController extends JFXApp3 {
   private var currentGrid: Option[Grid] = None
+  private var gameController: Option[GameController] = None
 
-  override def start(): Unit =
+  override def start(): Unit = {
     showMainMenu()
-  
-  def showMainMenu(): Unit =
+  }
+
+  def setController(controller: GameController): Unit =
+    this.gameController = Some(controller)
+
+  def showMainMenu(): Unit = {
+    //gameController.get.postEvent(ShowMainMenu)
     stage = createStandardStage(MainMenu())
+  }
 
   def showGameView(): Unit =
+    //gameController.get.postEvent(ShowGameView)
     initializeGrid()
     stage = createStandardStage(GameView())
 
-  def showGameInfo(): Unit =
+  def showGameInfo(): Unit = {
+    //gameController.get.postEvent(ShowInfoMenu)
     stage = createStandardStage(InfoMenu())
+  }
 
   def showGridStatus(grid: Grid): Unit =
     val greenPositions = grid.getAvailablePositions.map(GridMapper.logicalToPhysical)

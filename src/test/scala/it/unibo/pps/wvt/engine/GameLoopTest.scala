@@ -1,10 +1,14 @@
 package it.unibo.pps.wvt.engine
 
+import it.unibo.pps.wvt.controller.GameController
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterEach
 
 class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
+
+  private val NORMAL_SLEEP_TIME: Int = 100
+  private val HIGH_SLEEP_TIME: Int = 1100
 
   var engine: GameEngine = _
   var gameLoop: GameLoop = _
@@ -31,10 +35,10 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
     gameLoop.start()
     gameLoop.isRunning shouldBe true
 
-    Thread.sleep(100) // Let it run briefly
+    Thread.sleep(NORMAL_SLEEP_TIME)
 
     gameLoop.stop()
-    Thread.sleep(100) // Give time to stop
+    Thread.sleep(NORMAL_SLEEP_TIME)
     gameLoop.isRunning shouldBe false
   }
 
@@ -42,50 +46,50 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
     gameLoop.start()
     gameLoop.isRunning shouldBe true
 
-    // Try to start again - should not create multiple threads
-    gameLoop.start()
+    gameLoop.start() // Should be idempotent
     gameLoop.isRunning shouldBe true
 
     gameLoop.stop()
   }
 
   it should "update the engine periodically" in {
+
     val testEngine = engine.asInstanceOf[TestGameEngine]
     testEngine.updateCount shouldBe 0
 
     gameLoop.start()
-    Thread.sleep(200) // Run for 200ms
+    Thread.sleep(200)
     gameLoop.stop()
 
-    // Should have multiple updates in 200ms (at 60 FPS, expect ~12 updates)
+    // At 60 FPS, expect ~12 updates in 200ms
     testEngine.updateCount should be > 5
+    testEngine.updateCount should be < 20
   }
 
-  it should "calculate FPS" in {
+  it should "calculate FPS correctly" in {
     gameLoop.start()
 
-    // Wait for at least one second for FPS calculation
-    Thread.sleep(1100)
+    // Wait for FPS calculation
+    Thread.sleep(HIGH_SLEEP_TIME)
 
     val fps = gameLoop.getCurrentFps
     gameLoop.stop()
 
-    // Should be close to 60 FPS (allowing some variance)
-    fps should be > 50
-    fps should be < 70
+    // Should be close to 60 FPS
+    fps should be >= 50
+    fps should be <= 70
   }
 
   it should "stop updating when engine stops" in {
     val testEngine = engine.asInstanceOf[TestGameEngine]
 
     gameLoop.start()
-    Thread.sleep(100)
+    Thread.sleep(NORMAL_SLEEP_TIME)
 
     val countBefore = testEngine.updateCount
 
-    // Stop the engine (not the loop)
     testEngine.stop()
-    Thread.sleep(100)
+    Thread.sleep(NORMAL_SLEEP_TIME)
 
     val countAfter = testEngine.updateCount
 
@@ -95,46 +99,76 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
     countAfter shouldBe countBefore
   }
 
-  "GameLoop factory" should "create loop with engine" in {
-    val engine = GameEngine.create()
-    val loop = GameLoop.create(engine)
+  it should "maintain consistent timing with accumulator" in {
+    val testEngine = engine.asInstanceOf[TestGameEngine]
+    gameLoop.start()
 
-    loop shouldBe a [GameLoopImpl]
+    Thread.sleep(HIGH_SLEEP_TIME)
+    gameLoop.stop()
+
+    // With fixed timestep, elapsed time should be close to actual time
+    val expectedUpdates = (HIGH_SLEEP_TIME / 16) // ~31 updates at 60 FPS
+    testEngine.updateCount should be >= (expectedUpdates - 5)
+    testEngine.updateCount should be <= (expectedUpdates + 5)
+  }
+
+  it should "handle pause correctly" in {
+    val testEngine = engine.asInstanceOf[TestGameEngine]
+    gameLoop.start()
+
+    Thread.sleep(NORMAL_SLEEP_TIME)
+    val countBeforePause = testEngine.updateCount
+
+    testEngine.pause()
+    Thread.sleep(NORMAL_SLEEP_TIME)
+    val countDuringPause = testEngine.updateCount
+
+    // Should still call update but engine won't process
+    countDuringPause should be > countBeforePause
+
+    gameLoop.stop()
+  }
+
+  "GameLoop factory" should "create loop with engine" in {
+    val testEngine = GameEngine.create(new GameController)
+    val loop = GameLoop.create(testEngine)
+
+    loop shouldBe a[GameLoopImpl]
     loop.isRunning shouldBe false
 
-    engine.stop()
+    testEngine.stop()
   }
 }
 
-// Helper class
+// Test helper - minimal engine implementation
 class TestGameEngine extends GameEngine {
   private var _isRunning: Boolean = true
+  private var _isPaused: Boolean = false
   private var _gameState: GameState = GameState.initial()
   var updateCount: Int = 0
 
-  override def initialize(): Unit = {}
+  override def initialize(controller: GameController): Unit = {}
 
-  override def start(): Unit = {
+  override def start(): Unit =
     _isRunning = true
-  }
 
-  override def stop(): Unit = {
+  override def stop(): Unit =
     _isRunning = false
-  }
 
-  override def update(deltaTime: Long): Unit = {
-    if (_isRunning) {
+  override def pause(): Unit =
+    _isPaused = true
+    _gameState = _gameState.copy(isPaused = true)
+
+  override def resume(): Unit =
+    _isPaused = false
+    _gameState = _gameState.copy(isPaused = false)
+
+  override def update(deltaTime: Long): Unit =
+    if (_isRunning && !_isPaused)
       updateCount += 1
       _gameState = _gameState.copy(elapsedTime = _gameState.elapsedTime + deltaTime)
-    }
-  }
 
   override def isRunning: Boolean = _isRunning
+  override def isPaused: Boolean = _isPaused
   override def currentState: GameState = _gameState
-
-  override def processEvent(event: GameEvent): Unit =
-    event match {
-      case GameEvent.Stop => stop()
-      case _ => // Ignore other events for this test
-    }
 }
