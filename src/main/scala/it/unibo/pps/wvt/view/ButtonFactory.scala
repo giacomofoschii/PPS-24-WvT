@@ -1,6 +1,9 @@
 package it.unibo.pps.wvt.view
 
+import scalafx.scene.Cursor
 import scalafx.scene.control.Button
+import scalafx.scene.effect.DropShadow
+import scalafx.scene.paint.Color
 import scalafx.scene.text.{Font, FontWeight}
 
 object ButtonFactory {
@@ -8,6 +11,7 @@ object ButtonFactory {
 
   def createStyledButton(config: ButtonConfig)(action: => Unit): Button =
     new Button(config.text) {
+      cursor = Cursor.Hand
       font = Font.font(config.fontFamily, FontWeight.Bold, config.fontSize)
       prefWidth = config.width
       prefHeight = config.height
@@ -20,6 +24,13 @@ object ButtonFactory {
         "-fx-padding: 0; " +
         "-fx-text-fill: #DAA520;"
       onAction = _ => action
+      onMouseEntered = _ => {
+        effect = new DropShadow {
+          color = Color.Gray
+          radius = 10
+        }
+      }
+      onMouseExited = _ => effect = null
     }
   
   sealed trait ButtonAction

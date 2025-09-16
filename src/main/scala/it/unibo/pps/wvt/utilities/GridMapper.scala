@@ -1,6 +1,6 @@
 package it.unibo.pps.wvt.utilities
 
-import it.unibo.pps.wvt.model.{Position, Grid}
+import it.unibo.pps.wvt.model.Position
 import it.unibo.pps.wvt.utilities.ViewConstants._
 
 object GridMapper {
@@ -17,10 +17,9 @@ object GridMapper {
       Position(row, col)
     .filter(isValidPosition)
 
-  def getCellCenter(position: Position): PhysicalCoords = {
+  def getCellCenter(position: Position): PhysicalCoords =
     val (x, y) = logicalToPhysical(position)
     (x + CELL_WIDTH / 2.0, y + CELL_HEIGHT / 2.0)
-  }
 
   private def isValidPosition(pos: Position): Boolean =
     pos.row >= 0 && pos.row < GRID_ROWS && pos.col >= 0 && pos.col < GRID_COLS
