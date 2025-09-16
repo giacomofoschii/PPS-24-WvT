@@ -1,6 +1,7 @@
-package it.unibo.pps.wvt.engine
+package it.unibo.pps.wvt.controller
 
 import it.unibo.pps.wvt.controller.*
+import it.unibo.pps.wvt.engine.{GameEngine, GamePhase, GameState}
 import it.unibo.pps.wvt.input.InputSystem
 import it.unibo.pps.wvt.model.Position
 import it.unibo.pps.wvt.utilities.ViewConstants.*
@@ -37,7 +38,7 @@ object GameControllerTestConstants {
   val TARGET_FPS_VALUE: Int = 60
 }
 
-import it.unibo.pps.wvt.engine.GameControllerTestConstants.*
+import GameControllerTestConstants.*
 
 class GameControllerTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
