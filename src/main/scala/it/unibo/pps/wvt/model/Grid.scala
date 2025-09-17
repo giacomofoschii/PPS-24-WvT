@@ -16,11 +16,11 @@ case class Cell(position: Position, cellType: CellType):
 case class Grid(cells: Array[Array[Cell]]):
   def get(pos:Position): Cell = cells(pos.row)(pos.col)
 
-  def set(pos:Position, cell: Cell): Grid = {
+  def set(pos:Position, cell: Cell): Grid =
     val newCells = cells.map(_.clone())
     newCells(pos.row)(pos.col) = cell
     Grid(newCells)
-  }
+  
 
   def emptyCell(position: Position): Grid =
     set(position, Cell(position, CellType.Empty))

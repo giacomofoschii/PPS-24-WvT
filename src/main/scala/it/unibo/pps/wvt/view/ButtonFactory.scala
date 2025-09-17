@@ -24,14 +24,14 @@ object ButtonFactory {
         "-fx-padding: 0; " +
         "-fx-text-fill: #DAA520;"
       onAction = _ => action
-      onMouseEntered = _ => {
+      onMouseEntered = _ => 
         effect = new DropShadow {
           color = Color.Gray
           radius = 10
         }
-      }
       onMouseExited = _ => effect = null
     }
+  
   
   sealed trait ButtonAction
   case object StartGame extends ButtonAction
@@ -41,12 +41,11 @@ object ButtonFactory {
   case object PauseGame extends ButtonAction
   case object ResumeGame extends ButtonAction
 
-  def handleAction(action: ButtonAction): Unit = action match {
+  def handleAction(action: ButtonAction): Unit = action match
     case StartGame => ViewController.showGameView()
     case ShowInfo => ViewController.showGameInfo()
     case BackToMenu => ViewController.showMainMenu()
     case PauseGame => println("Game Paused")
     case ResumeGame => println("Game Resumed")
     case ExitGame => sys.exit(0)
-  }
 }

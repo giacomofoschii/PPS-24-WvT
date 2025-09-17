@@ -25,8 +25,8 @@ trait Attacker { this: Entity =>
   def canAttack: Boolean
   def projectileType: ProjectileType
 
-  def attack(): Option[Projectile] = {
-    if (canAttack) {
+  def attack(): Option[Projectile] =
+    if (canAttack)
       Some(Projectile(
         id = s"${entityType.toString.toLowerCase}-proj-${System.currentTimeMillis()}",
         damage = attackDamage,
@@ -34,8 +34,7 @@ trait Attacker { this: Entity =>
         source = position,
         projectileType = projectileType
       ))
-    } else None
-  }
+    else None
 }
 
 trait Moveable { this: Entity =>

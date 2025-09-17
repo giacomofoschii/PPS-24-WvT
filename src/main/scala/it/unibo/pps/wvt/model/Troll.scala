@@ -14,13 +14,8 @@ trait Troll extends Entity with Attacker with Moveable {
 }
 
 // Base Troll - Standard balanced troll
-case class BaseTroll(
-                      id: String,
-                      position: Position,
-                      health: Int,
-                      maxHealth: Int = BASE_TROLL_HEALTH,
-                      speed: Int = BASE_TROLL_SPEED
-                    ) extends Troll {
+case class BaseTroll(id: String, position: Position, health: Int, 
+  maxHealth: Int = BASE_TROLL_HEALTH, speed: Int = BASE_TROLL_SPEED) extends Troll {
   val attackDamage: Int = BASE_TROLL_DAMAGE
 
   override def entityType: EntityType.TrollType = EntityType.Base
@@ -32,13 +27,8 @@ case class BaseTroll(
 }
 
 // Warrior Troll - High health, low speed, medium damage
-case class WarriorTroll(
-                         id: String,
-                         position: Position,
-                         health: Int,
-                         maxHealth: Int = WARRIOR_TROLL_HEALTH,
-                         speed: Int = WARRIOR_TROLL_SPEED
-                       ) extends Troll {
+case class WarriorTroll(id: String, position: Position, health: Int,
+  maxHealth: Int = WARRIOR_TROLL_HEALTH, speed: Int = WARRIOR_TROLL_SPEED) extends Troll {
   val attackDamage: Int = WARRIOR_TROLL_DAMAGE
 
   override def entityType: EntityType.TrollType = EntityType.Warrior
@@ -50,13 +40,8 @@ case class WarriorTroll(
 }
 
 // Assassin Troll - Very low health, very high speed, high damage
-case class AssassinTroll(
-                          id: String,
-                          position: Position,
-                          health: Int,
-                          maxHealth: Int = ASSASSIN_TROLL_HEALTH,
-                          speed: Int = ASSASSIN_TROLL_SPEED
-                        ) extends Troll {
+case class AssassinTroll(id: String, position: Position, health: Int,
+  maxHealth: Int = ASSASSIN_TROLL_HEALTH, speed: Int = ASSASSIN_TROLL_SPEED) extends Troll {
   val attackDamage: Int = ASSASSIN_TROLL_DAMAGE
 
   override def entityType: EntityType.TrollType = EntityType.Assassin
@@ -68,13 +53,8 @@ case class AssassinTroll(
 }
 
 // Thrower Troll - Stays at back, long range attacks
-case class ThrowerTroll(
-                         id: String,
-                         position: Position,
-                         health: Int,
-                         maxHealth: Int = THROWER_TROLL_HEALTH,
-                         speed: Int = THROWER_TROLL_SPEED
-                       ) extends Troll {
+case class ThrowerTroll(id: String, position: Position, health: Int,
+                        maxHealth: Int = THROWER_TROLL_HEALTH, speed: Int = THROWER_TROLL_SPEED) extends Troll {
   val attackDamage = THROWER_TROLL_DAMAGE
 
   override def entityType: EntityType.TrollType = EntityType.Thrower

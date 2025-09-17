@@ -17,8 +17,8 @@ object ImageFactory {
       fitWidth = width
       preserveRatio = true
     }
+    
 
   private def loadImage(path: String): Option[Image] =
     Option(getClass.getResourceAsStream(path)).map(new Image(_))
-
 }

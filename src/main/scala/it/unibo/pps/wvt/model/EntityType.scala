@@ -18,13 +18,8 @@ object EntityType {
   case object Thrower extends TrollType
 }
 
-case class Projectile(
-                       id: String,
-                       damage: Int,
-                       speed: Int,
-                       source: Position,
-                       projectileType: ProjectileType
-                     )
+case class Projectile(id: String, damage: Int, speed: Int,
+                      source: Position, projectileType: ProjectileType)
 
 sealed trait ProjectileType
 

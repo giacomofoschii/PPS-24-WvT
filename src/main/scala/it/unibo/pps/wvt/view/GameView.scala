@@ -29,6 +29,7 @@ object GameView {
     val stackPane = new StackPane {
       children = Seq(backgroundImage, gridOverlay, entityOverlay, buttonOverlay)
     }
+
     entityPane = Some(entityOverlay)
     gridPane = Some(gridOverlay)
     stackPane
@@ -59,6 +60,7 @@ object GameView {
       opacity = CELL_OPACITY
       stroke = Color.White
     }
+    
 
   private def createButtonOverlay: Pane =
     val buttonConfigs = Map(
