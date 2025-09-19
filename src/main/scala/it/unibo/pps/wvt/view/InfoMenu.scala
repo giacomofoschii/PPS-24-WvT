@@ -14,7 +14,7 @@ import it.unibo.pps.wvt.utilities.GamePlayConstants._
 
 object InfoMenu {
 
-  def apply(): Parent = {
+  def apply(): Parent =
     lazy val backgroundImage = createBackgroundView("/main_menu.jpg", MENU_SCALE_FACTOR).getOrElse(new ImageView())
     val contentArea = new StackPane()
 
@@ -64,7 +64,6 @@ object InfoMenu {
     new StackPane {
       children = Seq(backgroundImage, layout)
     }
-  }
 
   private def createBoxWithNavigation(grid: GridPane, contentArea: StackPane, rulesView: VBox): VBox =
     new VBox {
@@ -89,55 +88,64 @@ object InfoMenu {
         }
       )
     }
-
+  
   private def legendItem(symbol: String, textLabel: String): VBox =
     new VBox {
       spacing = 4
       alignment = Pos.Center
       children = Seq(
-        new Text(symbol){ font = Font.font("Arial", FontWeight.Bold, 18); fill = Color.White },
-        new Text(textLabel){ font = Font.font("Arial", 12); fill = Color.LightGray }
+        new Text(symbol) {
+          font = Font.font("Arial", FontWeight.Bold, 18)
+          fill = Color.White
+        },
+        new Text(textLabel) {
+          font = Font.font("Arial", 12)
+          fill = Color.LightGray
+        }
       )
     }
-
-  private def createGrid(cards: Seq[(String,String,String,String,Seq[(String,String)])], cols: Int = 3): GridPane = {
+    
+  private def createGrid(cards: Seq[(String,String,String,String,Seq[(String,String)])], cols: Int = 3): GridPane =
     val grid = new GridPane {
       hgap = 20
       vgap = 20
       alignment = Pos.Center
     }
-    for ((card, idx) <- cards.zipWithIndex) {
+    for ((card, idx) <- cards.zipWithIndex)
       val (name, stat, ability, imagePath, icons) = card
       grid.add(createCard(name, stat, ability, imagePath, icons), idx % cols, idx / cols)
-    }
     grid
-  }
 
-  private def createCard(name: String, stat: String, ability: String, imagePath: String, icons: Seq[(String,String)]): VBox = {
-    val imageView = createImageView(imagePath, 100) match {
+  private def createCard(name: String, stat: String, ability: String, imagePath: String, icons: Seq[(String,String)]): VBox =
+    val imageView = createImageView(imagePath, 100) match 
       case Right(img) =>
         img.fitWidth = 100
         img.fitHeight = 100
         img.preserveRatio = true
         img
       case Left(_) => new ImageView()
-    }
-
+    
     val statBox = new HBox {
       spacing = 8
       alignment = Pos.Center
-      children = icons.map{ case (symbol,value) =>
+      children = icons.map { case (symbol,value) =>
         new VBox {
           spacing = 2
           alignment = Pos.Center
           children = Seq(
-            new Text(symbol){ font = Font.font("Arial", FontWeight.Bold, 16); fill = Color.White },
-            new Text(value){ font = Font.font("Arial", 14); fill = Color.LightGray }
+            new Text(symbol) {
+              font = Font.font("Arial", FontWeight.Bold, 16)
+              fill = Color.White
+            },
+            new Text(value) {
+             font = Font.font("Arial", 14)
+             fill = Color.LightGray 
+            }
           )
         }
       }
     }
-
+    
     val abilityBox = new Text(ability) {
       font = Font.font("Arial", FontWeight.Normal, 13)
       fill = Color.LightBlue
@@ -164,7 +172,6 @@ object InfoMenu {
         abilityBox
       )
     }
-  }
 
   private def createRulesView(): VBox =
     new VBox {
@@ -188,8 +195,8 @@ object InfoMenu {
         }
       )
     }
-
-  private def createWizardsView(): GridPane = {
+  
+  private def createWizardsView(): GridPane =
     val cards = Seq(
       ("Generator", "♦ 5   ♥ 20", "Produces elixir", "/generator.png", Seq(("\u2666","5"),("\u2665","20"))),
       ("Wind",      "♦ 6 ♥ 15 ✖ 8 → 3", "Pushes enemies", "/wind.png", Seq(("\u2666","6"),("\u2665","15"),("\u2716","8"),("\u2192","3"))),
@@ -198,9 +205,8 @@ object InfoMenu {
       ("Barrier",   "♦ 8 ♥ 30", "Blocks damage", "/barrier.png", Seq(("\u2666","8"),("\u2665","30")))
     )
     createGrid(cards, cols = 3)
-  }
-
-  private def createTrollsView(): GridPane = {
+  
+  private def createTrollsView(): GridPane =
     val cards = Seq(
       ("Base",     "♥ 50   ✖ 6 → 2", "Main target", "/base.png", Seq(("\u2665","50"),("\u2716","6"),("\u2192","2"))),
       ("Warrior",  "♥ 40   ✖ 8 → 2", "Slow but tough", "/warriorTroll.png", Seq(("\u2665","40"),("\u2716","8"),("\u2192","2"))),
@@ -208,8 +214,7 @@ object InfoMenu {
       ("Thrower",  "♥ 25   ✖ 10 → 3","Ranged", "/thrower.png", Seq(("\u2665","25"),("\u2716","10"),("\u2192","3")))
     )
     createGrid(cards, cols = 3)
-  }
-
+  
   private def baseRuleStyle: String =
     "-fx-font-family: Arial; -fx-font-size: 16; -fx-fill: white;"
 }
