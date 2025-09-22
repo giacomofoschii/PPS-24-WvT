@@ -59,11 +59,66 @@ class GameController(world: World) {
 
   def selectWizard(wizardType: WizardType): Unit = selectedWizardType = Some(wizardType)
 
+  def handleMouseClick(x: Int, y: Int): Unit =
+    val clickResult = inputSystem.handleMouseClick(x, y)
+    if(clickResult.isValid)
+      handleGridClick(clickResult.position)
+      ViewController.render()
+    else
+      ViewController.showError(clickResult.error.get)
+
+  def placeWizard(wizardType: WizardType, position: Position): Unit =
+    if (world.getEntityAt(position).isEmpty)
+      val entity = wizardType match
+        case WizardType.Generator => EntityFactory.createGeneratorWizard(world, position)
+        case WizardType.Barrier => EntityFactory.createBarrierWizard()
+        case WizardType.Wind => EntityFactory.createFireWizard()
+        //missing fire and ice wizards
+        case _ => throw new NotImplementedError("Wizard type not implemented yet")
+      ViewController.render()
+    else
+      ViewController.showError(s"Cannot place ${wizardType.toString} at $position. Cell is occupied.")
+
+  def placeTroll(trollType: TrollType, position: Position): Unit =
+    if (world.getEntityAt(position).isEmpty)
+      val entity = trollType match
+        case TrollType.Base => EntityFactory.createBaseTroll(world, position, TrollType.Base, 200, 2.0, "png")
+        case TrollType.Warrior => EntityFactory.createWarriorTroll()
+        case TrollType.Assassin => EntityFactory.createAssassinTroll()
+        case TrollType.Thrower => EntityFactory.createThrowerTroll()
+        case _ => throw new NotImplementedError("Troll type not implemented yet")
+      ViewController.render()
+
   private def setupEventHandlers(): Unit =
     eventHandler.registerHandler(classOf[GameEvent.GridClicked], event => {
       val clickEvent = event.asInstanceOf[GameEvent.GridClicked]
       handleGridClick(clickEvent.pos)
     })
+
+  private def handleGridClick(position: Position): Unit =
+    selectedWizardType match
+      case Some(wizardType) =>
+        if (canPlaceWizard(position, wizardType))
+          placeWizard(wizardType, position)
+          val cost = getWizardCost(wizardType)
+          playerElixir -= cost
+          selectedWizardType = None
+        else
+          ViewController.showError(s"Cannot place ${wizardType.toString} at $position. " +
+            s"Either the cell is occupied or you lack sufficient elixir.")
+      case None =>
+        ViewController.showError("No wizard selected. Please select a wizard to place.")
+
+  private def canPlaceWizard(position: Position, wizardType: WizardType): Boolean =
+    val cost = getWizardCost(wizardType)
+    world.getEntityAt(position).isEmpty && playerElixir >= cost
+
+  private def getWizardCost(wizardType: WizardType): Int = wizardType match
+    case WizardType.Generator => 50
+    case WizardType.Wind => 70
+    case WizardType.Barrier => 60
+    case _ => 100
+  //implement the other
 
   private def isMenuPhase(phase: GamePhase): Boolean = phase match
     case GamePhase.MainMenu | GamePhase.InfoMenu | GamePhase.Paused => true
