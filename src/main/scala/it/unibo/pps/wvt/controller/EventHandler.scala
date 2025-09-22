@@ -6,10 +6,6 @@ import it.unibo.pps.wvt.view.{ViewController, ViewState}
 
 import scala.collection.mutable
 
-/**
- * Controller for game events
- * Handles all game-specific events while GameEngine handles only lifecycle
- */
 class EventHandler(engine: GameEngine) {
   private val eventQueue: EventQueue = new EventQueue()
   private val eventHandlers: mutable.Map[Class[_], GameEvent => Unit] = mutable.Map.empty
