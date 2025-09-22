@@ -2,6 +2,7 @@ package it.unibo.pps.wvt.engine
 
 import it.unibo.pps.wvt.utilities.GameConstants.*
 import java.util.concurrent.*
+import scala.util.Try
 
 trait GameLoop {
   def start(): Unit
@@ -13,26 +14,53 @@ trait GameLoop {
 class GameLoopImpl(engine: GameEngine) extends GameLoop {
 
   private var scheduler: Option[ScheduledExecutorService] = None
-  private var running: Boolean = false
+  private var loopState: LoopState = LoopState()
 
-  // Time tracking
-  private var lastUpdate: Long = 0L
-  private var acc = 0L
+  // Case class for immutable state
+  private case class LoopState(
+                                running: Boolean = false,
+                                lastUpdate: Long = 0L,
+                                accumulator: Long = 0L,
+                                frameCount: Int = 0,
+                                fpsTimer: Long = 0L,
+                                currentFps: Int = 0
+                              ) {
+    def startRunning: LoopState = copy(
+      running = true,
+      lastUpdate = System.nanoTime(),
+      fpsTimer = System.currentTimeMillis(),
+      accumulator = 0L
+    )
 
-  // FPS tracking
-  private var frameCount: Int = 0
-  private var fpsTimer: Long = 0L
-  private var currentFps: Int = 0
+    def stopRunning: LoopState = copy(running = false)
 
-  // Fixed time step for consistent updates
+    def updateFrame(currentTime: Long): LoopState =
+      val frameTime = (currentTime - lastUpdate) / 1_000_000L
+      copy(
+        lastUpdate = currentTime,
+        accumulator = accumulator + frameTime
+      )
+
+    def consumeTimeStep(timeStep: Long): LoopState =
+      copy(accumulator = accumulator - timeStep)
+
+    def incrementFrameCount: LoopState = copy(frameCount = frameCount + 1)
+
+    def updateFps(currentTimeMs: Long): LoopState =
+      if (currentTimeMs - fpsTimer >= 1000)
+        copy(
+          currentFps = frameCount,
+          frameCount = 0,
+          fpsTimer = currentTimeMs
+        )
+      else this
+  }
+
   private val fixedTimeStep: Long = FRAME_TIME_MILLIS
 
   override def start(): Unit =
-    if (!running)
-      running = true
-      lastUpdate = System.nanoTime()
-      fpsTimer = System.currentTimeMillis()
-      acc = 0L
+    if (!loopState.running)
+      loopState = loopState.startRunning
 
       val executor = Executors.newSingleThreadScheduledExecutor(r => {
         val thread = new Thread(r, "GameLoop-Thread")
@@ -44,68 +72,67 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
       scheduler = Some(executor)
 
       executor.scheduleAtFixedRate(
-        () => gameLoopTick(),
+        () => Try(gameLoopTick()).recover {
+          case ex => println(s"Exception in game loop: ${ex.getMessage}")
+        },
         0,
         fixedTimeStep,
         TimeUnit.MILLISECONDS
       )
 
-      println(s"Game loop started with target FPS: $TARGET_FPS\n")
+      println(s"Game loop started with target FPS: $TARGET_FPS")
 
   override def stop(): Unit =
-    if(running)
-      running = false
+    if (loopState.running)
+      loopState = loopState.stopRunning
 
-      scheduler.foreach(exec =>
+      scheduler.foreach { exec =>
         exec.shutdown()
-        try
+        Try {
           if (!exec.awaitTermination(5, TimeUnit.SECONDS))
             exec.shutdownNow()
-        catch
+        }.recover {
           case _: InterruptedException =>
             exec.shutdownNow()
             Thread.currentThread().interrupt()
-      )
+        }
+      }
 
       scheduler = None
       println("Game loop stopped")
 
-  override def isRunning: Boolean = running
+  override def isRunning: Boolean = loopState.running
 
-  override def getCurrentFps: Int = currentFps
+  override def getCurrentFps: Int = loopState.currentFps
 
   private def gameLoopTick(): Unit =
-    if (running && engine.isRunning)
-      try
-        // Calculate delta time
-        val currentTime = System.nanoTime()
-        val frameTime = (currentTime - lastUpdate) / 1_000_000L // Convert to milliseconds
-        lastUpdate = currentTime
-        acc += frameTime
+    if (loopState.running && engine.isRunning)
+      val currentTime = System.nanoTime()
+      loopState = loopState.updateFrame(currentTime)
 
-        while(acc >= fixedTimeStep)
-          // Update game state with fixed time step
-          engine.update(fixedTimeStep)
-          acc -= fixedTimeStep
+      // Fixed time step update loop
+      while (loopState.accumulator >= fixedTimeStep)
+        engine.update(fixedTimeStep)
+        loopState = loopState.consumeTimeStep(fixedTimeStep)
 
-        // Update FPS counter
-        updateFpsCounter()
-
-      catch
-        case ex: Exception =>
-          println(s"Exception in game loop: ${ex.getMessage}")
-          ex.printStackTrace()
+      // Update FPS counter
+      updateFpsCounter()
 
   private def updateFpsCounter(): Unit =
-    frameCount += 1
-
+    loopState = loopState.incrementFrameCount
     val currentTimeMs = System.currentTimeMillis()
-    if (currentTimeMs - fpsTimer >= 1000)
-      currentFps = frameCount
-      frameCount = 0
-      fpsTimer = currentTimeMs
+    loopState = loopState.updateFps(currentTimeMs)
 }
 
 object GameLoop {
-  def create(engine: GameEngine): GameLoopImpl = new GameLoopImpl(engine)
+  def create(engine: GameEngine): GameLoop = new GameLoopImpl(engine)
+
+  // Utility functions for timing
+  object TimingUtils {
+    def calculateDelta(lastTime: Long, currentTime: Long): Long =
+      (currentTime - lastTime) / 1_000_000L
+
+    def interpolate(accumulator: Long, timeStep: Long): Double =
+      accumulator.toDouble / timeStep.toDouble
+  }
 }

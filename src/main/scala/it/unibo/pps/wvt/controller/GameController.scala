@@ -39,8 +39,8 @@ class GameController(world: World) {
     eventHandler.postEvent(event)
 
     event match
-      case _: GameEvent.Pause.type | _: GameEvent.Resume.type | _: GameEvent.ShowMainMenu.type |
-           _: GameEvent.ShowGameView.type | _: GameEvent.ShowInfoMenu.type | _: GameEvent.ExitGame.type =>
+      case GameEvent.Pause | GameEvent.Resume | GameEvent.ShowMainMenu |
+           GameEvent.ShowGameView | GameEvent.ShowInfoMenu | GameEvent.ExitGame =>
         eventHandler.processEvents()
       case _ =>
         if(isMenuPhase(eventHandler.getCurrentPhase))
@@ -89,11 +89,11 @@ class GameController(world: World) {
         case _ => throw new NotImplementedError("Troll type not implemented yet")
       ViewController.render()
 
-  private def setupEventHandlers(): Unit =
-    eventHandler.registerHandler(classOf[GameEvent.GridClicked], event => {
-      val clickEvent = event.asInstanceOf[GameEvent.GridClicked]
-      handleGridClick(clickEvent.pos)
-    })
+  private def setupEventHandlers(): Unit = {
+    eventHandler.registerHandler(classOf[GameEvent.GridClicked]) { (event: GameEvent.GridClicked) =>
+      handleGridClick(event.pos)
+    }
+  }
 
   private def handleGridClick(position: Position): Unit =
     selectedWizardType match
@@ -120,7 +120,5 @@ class GameController(world: World) {
     case _ => 100
   //implement the other
 
-  private def isMenuPhase(phase: GamePhase): Boolean = phase match
-    case GamePhase.MainMenu | GamePhase.InfoMenu | GamePhase.Paused => true
-    case _ => false
+  private def isMenuPhase(phase: GamePhase): Boolean = phase.isMenu || phase == GamePhase.Paused
 }

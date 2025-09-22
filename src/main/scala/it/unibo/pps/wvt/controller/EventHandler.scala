@@ -1,98 +1,91 @@
 package it.unibo.pps.wvt.controller
 
 import it.unibo.pps.wvt.engine.*
-import it.unibo.pps.wvt.engine.GamePhase.Playing
 import it.unibo.pps.wvt.view.{ViewController, ViewState}
-
-import scala.collection.mutable
+import scala.util.{Try, Success, Failure}
 
 class EventHandler(engine: GameEngine) {
   private val eventQueue: EventQueue = new EventQueue()
-  private val eventHandlers: mutable.Map[Class[_], GameEvent => Unit] = mutable.Map.empty
-
+  private var eventHandlers: Map[Class[_], GameEvent => Unit] = Map.empty
   private var currentPhase: GamePhase = GamePhase.MainMenu
 
   def initialize(): Unit =
     registerGameEventHandlers()
 
-
-  def registerHandler[T <: GameEvent](eventClass: Class[T], handler: T => Unit): Unit =
-    eventHandlers(eventClass) = handler.asInstanceOf[GameEvent => Unit]
+  def registerHandler[T <: GameEvent](eventClass: Class[T])(handler: T => Unit): Unit =
+    eventHandlers = eventHandlers + (eventClass -> handler.asInstanceOf[GameEvent => Unit])
 
   def postEvent(event: GameEvent): Unit =
     eventQueue.enqueue(event)
 
-  def processEvents(): Unit =
-    while (!eventQueue.isEmpty)
-      eventQueue.dequeue().foreach { event =>
-        processEvent(event)
-      }
+  def processEvents(): Unit = {
+    eventQueue.dequeueAll().foreach(processEvent)
+  }
 
-  def processEvent(event: GameEvent): Unit =
-    eventHandlers.get(event.getClass).foreach { handler =>
-      try
-        handler(event)
-      catch
-        case e: Exception =>
-          println(s"Error processing event $event: ${e.getMessage}")
-          e.printStackTrace()
+  private def processEvent(event: GameEvent): Unit = {
+    val result = Try {
+      event match {
+        case GameEvent.ShowMainMenu =>
+          handleMenuTransition(GamePhase.MainMenu, ViewState.MainMenu)
+
+        case GameEvent.ShowGameView =>
+          handleMenuTransition(GamePhase.Playing, ViewState.GameView)
+          if (!engine.isRunning) engine.start()
+
+        case GameEvent.ShowInfoMenu =>
+          handleMenuTransition(GamePhase.InfoMenu, ViewState.InfoMenu)
+
+        case GameEvent.ExitGame =>
+          engine.stop()
+          sys.exit(0)
+
+        case GameEvent.Pause if currentPhase == GamePhase.Playing =>
+          engine.pause()
+          handleMenuTransition(GamePhase.Paused)
+          ViewController.hideGridStatus()
+
+        case GameEvent.Resume if currentPhase == GamePhase.Paused =>
+          engine.resume()
+          handleMenuTransition(GamePhase.Playing)
+
+        case _ =>
+          // Fallback to registered handlers
+          eventHandlers.get(event.getClass).foreach(_(event))
+      }
     }
+
+    result match {
+      case Failure(exception) =>
+        println(s"Error processing event $event: ${exception.getMessage}")
+        exception.printStackTrace()
+      case Success(_) =>
+        // Event processed successfully
+    }
+  }
 
   def clearQueue(): Unit =
     eventQueue.clear()
 
   def getCurrentPhase: GamePhase = currentPhase
 
-  private def registerGameEventHandlers(): Unit =
-    registerHandler(classOf[GameEvent.ShowMainMenu.type ],
-      _ =>
-        handleMenuTransition(GamePhase.MainMenu)
-        ViewController.updateView(ViewState.MainMenu)
-    )
+  private def registerGameEventHandlers(): Unit = {
+    registerHandler(classOf[GameEvent.GridClicked]) {
+      case GameEvent.GridClicked(pos, _, _) =>
+        println(s"Grid clicked at $pos")
+    }
+  }
 
-    registerHandler(classOf[GameEvent.ShowGameView.type],
-      _ =>
-        handleMenuTransition(GamePhase.Playing)
-        ViewController.updateView(ViewState.GameView)
-        if (!engine.isRunning) engine.start()
-    )
-
-    registerHandler(classOf[GameEvent.ShowInfoMenu.type],
-      _ =>
-        handleMenuTransition(GamePhase.InfoMenu)
-        ViewController.updateView(ViewState.InfoMenu)
-    )
-
-    registerHandler(classOf[GameEvent.ExitGame.type],
-      _ =>
-        engine.stop()
-        sys.exit(0)
-    )
-
-    registerHandler(classOf[GameEvent.Pause.type],
-      _ =>
-        if (currentPhase == Playing)
-          engine.pause()
-          handleMenuTransition(GamePhase.Paused)
-          ViewController.hideGridStatus()
-    )
-
-    registerHandler(classOf[GameEvent.Resume.type],
-      _ =>
-        if (currentPhase == GamePhase.Paused)
-          engine.resume()
-          handleMenuTransition(GamePhase.Playing)
-    )
-
-  private def handleMenuTransition(newPhase: GamePhase): Unit =
+  private def handleMenuTransition(newPhase: GamePhase, viewState: ViewState = null): Unit = {
     val oldPhase = currentPhase
     currentPhase = newPhase
-
     engine.updatePhase(newPhase)
 
-    (oldPhase, newPhase) match
+    Option(viewState).foreach(ViewController.updateView)
+
+    // Log transition usando pattern matching
+    (oldPhase, newPhase) match {
       case (GamePhase.Playing, GamePhase.Paused) =>
-        ViewController.hideGridStatus()
+        println("Game paused")
       case (GamePhase.Paused, GamePhase.Playing) =>
         println("Resuming game...")
       case (_, GamePhase.MainMenu) =>
@@ -101,6 +94,8 @@ class EventHandler(engine: GameEngine) {
         println("Starting game...")
       case _ =>
         println(s"Transitioning from $oldPhase to $newPhase")
+    }
+  }
 }
 
 object EventHandler {
@@ -109,4 +104,11 @@ object EventHandler {
     handler.initialize()
     handler
   }
+
+  // Helper functions per composizione di handlers
+  def compose(handlers: (GameEvent => Unit)*): GameEvent => Unit =
+    event => handlers.foreach(_(event))
+
+  def conditional(predicate: GameEvent => Boolean)(handler: GameEvent => Unit): GameEvent => Unit =
+    event => if (predicate(event)) handler(event)
 }

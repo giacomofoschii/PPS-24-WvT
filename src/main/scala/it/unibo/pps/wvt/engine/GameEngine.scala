@@ -15,78 +15,79 @@ trait GameEngine {
   def updatePhase(phase: GamePhase): Unit
 }
 
-// Minimal game engine - only core lifecycle
 class GameEngineImpl extends GameEngine {
+  private var state: EngineState = EngineState()
 
-  private var _isRunning: Boolean = false
-  private var _isPaused: Boolean = false
-  private var _gameState: GameState = GameState.initial()
+  // Case class for internal state
+  private case class EngineState(
+                                  isRunning: Boolean = false,
+                                  isPaused: Boolean = false,
+                                  gameState: GameState = GameState.initial(),
+                                  controller: Option[GameController] = None,
+                                  gameLoop: Option[GameLoop] = None
+                                ) {
+    def withRunning(running: Boolean): EngineState = copy(isRunning = running)
+    def withPaused(paused: Boolean): EngineState = copy(isPaused = paused)
+    def withGameState(newState: GameState): EngineState = copy(gameState = newState)
+    def withController(ctrl: GameController): EngineState = copy(controller = Some(ctrl))
+    def withGameLoop(loop: GameLoop): EngineState = copy(gameLoop = Some(loop))
+  }
 
-  private var gameController: Option[GameController] = None
-  private var gameLoop: Option[GameLoop] = None
-
-  override def initialize(controller: GameController): Unit = {
-    gameController = Some(controller)
-    gameLoop = Some(GameLoop.create(this))
+  override def initialize(controller: GameController): Unit =
+    state = state
+      .withController(controller)
+      .withGameLoop(GameLoop.create(this))
     println("Game Engine initialized")
-  }
 
-  override def start(): Unit = {
-    if (!_isRunning)
-      _isRunning = true
-      gameLoop.foreach(_.start())
+  override def start(): Unit =
+    if (!state.isRunning)
+      state = state.withRunning(true)
+      state.gameLoop.foreach(_.start())
       println("Game Engine started")
-  }
 
-  override def stop(): Unit = {
-    if (_isRunning) {
-      _isRunning = false
-      _isPaused = false
-      gameLoop.foreach(_.stop())
+  override def stop(): Unit =
+    if (state.isRunning)
+      state = state.withRunning(false).withPaused(false)
+      state.gameLoop.foreach(_.stop())
       println("Game Engine stopped")
-    }
-  }
 
-  override def pause(): Unit = {
-    if (_isRunning && !_isPaused) {
-      _isPaused = true
-      _gameState = _gameState.copy(isPaused = true)
+  override def pause(): Unit =
+    if (state.isRunning && !state.isPaused)
+      state = state
+        .withPaused(true)
+        .withGameState(state.gameState.copy(isPaused = true))
       println("Game Engine paused")
-    }
-  }
 
-  override def resume(): Unit = {
-    if (_isRunning && _isPaused) {
-      _isPaused = false
-      _gameState = _gameState.copy(isPaused = false)
+  override def resume(): Unit =
+    if (state.isRunning && state.isPaused)
+      state = state
+        .withPaused(false)
+        .withGameState(state.gameState.copy(isPaused = false))
       println("Game Engine resumed")
-    }
-  }
 
   override def update(deltaTime: Long): Unit =
-    gameController.foreach(_.getEventHandler.processEvents())
+    state.controller.foreach(_.getEventHandler.processEvents())
 
-    if(_isRunning && !_isPaused)
-      gameController.foreach(_.update())
-      _gameState = _gameState.copy(elapsedTime = _gameState.elapsedTime + deltaTime)
+    if (state.isRunning && !state.isPaused)
+      state.controller.foreach(_.update())
+      state = state.withGameState(state.gameState.updateTime(deltaTime))
 
   override def updatePhase(newPhase: GamePhase): Unit =
-    _gameState = _gameState.copy(phase = newPhase)
+    state = state.withGameState(state.gameState.transitionTo(newPhase))
 
-  override def isRunning: Boolean = _isRunning
-  override def isPaused: Boolean = _isPaused
-  override def currentState: GameState = _gameState
+  override def isRunning: Boolean = state.isRunning
+  override def isPaused: Boolean = state.isPaused
+  override def currentState: GameState = state.gameState
 }
 
 object GameEngine {
   private var instance: Option[GameEngine] = None
 
-  def create(controller: GameController): GameEngine = {
+  def create(controller: GameController): GameEngine =
     val engine = new GameEngineImpl()
     engine.initialize(controller)
     instance = Some(engine)
     engine
-  }
 
   def getInstance: Option[GameEngine] = instance
 }
