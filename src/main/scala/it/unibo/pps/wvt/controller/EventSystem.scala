@@ -11,15 +11,11 @@ enum GameEvent {
   case Pause
   case Resume
 
-  // Menu events  
+  // Menu events
   case ShowMainMenu
   case ShowGameView
   case ShowInfoMenu
   case ExitGame
-
-  // Update/Render events
-  case Update(deltaTime: Long)
-  case Render
 
   // Input events
   case GridClicked(pos: Position, screenX: Int, screenY: Int)
@@ -28,27 +24,23 @@ enum GameEvent {
   def timestamp: Long = System.currentTimeMillis()
 
   // Pattern matching for event priority
-  def priority: Int = this match {
+  def priority: Int = this match
     case Stop | ExitGame => 0
     case Pause | Resume => 1
     case ShowMainMenu | ShowGameView | ShowInfoMenu => 2
-    case Update(_) => 3
-    case Render => 4
-    case _ => 5
-  }
+    case _ => 3
 }
 
 class EventQueue(private val maxQueueSize: Int = 1000) {
   private var queue: Queue[GameEvent] = Queue.empty
 
   def enqueue(event: GameEvent): Boolean =
-    if (queue.size < maxQueueSize) {
+    if (queue.size < maxQueueSize)
       queue = queue.enqueue(event)
       true
-    } else {
+    else
       println(s"Event queue full, dropping event: $event")
       false
-    }
 
   def dequeue(): Option[GameEvent] =
     queue.dequeueOption.map { case (event, newQueue) =>
@@ -56,27 +48,23 @@ class EventQueue(private val maxQueueSize: Int = 1000) {
       event
     }
 
-  def dequeueAll(): List[GameEvent] = {
+  def dequeueAll(): List[GameEvent] =
     val events = queue.toList
     queue = Queue.empty
     events
-  }
 
   def isEmpty: Boolean = queue.isEmpty
 
   def size: Int = queue.size
 
-  def clear(): Unit = {
+  def clear(): Unit =
     queue = Queue.empty
-  }
-  
+
   def peekNext: Option[GameEvent] = queue.headOption
 
-  def filterQueue(predicate: GameEvent => Boolean): Unit = {
+  def filterQueue(predicate: GameEvent => Boolean): Unit =
     queue = queue.filter(predicate)
-  }
 
-  def prioritize(): Unit = {
+  def prioritize(): Unit =
     queue = Queue.from(queue.toList.sortBy(_.priority))
-  }
 }

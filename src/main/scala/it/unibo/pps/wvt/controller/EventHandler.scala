@@ -18,11 +18,10 @@ class EventHandler(engine: GameEngine) {
   def postEvent(event: GameEvent): Unit =
     eventQueue.enqueue(event)
 
-  def processEvents(): Unit = {
+  def processEvents(): Unit =
     eventQueue.dequeueAll().foreach(processEvent)
-  }
 
-  private def processEvent(event: GameEvent): Unit = {
+  private def processEvent(event: GameEvent): Unit =
     val result = Try {
       event match {
         case GameEvent.ShowMainMenu =>
@@ -61,29 +60,26 @@ class EventHandler(engine: GameEngine) {
       case Success(_) =>
         // Event processed successfully
     }
-  }
 
   def clearQueue(): Unit =
     eventQueue.clear()
 
   def getCurrentPhase: GamePhase = currentPhase
 
-  private def registerGameEventHandlers(): Unit = {
+  private def registerGameEventHandlers(): Unit =
     registerHandler(classOf[GameEvent.GridClicked]) {
       case GameEvent.GridClicked(pos, _, _) =>
         println(s"Grid clicked at $pos")
     }
-  }
 
-  private def handleMenuTransition(newPhase: GamePhase, viewState: ViewState = null): Unit = {
+  private def handleMenuTransition(newPhase: GamePhase, viewState: ViewState = null): Unit =
     val oldPhase = currentPhase
     currentPhase = newPhase
     engine.updatePhase(newPhase)
 
     Option(viewState).foreach(ViewController.updateView)
 
-    // Log transition usando pattern matching
-    (oldPhase, newPhase) match {
+    (oldPhase, newPhase) match
       case (GamePhase.Playing, GamePhase.Paused) =>
         println("Game paused")
       case (GamePhase.Paused, GamePhase.Playing) =>
@@ -94,18 +90,14 @@ class EventHandler(engine: GameEngine) {
         println("Starting game...")
       case _ =>
         println(s"Transitioning from $oldPhase to $newPhase")
-    }
-  }
 }
 
 object EventHandler {
-  def create(engine: GameEngine): EventHandler = {
+  def create(engine: GameEngine): EventHandler =
     val handler = new EventHandler(engine)
     handler.initialize()
     handler
-  }
 
-  // Helper functions per composizione di handlers
   def compose(handlers: (GameEvent => Unit)*): GameEvent => Unit =
     event => handlers.foreach(_(event))
 
