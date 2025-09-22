@@ -2,7 +2,6 @@ package it.unibo.pps.wvt.controller
 
 import it.unibo.pps.wvt.controller.*
 import it.unibo.pps.wvt.engine.{GameEngine, GamePhase, GameState}
-import it.unibo.pps.wvt.input.InputSystem
 import it.unibo.pps.wvt.model.Position
 import it.unibo.pps.wvt.utilities.ViewConstants.*
 import org.scalatest.BeforeAndAfterEach
