@@ -2,7 +2,6 @@ package it.unibo.pps.wvt.input
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import it.unibo.pps.wvt.input.{InputProcessor, InputSystem}
 import it.unibo.pps.wvt.utilities.{Position, ViewConstants}
 
 class InputSystemTest extends AnyFlatSpec with Matchers {

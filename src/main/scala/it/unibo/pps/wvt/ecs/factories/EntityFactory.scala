@@ -11,7 +11,11 @@ object EntityFactory {
     world.addComponent(entity, ElixirGeneratorComponent(5, 10))
     entity
 
-  def createWindWizard(): EntityId = ???
+  def createWindWizard(world: World, position: Position): EntityId =
+    val entity = createBaseWizard(world, position, WizardType.Wind, 80, 40, "/wind_wizard.png")
+    world.addComponent(entity, AttackComponent(15, 3.0, 2000))
+    world.addComponent(entity, CooldownComponent(0))
+    entity
 
   def createBarrierWizard(): EntityId = ???
 
