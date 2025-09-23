@@ -13,7 +13,7 @@ object GridMapper {
     Option.when(x >= GRID_OFFSET_X && y >= GRID_OFFSET_Y):
       val col = ((x - GRID_OFFSET_X) / CELL_WIDTH).toInt
       val row = ((y - GRID_OFFSET_Y) / CELL_HEIGHT).toInt
-      Position(row, col)
+      Position(row, col, allowInvalid = true)
     .filter(isValidPosition)
 
   def screenToCell(x: Int, y: Int): Option[Position] =
