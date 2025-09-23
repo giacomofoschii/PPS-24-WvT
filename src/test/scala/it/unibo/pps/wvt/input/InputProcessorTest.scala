@@ -1,3 +1,5 @@
+package it.unibo.pps.wvt.input
+
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import it.unibo.pps.wvt.input.{InputProcessor, MouseClick}

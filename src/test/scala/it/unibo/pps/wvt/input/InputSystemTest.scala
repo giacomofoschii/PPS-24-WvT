@@ -1,3 +1,5 @@
+package it.unibo.pps.wvt.input
+
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import it.unibo.pps.wvt.input.{InputProcessor, InputSystem}
@@ -128,7 +130,8 @@ class InputSystemTest extends AnyFlatSpec with Matchers {
       // Converti di nuovo in posizione tramite click
       val clickResult = inputSystem.handleMouseClick(x.toInt, y.toInt)
       clickResult.isValid shouldBe true
-      clickResult.position shouldBe position
+      clickResult.position.row shouldBe position.row
+      clickResult.position.col shouldBe position.col
     }
   }
 }
