@@ -50,7 +50,7 @@ object EntityFactory {
     val entity = createStandardTroll(world, pos, TrollType.Base,
       BASE_TROLL_HEALTH, BASE_TROLL_SPEED,
       BASE_TROLL_DAMAGE, BASE_TROLL_RANGE,
-      BASE_TROLL_COOLDOWN, "src/main/resources/troll/BASE_TROLL/WALK/WALK_005.png"
+      BASE_TROLL_COOLDOWN, "/troll/BASE_TROLL/WALK/WALK_005.png"
     )
     entity
 
@@ -58,7 +58,7 @@ object EntityFactory {
     val entity = createStandardTroll(world, pos, TrollType.Warrior,
       WARRIOR_TROLL_HEALTH, WARRIOR_TROLL_SPEED,
       WARRIOR_TROLL_DAMAGE, WARRIOR_TROLL_RANGE,
-      WARRIOR_TROLL_COOLDOWN, "src/main/resources/troll/WAR_TROLL/WALK/WALK_005.png"
+      WARRIOR_TROLL_COOLDOWN, "/troll/WAR_TROLL/WALK/WALK_005.png"
     )
     entity
 
@@ -66,7 +66,7 @@ object EntityFactory {
     val entity = createStandardTroll(world, pos, TrollType.Assassin,
       ASSASSIN_TROLL_HEALTH, ASSASSIN_TROLL_SPEED,
       ASSASSIN_TROLL_DAMAGE, ASSASSIN_TROLL_RANGE,
-      ASSASSIN_TROLL_COOLDOWN, "src/main/resources/troll/ASS_TROLL/WALK/WALK_005.png"
+      ASSASSIN_TROLL_COOLDOWN, "/troll/ASS_TROLL/WALK/WALK_005.png"
     )
     entity
 
@@ -74,7 +74,7 @@ object EntityFactory {
     val entity = createStandardTroll(world, pos, TrollType.Thrower,
       THROWER_TROLL_HEALTH, THROWER_TROLL_SPEED,
       THROWER_TROLL_DAMAGE, THROWER_TROLL_RANGE,
-      THROWER_TROLL_COOLDOWN, "src/main/resources/troll/BASE_TROLL/WALK/WALK_005.png"
+      THROWER_TROLL_COOLDOWN, "/troll/BASE_TROLL/WALK/WALK_005.png"
     )
     entity
 
