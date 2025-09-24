@@ -51,8 +51,35 @@ case class CombatSystem() extends System:
     // Process thrower's fire
     processThrowerProjectiles(world)
 
-  // TODO: GIOVANNI RINCHIUSO aggiungi qui la logica di sparo del mago
-  private def processWizardProjectiles(world: World): Unit = ???
+  private def processWizardProjectiles(world: World): Unit =
+    val wizards = for
+      entity <- world.getEntitiesByType("wizard")
+      wizardType <- world.getComponent[WizardTypeComponent](entity)
+      if wizardType.wizardType != WizardType.Generator && wizardType.wizardType != WizardType.Barrier
+      pos <- world.getComponent[PositionComponent](entity)
+      attack <- world.getComponent[AttackComponent](entity)
+      if !isOnCooldown(entity, world)
+      if hasTargetsInRange(entity, pos.position, attack.range, world)
+    yield (entity, pos.position, attack)
+  
+    wizards.foreach { case (wizard, pos, attack) =>
+      // TODO: GIACOMO FOSCHI aggiungi qui la creazione del proiettile del mago
+      val projectile = world.createEntity()
+  
+      // Applica cooldown al mago
+      world.addComponent(wizard, CooldownComponent(attack.cooldown))
+    }
+  
+  private def hasTargetsInRange(wizardEntity: EntityId, wizardPos: Position, range: Double, world: World): Boolean =
+    world.getEntitiesByType("troll").exists: trollEntity =>
+      world.getComponent[PositionComponent](trollEntity) match
+        case Some(trollPos) =>
+          val distance = calculateDistance(wizardPos, trollPos.position)
+          distance <= range
+        case None => false
+  
+  private def calculateDistance(pos1: Position, pos2: Position): Double =
+    math.sqrt(math.pow(pos1.col - pos2.col, 2) + math.pow(pos1.row - pos2.row, 2))
 
   private def processThrowerProjectiles(world: World): Unit =
     val throwers = for
