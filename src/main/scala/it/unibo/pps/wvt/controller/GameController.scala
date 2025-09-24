@@ -1,46 +1,85 @@
 package it.unibo.pps.wvt.controller
 
-import scala.collection.mutable
 import it.unibo.pps.wvt.engine.*
 import it.unibo.pps.wvt.input.InputSystem
 import it.unibo.pps.wvt.view.ViewController
-import it.unibo.pps.wvt.ecs.core.{System, World}
+import it.unibo.pps.wvt.ecs.core.*
 import it.unibo.pps.wvt.ecs.components.*
+import it.unibo.pps.wvt.ecs.components.WizardType.*
 import it.unibo.pps.wvt.ecs.factories.EntityFactory
 import it.unibo.pps.wvt.ecs.systems.*
+import it.unibo.pps.wvt.utilities.GamePlayConstants.*
 import it.unibo.pps.wvt.utilities.Position
 
 
 class GameController(world: World) {
+
+  case class GameSystemsState(
+                             movement: MovementSystem = MovementSystem(),
+                             combat: CombatSystem = CombatSystem(),
+                             elixir: ElixirSystem = ElixirSystem(),
+                             health: HealthSystem = HealthSystem(ElixirSystem(), Set.empty),
+                             render: RenderSystem = RenderSystem(),
+                             selectedWizardType: Option[WizardType] = None,
+                             currentWave: Int = 1
+                             ) {
+    def updateAll(world: World): GameSystemsState =
+      val updatedElixir = elixir.update(world).asInstanceOf[ElixirSystem]
+      val updatedMovement = movement.update(world).asInstanceOf[MovementSystem]
+      val updatedCombat = combat.update(world).asInstanceOf[CombatSystem]
+      val updatedHealth = health
+        .copy(elixirSystem = updatedElixir)
+        .update(world)
+        .asInstanceOf[HealthSystem]
+      val updatedRender = render.update(world).asInstanceOf[RenderSystem]
+
+      copy(
+        movement = updatedMovement,
+        combat = updatedCombat,
+        elixir = updatedElixir,
+        health = updatedHealth,
+        render = updatedRender
+      )
+
+    def spendElixir(amount: Int): Option[GameSystemsState] =
+      val (newElixirSystem, success) = elixir.spendElixir(amount)
+      if (success)
+        Some(copy(
+          elixir = newElixirSystem,
+          health = health.copy(elixirSystem = newElixirSystem)
+        ))
+      else
+        None
+
+    def selectWizard(wizardType: WizardType): GameSystemsState =
+      copy(selectedWizardType = Some(wizardType))
+
+    def clearWizardSelection: GameSystemsState =
+      copy(selectedWizardType = None)
+
+    def getCurrentElixir: Int = elixir.getCurrentElixir
+
+    def canAfford(cost: Int): Boolean = elixir.canAfford(cost)
+  }
+
   // Core systems
   private val gameEngine: GameEngine = new GameEngineImpl()
   private val eventHandler: EventHandler = EventHandler.create(gameEngine)
   private val inputSystem: InputSystem = InputSystem()
 
-  //ECS Systems
-  private val systems = mutable.Buffer[System]()
-  private val movementSystem = new MovementSystem
-  private val combatSystem = new CombatSystem
-  private val elixirSystem = new ElixirSystem
-  private val healthSystem = HealthSystem(elixirSystem, Set.empty)
-  private val renderSystem = new RenderSystem
-  //Game state
-  private var playerElixir: Int = 100
-  private var selectedWizardType: Option[WizardType] = None
-  private var currentWave: Int = 1
+  // Mutable state
+  private var state: GameSystemsState = GameSystemsState()
 
   def initialize(): Unit =
     gameEngine.initialize(this)
-    systems += movementSystem
-    systems += combatSystem
-    systems += elixirSystem
-    systems += healthSystem
-    systems += renderSystem
     setupEventHandlers()
 
   def update(): Unit =
     if(eventHandler.getCurrentPhase == GamePhase.Playing && !gameEngine.isPaused)
-      systems.foreach(_.update(world))
+      state = state.updateAll(world)
+
+  def getCurrentElixir: Int = state.getCurrentElixir
+  def getRenderSystem: RenderSystem = state.render
 
   def postEvent(event: GameEvent): Unit =
     eventHandler.postEvent(event)
@@ -62,9 +101,9 @@ class GameController(world: World) {
   def getInputSystem: InputSystem = inputSystem
   def getEventHandler: EventHandler = eventHandler
   def getWorld: World = world
-  def getRenderSystem: RenderSystem = renderSystem
 
-  def selectWizard(wizardType: WizardType): Unit = selectedWizardType = Some(wizardType)
+  def selectWizard(wizardType: WizardType): Unit =
+    state = state.selectWizard(wizardType)
 
   def handleMouseClick(x: Int, y: Int): Unit =
     val clickResult = inputSystem.handleMouseClick(x, y)
@@ -75,27 +114,37 @@ class GameController(world: World) {
       ViewController.showError(clickResult.error.get)
 
   def placeWizard(wizardType: WizardType, position: Position): Unit =
-    if (world.getEntityAt(position).isEmpty)
-      val entity = wizardType match
-        case WizardType.Generator => EntityFactory.createGeneratorWizard(world, position)
-        case WizardType.Barrier => EntityFactory.createBarrierWizard(world, position)
-        case WizardType.Wind => EntityFactory.createFireWizard(world, position)
-        case WizardType.Fire => EntityFactory.createFireWizard(world, position)
-        case WizardType.Ice => EntityFactory.createIceWizard(world, position)
-        case _ => throw new NotImplementedError("Wizard type not implemented yet")
-      ViewController.render()
-    else
-      ViewController.showError(s"Cannot place ${wizardType.toString} at $position. Cell is occupied.")
+    val cost = getWizardCost(wizardType)
 
-  def placeTroll(trollType: TrollType, position: Position): Unit =
-    if (world.getEntityAt(position).isEmpty)
-      val entity = trollType match
+    val result = for
+      _ <- Either.cond(world.getEntityAt(position).isEmpty, (), s"Cell at $position is occupied")
+      _ <- Either.cond(state.canAfford(cost), (), s"Insufficient elixir (need $cost, have ${state.getCurrentElixir})")
+    yield
+      val entity = createWizardEntity(wizardType, position)
+
+      state.spendElixir(cost).foreach { newState =>
+        state = newState.clearWizardSelection
+      }
+
+      ViewController.render()
+
+    result.left.foreach { error =>
+      ViewController.showError(s"Cannot place ${wizardType.toString}: $error")
+    }
+
+  def placeTroll(trollType: TrollType, position: Position): Unit = {
+    if (world.getEntityAt(position).isEmpty) {
+      val entity = trollType match {
         case TrollType.Base => EntityFactory.createBaseTroll(world, position)
         case TrollType.Warrior => EntityFactory.createWarriorTroll(world, position)
         case TrollType.Assassin => EntityFactory.createAssassinTroll(world, position)
         case TrollType.Thrower => EntityFactory.createThrowerTroll(world, position)
-        case _ => throw new NotImplementedError("Troll type not implemented yet")
+      }
       ViewController.render()
+    } else {
+      ViewController.showError(s"Cannot place ${trollType.toString} at $position. Cell is occupied.")
+    }
+  }
 
   private def setupEventHandlers(): Unit = {
     eventHandler.registerHandler(classOf[GameEvent.GridClicked]) { (event: GameEvent.GridClicked) =>
@@ -104,29 +153,26 @@ class GameController(world: World) {
   }
 
   private def handleGridClick(position: Position): Unit =
-    selectedWizardType match
+    state.selectedWizardType match
       case Some(wizardType) =>
-        if (canPlaceWizard(position, wizardType))
-          placeWizard(wizardType, position)
-          val cost = getWizardCost(wizardType)
-          playerElixir -= cost
-          selectedWizardType = None
-        else
-          ViewController.showError(s"Cannot place ${wizardType.toString} at $position. " +
-            s"Either the cell is occupied or you lack sufficient elixir.")
+        placeWizard(wizardType, position)
       case None =>
         ViewController.showError("No wizard selected. Please select a wizard to place.")
 
-  private def canPlaceWizard(position: Position, wizardType: WizardType): Boolean =
-    val cost = getWizardCost(wizardType)
-    world.getEntityAt(position).isEmpty && playerElixir >= cost
+  private def createWizardEntity(wizardType: WizardType, position: Position): EntityId =
+    wizardType match
+      case Generator => EntityFactory.createGeneratorWizard(world, position)
+      case Barrier => EntityFactory.createBarrierWizard(world, position)
+      case Wind => EntityFactory.createWindWizard(world, position)
+      case Fire => EntityFactory.createFireWizard(world, position)
+      case Ice => EntityFactory.createIceWizard(world, position)
 
   private def getWizardCost(wizardType: WizardType): Int = wizardType match
-    case WizardType.Generator => 50
-    case WizardType.Wind => 70
-    case WizardType.Barrier => 60
-    case _ => 100
-  //implement the other
+    case Generator => GENERATOR_WIZARD_COST
+    case Barrier => BARRIER_WIZARD_COST
+    case Wind => WIND_WIZARD_COST
+    case Fire => FIRE_WIZARD_COST
+    case Ice => ICE_WIZARD_COST
 
   private def isMenuPhase(phase: GamePhase): Boolean = phase.isMenu || phase == GamePhase.Paused
 }
