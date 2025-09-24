@@ -3,80 +3,62 @@ package it.unibo.pps.wvt.ecs.systems
 import it.unibo.pps.wvt.ecs.core.{System, World}
 import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
-import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 
-class ElixirSystem extends System {
+case class ElixirSystem(
+                         totalElixir: Int = INITIAL_ELIXIR,
+                         lastPeriodicGeneration: Long = System.currentTimeMillis()
+                       ) extends System:
 
-  private val totalElixir: AtomicInteger = AtomicInteger(INITIAL_ELIXIR)
-  private val lastPeriodicGeneration: AtomicLong = AtomicLong(System.currentTimeMillis())
-
-  override def update(world: World): Unit = {
+  override def update(world: World): System =
     updatePeriodicElixirGeneration()
-    updateGeneratorWizardElixir(world)
-  }
+      .updateGeneratorWizardElixir(world)
 
-  /**
-   * Manage periodic elixir generation
-   */
-  private def updatePeriodicElixirGeneration(): Unit =
+  // Manage periodic elixir generation
+  private def updatePeriodicElixirGeneration(): ElixirSystem =
     val currentTime = System.currentTimeMillis()
-    val lastGen = lastPeriodicGeneration.get()
-    if (currentTime - lastGen >= ELIXIR_GENERATION_INTERVAL)
-      if (lastPeriodicGeneration.compareAndSet(lastGen, currentTime))
-        totalElixir.addAndGet(PERIODIC_ELIXIR)
+    if currentTime - lastPeriodicGeneration >= ELIXIR_GENERATION_INTERVAL then
+      copy(
+        totalElixir = totalElixir + PERIODIC_ELIXIR,
+        lastPeriodicGeneration = currentTime
+      )
+    else this
 
-  /**
-   * Manage elixir generation from Generator Wizards
-   */
-  private def updateGeneratorWizardElixir(world: World): Unit =
+  // Manage elixir generation from Generator Wizards
+  private def updateGeneratorWizardElixir(world: World): ElixirSystem =
     val generatorEntities = world.getEntitiesWithTwoComponents[WizardTypeComponent, ElixirGeneratorComponent]
     val currentTime = System.currentTimeMillis()
-    generatorEntities.foreach { entityId =>
+    var updatedSystem = this
+    generatorEntities.foreach: entityId =>
       for
         wizardType <- world.getComponent[WizardTypeComponent](entityId)
         elixirGenerator <- world.getComponent[ElixirGeneratorComponent](entityId)
         cooldownComponent <- world.getComponent[CooldownComponent](entityId).orElse(Some(CooldownComponent(0L)))
       yield
-        if (wizardType.wizardType == WizardType.Generator)
-          if (cooldownComponent.remainingTime <= currentTime)
-            totalElixir.addAndGet(elixirGenerator.elixirPerSecond)
+        if wizardType.wizardType == WizardType.Generator then
+          if cooldownComponent.remainingTime <= currentTime then
+            updatedSystem = updatedSystem.copy(totalElixir = updatedSystem.totalElixir + elixirGenerator.elixirPerSecond)
             val newCooldown = CooldownComponent(currentTime + elixirGenerator.cooldown * 1000)
-            if (world.hasComponent[CooldownComponent](entityId))
+            if world.hasComponent[CooldownComponent](entityId) then
               world.removeComponent[CooldownComponent](entityId)
             world.addComponent(entityId, newCooldown)
-    }
+    updatedSystem
 
-  /**
-   * Remove elixir if enough is available
-   */
-  def spendElixir(amount: Int): Boolean = {
-    val current = totalElixir.get()
-    if (current >= amount) {
-      if (totalElixir.compareAndSet(current, current - amount)) {
-        true
-      } else {
-        spendElixir(amount)
-      }
-    } else {
-      false
-    }
-  }
+  // Remove elixir if enough is available
+  def spendElixir(amount: Int): (ElixirSystem, Boolean) =
+    if totalElixir >= amount then
+      (copy(totalElixir = totalElixir - amount), true)
+    else (this, false)
 
+  // Add elixir to total
+  def addElixir(amount: Int): ElixirSystem =
+    copy(totalElixir = totalElixir + amount)
 
+  // Get current amount of elixir
+  def getCurrentElixir: Int = totalElixir
 
-  /**
-   * Gives the current amount of elixir
-   */
-  def getCurrentElixir: Int = totalElixir.get()
+  // Check if can afford amount
+  def canAfford(amount: Int): Boolean = totalElixir >= amount
 
-
-  def canAfford(amount: Int): Boolean = totalElixir.get() >= amount
-
-  /**
-   * System reset
-   */
-  def reset(): Unit = {
-    totalElixir.set(INITIAL_ELIXIR)
-    lastPeriodicGeneration.set(System.currentTimeMillis())
-  }
-}
+  // System reset
+  def reset(): ElixirSystem =
+    copy(totalElixir = INITIAL_ELIXIR, lastPeriodicGeneration = System.currentTimeMillis())
