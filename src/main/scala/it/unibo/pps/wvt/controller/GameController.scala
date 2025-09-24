@@ -20,6 +20,9 @@ class GameController(world: World) {
   //ECS Systems
   private val systems = mutable.Buffer[System]()
   private val movementSystem = new MovementSystem
+  private val combatSystem = new CombatSystem
+  private val elixirSystem = new ElixirSystem
+  private val healthSystem = HealthSystem(elixirSystem, Set.empty)
   private val renderSystem = new RenderSystem
   //Game state
   private var playerElixir: Int = 100
@@ -29,6 +32,9 @@ class GameController(world: World) {
   def initialize(): Unit =
     gameEngine.initialize(this)
     systems += movementSystem
+    systems += combatSystem
+    systems += elixirSystem
+    systems += healthSystem
     systems += renderSystem
     setupEventHandlers()
 

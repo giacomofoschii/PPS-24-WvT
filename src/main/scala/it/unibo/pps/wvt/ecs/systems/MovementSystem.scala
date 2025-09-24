@@ -5,11 +5,11 @@ import it.unibo.pps.wvt.ecs.components.TrollType.*
 import it.unibo.pps.wvt.ecs.core.*
 import it.unibo.pps.wvt.utilities.Position
 
-class MovementSystem extends System {
+case class MovementSystem() extends System {
 
   private type MovementStrategy = (Position, Double, EntityId, World) => Option[Position]
 
-  override def update(world: World): Unit =
+  override def update(world: World): System =
     val movableEntities = world.getEntitiesWithTwoComponents[PositionComponent, MovementComponent]
 
     movableEntities
@@ -18,6 +18,7 @@ class MovementSystem extends System {
       .foreach { case (entity, newPos) =>
         world.addComponent(entity, PositionComponent(newPos))
       }
+    this
 
   private def calculateNewPosition(entity: EntityId, world: World): Option[Position] =
     for
