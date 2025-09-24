@@ -26,7 +26,7 @@ case class CooldownComponent(remainingTime: Long) extends Component
 // UI components
 case class SpriteComponent(spritePath: String) extends Component
 
-// Types components
+// Entities types components
 sealed trait EntityTypeComponent extends Component
 case class WizardTypeComponent(wizardType: WizardType) extends EntityTypeComponent
 case class TrollTypeComponent(trollType: TrollType) extends EntityTypeComponent
