@@ -8,7 +8,7 @@ import it.unibo.pps.wvt.utilities.Position
 
 import scala.util.Random
 
-case class CombatSystem() extends System {
+case class CombatSystem() extends System:
 
   type TargetSelector = (EntityId, World)
   type DamageModifier = Int => Int
@@ -35,17 +35,14 @@ case class CombatSystem() extends System {
       if !isOnCooldown(entity, world)
     yield (entity, pos.position, attack)
 
-    meleeAttackers.foreach { case (attacker, pos, attack) =>
+    meleeAttackers.foreach: (attacker, pos, attack) =>
       val targetPos = Position(pos.row, pos.col - 1)
 
-      world.getEntityAt(targetPos).foreach { target =>
-        world.getComponent[WizardTypeComponent](target).foreach { _ =>
+      world.getEntityAt(targetPos).foreach: target =>
+        world.getComponent[WizardTypeComponent](target).foreach: _ =>
           val damage = calculateMeleeDamage(attacker, target, attack.damage, world)
           world.addComponent(target, DamageComponent(damage, attacker))
           world.addComponent(attacker, CooldownComponent(attack.cooldown))
-        }
-      }
-    }
 
   private def processRangedAttacks(world: World): Unit =
     // Process wizard's fire
@@ -66,22 +63,21 @@ case class CombatSystem() extends System {
       if pos.position.col <= 6
       attack <- world.getComponent[AttackComponent](entity)
       if !isOnCooldown(entity, world)
-    yield (entity, pos.position, attack) 
-    
-    throwers.foreach { case (thrower, pos, attack) => 
+    yield (entity, pos.position, attack)
+
+    throwers.foreach: (thrower, pos, attack) =>
       // TODO: GIACOMO FOSCHI aggiungi qui la creazione del proiettile
       val projectile = world.createEntity()
-      
+
       world.addComponent(thrower, CooldownComponent(attack.cooldown))
-    }
 
   private def calculateMeleeDamage(attacker: EntityId, target: EntityId, baseDamage: Int,
                                    world: World): Int =
-    val attackerModifiers = world.getComponent[TrollTypeComponent](attacker).map { troll =>
-        troll.trollType match
-          case Assassin if Random.nextDouble() < 0.05 => Seq(ASSASSIN_TROLL_DAMAGE * 2)
-          case _ => Seq.empty
-      }.getOrElse(Seq.empty)
+    val attackerModifiers = world.getComponent[TrollTypeComponent](attacker).map: troll =>
+      troll.trollType match
+        case Assassin if Random.nextDouble() < 0.05 => Seq(ASSASSIN_TROLL_DAMAGE * 2)
+        case _ => Seq.empty
+    .getOrElse(Seq.empty)
 
     attackerModifiers.foldLeft(baseDamage)(_ * _)
 
@@ -89,13 +85,10 @@ case class CombatSystem() extends System {
     world.getComponent[CooldownComponent](entity).exists(_.remainingTime > 0)
 
   private def updateCooldowns(world: World): Unit =
-    world.getEntitiesWithComponent[CooldownComponent].foreach { entity =>
-      world.getComponent[CooldownComponent](entity).foreach { cooldown =>
+    world.getEntitiesWithComponent[CooldownComponent].foreach: entity =>
+      world.getComponent[CooldownComponent](entity).foreach: cooldown =>
         val newTime = (cooldown.remainingTime - 16L).max(0L)
-        if (newTime > 0)
+        if newTime > 0 then
           world.addComponent(entity, CooldownComponent(newTime))
         else
           world.removeComponent[CooldownComponent](entity)
-      }
-    }
-}

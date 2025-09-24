@@ -4,14 +4,13 @@ import it.unibo.pps.wvt.utilities.GameConstants.*
 import java.util.concurrent.*
 import scala.util.Try
 
-trait GameLoop {
+trait GameLoop:
   def start(): Unit
   def stop(): Unit
   def isRunning: Boolean
   def getCurrentFps: Int
-}
 
-class GameLoopImpl(engine: GameEngine) extends GameLoop {
+class GameLoopImpl(engine: GameEngine) extends GameLoop:
 
   private var scheduler: Option[ScheduledExecutorService] = None
   private var loopState: LoopState = LoopState()
@@ -24,7 +23,7 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
                                 frameCount: Int = 0,
                                 fpsTimer: Long = 0L,
                                 currentFps: Int = 0
-                              ) {
+                              ):
     def startRunning: LoopState = copy(
       running = true,
       lastUpdate = System.nanoTime(),
@@ -47,34 +46,31 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
     def incrementFrameCount: LoopState = copy(frameCount = frameCount + 1)
 
     def updateFps(currentTimeMs: Long): LoopState =
-      if (currentTimeMs - fpsTimer >= 1000)
+      if currentTimeMs - fpsTimer >= 1000 then
         copy(
           currentFps = frameCount,
           frameCount = 0,
           fpsTimer = currentTimeMs
         )
       else this
-  }
 
   private val fixedTimeStep: Long = FRAME_TIME_MILLIS
 
   override def start(): Unit =
-    if (!loopState.running)
+    if !loopState.running then
       loopState = loopState.startRunning
 
-      val executor = Executors.newSingleThreadScheduledExecutor(r => {
+      val executor = Executors.newSingleThreadScheduledExecutor: r =>
         val thread = new Thread(r, "GameLoop-Thread")
         thread.setDaemon(true)
         thread.setPriority(Thread.MAX_PRIORITY)
         thread
-      })
 
       scheduler = Some(executor)
 
       executor.scheduleAtFixedRate(
-        () => Try(gameLoopTick()).recover {
-          case ex => println(s"Exception in game loop: ${ex.getMessage}")
-        },
+        () => Try(gameLoopTick()).recover:
+          case ex => println(s"Exception in game loop: ${ex.getMessage}"),
         0,
         fixedTimeStep,
         TimeUnit.MILLISECONDS
@@ -83,20 +79,18 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
       println(s"Game loop started with target FPS: $TARGET_FPS")
 
   override def stop(): Unit =
-    if (loopState.running)
+    if loopState.running then
       loopState = loopState.stopRunning
 
-      scheduler.foreach { exec =>
+      scheduler.foreach: exec =>
         exec.shutdown()
-        Try {
-          if (!exec.awaitTermination(5, TimeUnit.SECONDS))
+        Try:
+          if !exec.awaitTermination(5, TimeUnit.SECONDS) then
             exec.shutdownNow()
-        }.recover {
+        .recover:
           case _: InterruptedException =>
             exec.shutdownNow()
             Thread.currentThread().interrupt()
-        }
-      }
 
       scheduler = None
       println("Game loop stopped")
@@ -106,12 +100,12 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
   override def getCurrentFps: Int = loopState.currentFps
 
   private def gameLoopTick(): Unit =
-    if (loopState.running && engine.isRunning)
+    if loopState.running && engine.isRunning then
       val currentTime = System.nanoTime()
       loopState = loopState.updateFrame(currentTime)
 
       // Fixed time step update loop
-      while (loopState.accumulator >= fixedTimeStep)
+      while loopState.accumulator >= fixedTimeStep do
         engine.update(fixedTimeStep)
         loopState = loopState.consumeTimeStep(fixedTimeStep)
 
@@ -122,17 +116,14 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop {
     loopState = loopState.incrementFrameCount
     val currentTimeMs = System.currentTimeMillis()
     loopState = loopState.updateFps(currentTimeMs)
-}
 
-object GameLoop {
+object GameLoop:
   def create(engine: GameEngine): GameLoop = new GameLoopImpl(engine)
 
   // Utility functions for timing
-  object TimingUtils {
+  object TimingUtils:
     def calculateDelta(lastTime: Long, currentTime: Long): Long =
       (currentTime - lastTime) / 1_000_000L
 
     def interpolate(accumulator: Long, timeStep: Long): Double =
       accumulator.toDouble / timeStep.toDouble
-  }
-}

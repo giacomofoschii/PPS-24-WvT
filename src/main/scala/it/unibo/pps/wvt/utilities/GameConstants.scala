@@ -1,12 +1,12 @@
 package it.unibo.pps.wvt.utilities
 
-object GameConstants {
+object GameConstants:
   val TARGET_FPS: Int = 60
   val FRAME_TIME_NANOS: Long = 1_000_000_000L / TARGET_FPS
   val FRAME_TIME_MILLIS: Long = 1000L / TARGET_FPS
-}
 
-object GamePlayConstants {
+
+object GamePlayConstants:
   // Elixir generation parameters
   val INITIAL_ELIXIR: Int = 200
   val PERIODIC_ELIXIR: Int = 100
@@ -71,9 +71,8 @@ object GamePlayConstants {
   val ICE_WIZARD_RANGE: Int = 3
 
   val PROJECTILE_SPEED: Double = 3.0
-}
 
-object ViewConstants {
+object ViewConstants:
   //Grid dimensions
   val GRID_ROWS: Int = 5
   val GRID_COLS: Int = 9
@@ -90,4 +89,3 @@ object ViewConstants {
   val TITLE_SCALE_FACTOR = 0.4
 
   val PADDING_MENU = 15
-}

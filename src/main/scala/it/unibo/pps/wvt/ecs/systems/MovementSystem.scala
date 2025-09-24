@@ -5,7 +5,7 @@ import it.unibo.pps.wvt.ecs.components.TrollType.*
 import it.unibo.pps.wvt.ecs.core.*
 import it.unibo.pps.wvt.utilities.Position
 
-case class MovementSystem() extends System {
+case class MovementSystem() extends System:
 
   private type MovementStrategy = (Position, Double, EntityId, World) => Option[Position]
 
@@ -15,9 +15,8 @@ case class MovementSystem() extends System {
     movableEntities
       .map(entity => (entity, calculateNewPosition(entity, world)))
       .collect { case (entity, Some(newPos)) => (entity, newPos) }
-      .foreach { case (entity, newPos) =>
+      .foreach: (entity, newPos) =>
         world.addComponent(entity, PositionComponent(newPos))
-      }
     this
 
   private def calculateNewPosition(entity: EntityId, world: World): Option[Position] =
@@ -46,20 +45,18 @@ case class MovementSystem() extends System {
     )
 
   private val zigzagMovement: MovementStrategy = (pos, speed, _, _) =>
-    val zigzag = if (pos.col % 2 == 0) -1 else 1
+    val zigzag = if pos.col % 2 == 0 then -1 else 1
     val newRow = (pos.row + zigzag).max(0).min(4)
     Option.when(pos.col > 0 && speed > 0)(
       Position(newRow, (pos.col - math.ceil(speed).toInt).max(0))
     )
-    
+
   private def conditionalMovement(stopColumn: Int): MovementStrategy = (pos, speed, _, _) =>
     Option.when(pos.col > stopColumn && speed > 0)(
       Position(pos.row, (pos.col - math.ceil(speed).toInt).max(stopColumn))
     )
-    
+
   private val defaultMovementStrategy: MovementStrategy = (_, _, _, _) => None
-  
+
   private def isValidPosition(pos: Position, entity: EntityId, world: World): Boolean =
     pos.isValid && world.getEntityAt(pos).forall(_ == entity)
-
-}

@@ -4,7 +4,7 @@ import it.unibo.pps.wvt.engine.*
 import it.unibo.pps.wvt.view.{ViewController, ViewState}
 import scala.util.{Try, Success, Failure}
 
-class EventHandler(engine: GameEngine) {
+class EventHandler(engine: GameEngine):
   private val eventQueue: EventQueue = new EventQueue()
   private var eventHandlers: Map[Class[_], GameEvent => Unit] = Map.empty
   private var currentPhase: GamePhase = GamePhase.MainMenu
@@ -22,14 +22,14 @@ class EventHandler(engine: GameEngine) {
     eventQueue.dequeueAll().foreach(processEvent)
 
   private def processEvent(event: GameEvent): Unit =
-    val result = Try {
-      event match {
+    val result = Try:
+      event match
         case GameEvent.ShowMainMenu =>
           handleMenuTransition(GamePhase.MainMenu, ViewState.MainMenu)
 
         case GameEvent.ShowGameView =>
           handleMenuTransition(GamePhase.Playing, ViewState.GameView)
-          if (!engine.isRunning) engine.start()
+          if !engine.isRunning then engine.start()
 
         case GameEvent.ShowInfoMenu =>
           handleMenuTransition(GamePhase.InfoMenu, ViewState.InfoMenu)
@@ -50,16 +50,13 @@ class EventHandler(engine: GameEngine) {
         case _ =>
           // Fallback to registered handlers
           eventHandlers.get(event.getClass).foreach(_(event))
-      }
-    }
 
-    result match {
+    result match
       case Failure(exception) =>
         println(s"Error processing event $event: ${exception.getMessage}")
         exception.printStackTrace()
       case Success(_) =>
-        // Event processed successfully
-    }
+  // Event processed successfully
 
   def clearQueue(): Unit =
     eventQueue.clear()
@@ -67,10 +64,9 @@ class EventHandler(engine: GameEngine) {
   def getCurrentPhase: GamePhase = currentPhase
 
   private def registerGameEventHandlers(): Unit =
-    registerHandler(classOf[GameEvent.GridClicked]) {
+    registerHandler(classOf[GameEvent.GridClicked]):
       case GameEvent.GridClicked(pos, _, _) =>
         println(s"Grid clicked at $pos")
-    }
 
   private def handleMenuTransition(newPhase: GamePhase, viewState: ViewState = null): Unit =
     val oldPhase = currentPhase
@@ -90,9 +86,8 @@ class EventHandler(engine: GameEngine) {
         println("Starting game...")
       case _ =>
         println(s"Transitioning from $oldPhase to $newPhase")
-}
 
-object EventHandler {
+object EventHandler:
   def create(engine: GameEngine): EventHandler =
     val handler = new EventHandler(engine)
     handler.initialize()
@@ -102,5 +97,4 @@ object EventHandler {
     event => handlers.foreach(_(event))
 
   def conditional(predicate: GameEvent => Boolean)(handler: GameEvent => Unit): GameEvent => Unit =
-    event => if (predicate(event)) handler(event)
-}
+    event => if predicate(event) then handler(event)

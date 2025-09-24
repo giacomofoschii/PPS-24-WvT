@@ -3,7 +3,7 @@ package it.unibo.pps.wvt.controller
 import it.unibo.pps.wvt.utilities.Position
 import scala.collection.immutable.Queue
 
-enum GameEvent {
+enum GameEvent:
   // System events
   case Initialize
   case Start
@@ -29,13 +29,12 @@ enum GameEvent {
     case Pause | Resume => 1
     case ShowMainMenu | ShowGameView | ShowInfoMenu => 2
     case _ => 3
-}
 
-class EventQueue(private val maxQueueSize: Int = 1000) {
+class EventQueue(private val maxQueueSize: Int = 1000):
   private var queue: Queue[GameEvent] = Queue.empty
 
   def enqueue(event: GameEvent): Boolean =
-    if (queue.size < maxQueueSize)
+    if queue.size < maxQueueSize then
       queue = queue.enqueue(event)
       true
     else
@@ -43,10 +42,9 @@ class EventQueue(private val maxQueueSize: Int = 1000) {
       false
 
   def dequeue(): Option[GameEvent] =
-    queue.dequeueOption.map { case (event, newQueue) =>
+    queue.dequeueOption.map: (event, newQueue) =>
       queue = newQueue
       event
-    }
 
   def dequeueAll(): List[GameEvent] =
     val events = queue.toList
@@ -67,4 +65,3 @@ class EventQueue(private val maxQueueSize: Int = 1000) {
 
   def prioritize(): Unit =
     queue = Queue.from(queue.toList.sortBy(_.priority))
-}

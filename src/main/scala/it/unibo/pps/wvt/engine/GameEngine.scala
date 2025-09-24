@@ -2,7 +2,7 @@ package it.unibo.pps.wvt.engine
 
 import it.unibo.pps.wvt.controller.GameController
 
-trait GameEngine {
+trait GameEngine:
   def initialize(controller: GameController): Unit
   def start(): Unit
   def stop(): Unit
@@ -13,9 +13,8 @@ trait GameEngine {
   def isPaused: Boolean
   def currentState: GameState
   def updatePhase(phase: GamePhase): Unit
-}
 
-class GameEngineImpl extends GameEngine {
+class GameEngineImpl extends GameEngine:
   private var state: EngineState = EngineState()
 
   // Case class for internal state
@@ -25,13 +24,12 @@ class GameEngineImpl extends GameEngine {
                                   gameState: GameState = GameState.initial(),
                                   controller: Option[GameController] = None,
                                   gameLoop: Option[GameLoop] = None
-                                ) {
+                                ):
     def withRunning(running: Boolean): EngineState = copy(isRunning = running)
     def withPaused(paused: Boolean): EngineState = copy(isPaused = paused)
     def withGameState(newState: GameState): EngineState = copy(gameState = newState)
     def withController(ctrl: GameController): EngineState = copy(controller = Some(ctrl))
     def withGameLoop(loop: GameLoop): EngineState = copy(gameLoop = Some(loop))
-  }
 
   override def initialize(controller: GameController): Unit =
     state = state
@@ -40,26 +38,26 @@ class GameEngineImpl extends GameEngine {
     println("Game Engine initialized")
 
   override def start(): Unit =
-    if (!state.isRunning)
+    if !state.isRunning then
       state = state.withRunning(true)
       state.gameLoop.foreach(_.start())
       println("Game Engine started")
 
   override def stop(): Unit =
-    if (state.isRunning)
+    if state.isRunning then
       state = state.withRunning(false).withPaused(false)
       state.gameLoop.foreach(_.stop())
       println("Game Engine stopped")
 
   override def pause(): Unit =
-    if (state.isRunning && !state.isPaused)
+    if state.isRunning && !state.isPaused then
       state = state
         .withPaused(true)
         .withGameState(state.gameState.copy(isPaused = true))
       println("Game Engine paused")
 
   override def resume(): Unit =
-    if (state.isRunning && state.isPaused)
+    if state.isRunning && state.isPaused then
       state = state
         .withPaused(false)
         .withGameState(state.gameState.copy(isPaused = false))
@@ -68,7 +66,7 @@ class GameEngineImpl extends GameEngine {
   override def update(deltaTime: Long): Unit =
     state.controller.foreach(_.getEventHandler.processEvents())
 
-    if (state.isRunning && !state.isPaused)
+    if state.isRunning && !state.isPaused then
       state.controller.foreach(_.update())
       state = state.withGameState(state.gameState.updateTime(deltaTime))
 
@@ -78,9 +76,8 @@ class GameEngineImpl extends GameEngine {
   override def isRunning: Boolean = state.isRunning
   override def isPaused: Boolean = state.isPaused
   override def currentState: GameState = state.gameState
-}
 
-object GameEngine {
+object GameEngine:
   private var instance: Option[GameEngine] = None
 
   def create(controller: GameController): GameEngine =
@@ -90,4 +87,3 @@ object GameEngine {
     engine
 
   def getInstance: Option[GameEngine] = instance
-}

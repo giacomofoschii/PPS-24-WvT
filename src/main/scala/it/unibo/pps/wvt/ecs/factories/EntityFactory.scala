@@ -6,7 +6,7 @@ import it.unibo.pps.wvt.ecs.components.TrollType.*
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
 import it.unibo.pps.wvt.utilities.Position
 
-object EntityFactory {
+object EntityFactory:
 
   // WIZARD IMPLEMENTATIONS
 
@@ -43,7 +43,7 @@ object EntityFactory {
     world.addComponent(entity, SpriteComponent(spritePath))
     world.addComponent(entity, WizardTypeComponent(wizardType))
     entity
-  
+
   // TROLL IMPLEMENTATIONS
 
   def createBaseTroll(world: World, pos: Position): EntityId =
@@ -93,5 +93,3 @@ object EntityFactory {
     ))
     world.addComponent(entity, SpriteComponent(spritePath))
     entity
-  
-}
