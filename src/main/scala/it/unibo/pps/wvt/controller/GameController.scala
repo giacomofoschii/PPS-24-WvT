@@ -7,7 +7,7 @@ import it.unibo.pps.wvt.view.ViewController
 import it.unibo.pps.wvt.ecs.core.{System, World}
 import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.factories.EntityFactory
-import it.unibo.pps.wvt.ecs.systems.RenderSystem
+import it.unibo.pps.wvt.ecs.systems.*
 import it.unibo.pps.wvt.utilities.Position
 
 
@@ -19,8 +19,8 @@ class GameController(world: World) {
 
   //ECS Systems
   private val systems = mutable.Buffer[System]()
-  private val renderSystem = new RenderSystem()
-
+  private val movementSystem = new MovementSystem
+  private val renderSystem = new RenderSystem
   //Game state
   private var playerElixir: Int = 100
   private var selectedWizardType: Option[WizardType] = None
@@ -28,6 +28,7 @@ class GameController(world: World) {
 
   def initialize(): Unit =
     gameEngine.initialize(this)
+    systems += movementSystem
     systems += renderSystem
     setupEventHandlers()
 
@@ -83,10 +84,10 @@ class GameController(world: World) {
   def placeTroll(trollType: TrollType, position: Position): Unit =
     if (world.getEntityAt(position).isEmpty)
       val entity = trollType match
-        case TrollType.Base => EntityFactory.createBaseTroll(world, position, TrollType.Base, 200, 2.0, "png")
-        case TrollType.Warrior => EntityFactory.createWarriorTroll()
-        case TrollType.Assassin => EntityFactory.createAssassinTroll()
-        case TrollType.Thrower => EntityFactory.createThrowerTroll()
+        case TrollType.Base => EntityFactory.createBaseTroll(world, position)
+        case TrollType.Warrior => EntityFactory.createWarriorTroll(world, position)
+        case TrollType.Assassin => EntityFactory.createAssassinTroll(world, position)
+        case TrollType.Thrower => EntityFactory.createThrowerTroll(world, position)
         case _ => throw new NotImplementedError("Troll type not implemented yet")
       ViewController.render()
 

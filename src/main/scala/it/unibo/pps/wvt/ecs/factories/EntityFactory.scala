@@ -1,7 +1,9 @@
 package it.unibo.pps.wvt.ecs.factories
 
-import it.unibo.pps.wvt.ecs.core.{World, EntityId}
-import it.unibo.pps.wvt.ecs.components._
+import it.unibo.pps.wvt.ecs.core.{EntityId, World}
+import it.unibo.pps.wvt.ecs.components.*
+import it.unibo.pps.wvt.ecs.components.TrollType.*
+import it.unibo.pps.wvt.utilities.GamePlayConstants.*
 import it.unibo.pps.wvt.utilities.Position
 
 object EntityFactory {
@@ -30,21 +32,39 @@ object EntityFactory {
     world.addComponent(entity, AttackComponent(10, 2.0, 1000))
     entity
   
-  
+  // TROLL IMPLEMENTATIONS
 
-  def createBaseTroll(world: World, position: Position, trollType: TrollType,
-                      health: Int, speed: Double, spritePath: String): EntityId =
-    val entity = world.createEntity()
-    world.addComponent(entity, PositionComponent(position))
-    world.addComponent(entity, HealthComponent(health, health))
-    world.addComponent(entity, MovementComponent(speed))
-    world.addComponent(entity, SpriteComponent(spritePath))
-    world.addComponent(entity, TrollTypeComponent(trollType))
+  def createBaseTroll(world: World, pos: Position): EntityId =
+    val entity = createStandardTroll(world, pos, TrollType.Base,
+      BASE_TROLL_HEALTH, BASE_TROLL_SPEED,
+      BASE_TROLL_DAMAGE, BASE_TROLL_RANGE,
+      BASE_TROLL_COOLDOWN, "src/main/resources/troll/BASE_TROLL/WALK/WALK_005.png"
+    )
     entity
 
-  def createWarriorTroll(): EntityId = ???
-  def createAssassinTroll(): EntityId = ???
-  def createThrowerTroll(): EntityId = ???
+  def createWarriorTroll(world: World, pos: Position): EntityId =
+    val entity = createStandardTroll(world, pos, TrollType.Warrior,
+      WARRIOR_TROLL_HEALTH, WARRIOR_TROLL_SPEED,
+      WARRIOR_TROLL_DAMAGE, WARRIOR_TROLL_RANGE,
+      WARRIOR_TROLL_COOLDOWN, "src/main/resources/troll/WAR_TROLL/WALK/WALK_005.png"
+    )
+    entity
+
+  def createAssassinTroll(world: World, pos: Position): EntityId =
+    val entity = createStandardTroll(world, pos, TrollType.Assassin,
+      ASSASSIN_TROLL_HEALTH, ASSASSIN_TROLL_SPEED,
+      ASSASSIN_TROLL_DAMAGE, ASSASSIN_TROLL_RANGE,
+      ASSASSIN_TROLL_COOLDOWN, "src/main/resources/troll/ASS_TROLL/WALK/WALK_005.png"
+    )
+    entity
+
+  def createThrowerTroll(world: World, pos: Position): EntityId =
+    val entity = createStandardTroll(world, pos, TrollType.Thrower,
+      THROWER_TROLL_HEALTH, THROWER_TROLL_SPEED,
+      THROWER_TROLL_DAMAGE, THROWER_TROLL_RANGE,
+      THROWER_TROLL_COOLDOWN, "src/main/resources/troll/BASE_TROLL/WALK/WALK_005.png"
+    )
+    entity
 
   private def createBaseWizard(world: World, position: Position, wizardType: WizardType,
                                health: Int, cost: Int, spritePath: String): EntityId =
@@ -54,6 +74,23 @@ object EntityFactory {
     world.addComponent(entity, CostComponent(cost))
     world.addComponent(entity, SpriteComponent(spritePath))
     world.addComponent(entity, WizardTypeComponent(wizardType))
+    entity
+
+
+  private def createStandardTroll(world: World, pos: Position, tType: TrollType,
+                                  health: Int, speed: Double, damage: Int,
+                                  range: Double, cooldown: Long, spritePath: String): EntityId =
+    val entity = world.createEntity()
+    world.addComponent(entity, PositionComponent(pos))
+    world.addComponent(entity, TrollTypeComponent(tType))
+    world.addComponent(entity, HealthComponent(health, health))
+    world.addComponent(entity, MovementComponent(speed))
+    world.addComponent(entity, AttackComponent(
+      damage = damage,
+      range = range,
+      cooldown = cooldown
+    ))
+    world.addComponent(entity, SpriteComponent(spritePath))
     entity
   
 }

@@ -1,9 +1,8 @@
 package it.unibo.pps.wvt.ecs.systems
 
-import it.unibo.pps.wvt.utilities.ViewConstants.{GRID_COLS, GRID_ROWS}
-import it.unibo.pps.wvt.utilities.{GridMapper, Position}
+import it.unibo.pps.wvt.utilities.*
 import it.unibo.pps.wvt.ecs.components.*
-import it.unibo.pps.wvt.ecs.core.{System, World}
+import it.unibo.pps.wvt.ecs.core.*
 import it.unibo.pps.wvt.view.GameView
 
 class RenderSystem extends System{

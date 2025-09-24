@@ -242,10 +242,10 @@ object InfoMenu {
 
   private def createTrollsView(): GridPane =
     val cards = Seq(
-      ("Base",     "♥ 50   ✖ 6 → 2", "Base", "/base.png", Seq(("\u2665","50"),("\u2716","6"),("\u2192","2"))),
-      ("Warrior",  "♥ 40   ✖ 8 → 2", "Slow but tough", "/warriorTroll.png", Seq(("\u2665","40"),("\u2716","8"),("\u2192","2"))),
-      ("Assassin", "♥ 20   ✖ 15 → 4","Fast killer", "/assassin.png", Seq(("\u2665","20"),("\u2716","15"),("\u2192","4"))),
-      ("Thrower",  "♥ 25   ✖ 10 → 3","Ranged", "/thrower.png", Seq(("\u2665","25"),("\u2716","10"),("\u2192","3")))
+      ("Base",     "♥ 50   ✖ 6 → 2", "Base", "troll/BASE_TROLL/WALK/WALK_005.png", Seq(("\u2665","50"),("\u2716","6"),("\u2192","2"))),
+      ("Warrior",  "♥ 40   ✖ 8 → 2", "Slow but tough", "troll/WAR_TROLL/WALK/WALK_005.png", Seq(("\u2665","40"),("\u2716","8"),("\u2192","2"))),
+      ("Assassin", "♥ 20   ✖ 15 → 4","Fast killer", "troll/ASS_TROLL/WALK/WALK_005.png", Seq(("\u2665","20"),("\u2716","15"),("\u2192","4"))),
+      ("Thrower",  "♥ 25   ✖ 10 → 3","Ranged", "troll/BASE_TROLL/WALK/WALK_005.png", Seq(("\u2665","25"),("\u2716","10"),("\u2192","3")))
     )
     createGrid(cards, cols = 4)
 

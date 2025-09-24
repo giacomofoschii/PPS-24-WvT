@@ -17,23 +17,31 @@ object GamePlayConstants {
 
   // Troll parameters
   val BASE_TROLL_HEALTH: Int = 100
-  val BASE_TROLL_SPEED: Int = 2
+  val BASE_TROLL_SPEED: Double = 2.0
   val BASE_TROLL_DAMAGE: Int = 20
+  val BASE_TROLL_RANGE: Double = 1.0
+  val BASE_TROLL_COOLDOWN: Long = 1000L
   val BASE_TROLL_REWARD: Int = 25
 
   val WARRIOR_TROLL_HEALTH: Int = 200
-  val WARRIOR_TROLL_SPEED: Int = 1
+  val WARRIOR_TROLL_SPEED: Double = 1.0
   val WARRIOR_TROLL_DAMAGE: Int = 40
+  val WARRIOR_TROLL_RANGE: Double = 1.0
+  val WARRIOR_TROLL_COOLDOWN: Long = 1500L
   val WARRIOR_TROLL_REWARD: Int = 75
 
   val ASSASSIN_TROLL_HEALTH: Int = 50
-  val ASSASSIN_TROLL_SPEED: Int = 3
+  val ASSASSIN_TROLL_SPEED: Double = 3.0
   val ASSASSIN_TROLL_DAMAGE: Int = 60
+  val ASSASSIN_TROLL_RANGE: Double = 1.5
+  val ASSASSIN_TROLL_COOLDOWN: Long = 800L
   val ASSASSIN_TROLL_REWARD: Int = 100
 
   val THROWER_TROLL_HEALTH: Int = 75
-  val THROWER_TROLL_SPEED: Int = 2
+  val THROWER_TROLL_SPEED: Double = 2.0
   val THROWER_TROLL_DAMAGE: Int = 30
+  val THROWER_TROLL_RANGE: Double = 5.0
+  val THROWER_TROLL_COOLDOWN: Long = 2000L
   val THROWER_TROLL_REWARD: Int = 125
 
   val GENERATOR_WIZARD_HEALTH: Int = 150
@@ -62,7 +70,7 @@ object GamePlayConstants {
   val ICE_WIZARD_ATTACK_DAMAGE: Int = 30
   val ICE_WIZARD_RANGE: Int = 3
 
-  val PROJECTILE_SPEED: Int = 3
+  val PROJECTILE_SPEED: Double = 3.0
 }
 
 object ViewConstants {
