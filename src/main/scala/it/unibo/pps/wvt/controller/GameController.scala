@@ -71,9 +71,10 @@ class GameController(world: World) {
     if (world.getEntityAt(position).isEmpty)
       val entity = wizardType match
         case WizardType.Generator => EntityFactory.createGeneratorWizard(world, position)
-        case WizardType.Barrier => EntityFactory.createBarrierWizard()
-        case WizardType.Wind => EntityFactory.createFireWizard()
-        //missing fire and ice wizards
+        case WizardType.Barrier => EntityFactory.createBarrierWizard(world, position)
+        case WizardType.Wind => EntityFactory.createFireWizard(world, position)
+        case WizardType.Fire => EntityFactory.createFireWizard(world, position)
+        case WizardType.Ice => EntityFactory.createIceWizard(world, position)
         case _ => throw new NotImplementedError("Wizard type not implemented yet")
       ViewController.render()
     else

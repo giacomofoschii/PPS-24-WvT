@@ -14,14 +14,21 @@ object EntityFactory {
   def createWindWizard(world: World, position: Position): EntityId =
     val entity = createBaseWizard(world, position, WizardType.Wind, 80, 40, "/wind_wizard.png")
     world.addComponent(entity, AttackComponent(15, 3.0, 2000))
-    world.addComponent(entity, CooldownComponent(0))
     entity
 
-  def createBarrierWizard(): EntityId = ???
+  def createBarrierWizard(world: World, position: Position): EntityId =
+    val entity = createBaseWizard(world, position, WizardType.Barrier, 120, 60, "/barrier_wizard.png")
+    entity
 
-  def createFireWizard(): EntityId = ???
+  def createFireWizard(world: World, position: Position): EntityId =
+    val entity = createBaseWizard(world, position, WizardType.Fire, 90, 45, "/fire_wizard.png")
+    world.addComponent(entity, AttackComponent(20, 2.5, 1500))
+    entity
 
-  def createIceWizard(): EntityId = ???
+  def createIceWizard(world: World, position: Position): EntityId =
+    val entity = createBaseWizard(world, position, WizardType.Ice, 85, 42, "/ice_wizard.png")
+    world.addComponent(entity, AttackComponent(10, 2.0, 1000))
+    entity
   
   
 
