@@ -11,18 +11,17 @@ import it.unibo.pps.wvt.ecs.systems.*
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
 import it.unibo.pps.wvt.utilities.Position
 
-
-class GameController(world: World) {
+class GameController(world: World):
 
   case class GameSystemsState(
-                             movement: MovementSystem = MovementSystem(),
-                             combat: CombatSystem = CombatSystem(),
-                             elixir: ElixirSystem = ElixirSystem(),
-                             health: HealthSystem = HealthSystem(ElixirSystem(), Set.empty),
-                             render: RenderSystem = RenderSystem(),
-                             selectedWizardType: Option[WizardType] = None,
-                             currentWave: Int = 1
-                             ) {
+                               movement: MovementSystem,
+                               combat: CombatSystem,
+                               elixir: ElixirSystem,
+                               health: HealthSystem,
+                               render: RenderSystem,
+                               selectedWizardType: Option[WizardType] = None,
+                               currentWave: Int = 1
+                             ):
     def updateAll(world: World): GameSystemsState =
       val updatedElixir = elixir.update(world).asInstanceOf[ElixirSystem]
       val updatedMovement = movement.update(world).asInstanceOf[MovementSystem]
@@ -43,7 +42,7 @@ class GameController(world: World) {
 
     def spendElixir(amount: Int): Option[GameSystemsState] =
       val (newElixirSystem, success) = elixir.spendElixir(amount)
-      if (success)
+      if success then
         Some(copy(
           elixir = newElixirSystem,
           health = health.copy(elixirSystem = newElixirSystem)
@@ -60,7 +59,17 @@ class GameController(world: World) {
     def getCurrentElixir: Int = elixir.getCurrentElixir
 
     def canAfford(cost: Int): Boolean = elixir.canAfford(cost)
-  }
+
+  object GameSystemsState:
+    def initial(): GameSystemsState =
+      val elixir = ElixirSystem()
+      GameSystemsState(
+        movement = MovementSystem(),
+        combat = CombatSystem(),
+        elixir = elixir,
+        health = HealthSystem(elixir, Set.empty),
+        render = RenderSystem()
+      )
 
   // Core systems
   private val gameEngine: GameEngine = new GameEngineImpl()
@@ -68,14 +77,14 @@ class GameController(world: World) {
   private val inputSystem: InputSystem = InputSystem()
 
   // Mutable state
-  private var state: GameSystemsState = GameSystemsState()
+  private var state: GameSystemsState = GameSystemsState.initial()
 
   def initialize(): Unit =
     gameEngine.initialize(this)
     setupEventHandlers()
 
   def update(): Unit =
-    if(eventHandler.getCurrentPhase == GamePhase.Playing && !gameEngine.isPaused)
+    if eventHandler.getCurrentPhase == GamePhase.Playing && !gameEngine.isPaused then
       state = state.updateAll(world)
 
   def getCurrentElixir: Int = state.getCurrentElixir
@@ -83,13 +92,12 @@ class GameController(world: World) {
 
   def postEvent(event: GameEvent): Unit =
     eventHandler.postEvent(event)
-
     event match
       case GameEvent.Pause | GameEvent.Resume | GameEvent.ShowMainMenu |
            GameEvent.ShowGameView | GameEvent.ShowInfoMenu | GameEvent.ExitGame =>
         eventHandler.processEvents()
       case _ =>
-        if(isMenuPhase(eventHandler.getCurrentPhase))
+        if isMenuPhase(eventHandler.getCurrentPhase) then
           eventHandler.processEvents()
 
   def start(): Unit = gameEngine.start()
@@ -107,7 +115,7 @@ class GameController(world: World) {
 
   def handleMouseClick(x: Int, y: Int): Unit =
     val clickResult = inputSystem.handleMouseClick(x, y)
-    if(clickResult.isValid)
+    if clickResult.isValid then
       handleGridClick(clickResult.position)
       ViewController.render()
     else
@@ -115,42 +123,32 @@ class GameController(world: World) {
 
   def placeWizard(wizardType: WizardType, position: Position): Unit =
     val cost = getWizardCost(wizardType)
-
     val result = for
       _ <- Either.cond(world.getEntityAt(position).isEmpty, (), s"Cell at $position is occupied")
       _ <- Either.cond(state.canAfford(cost), (), s"Insufficient elixir (need $cost, have ${state.getCurrentElixir})")
     yield
       val entity = createWizardEntity(wizardType, position)
-
-      state.spendElixir(cost).foreach { newState =>
+      state.spendElixir(cost).foreach: newState =>
         state = newState.clearWizardSelection
-      }
-
       ViewController.render()
 
-    result.left.foreach { error =>
+    result.left.foreach: error =>
       ViewController.showError(s"Cannot place ${wizardType.toString}: $error")
-    }
 
-  def placeTroll(trollType: TrollType, position: Position): Unit = {
-    if (world.getEntityAt(position).isEmpty) {
-      val entity = trollType match {
+  def placeTroll(trollType: TrollType, position: Position): Unit =
+    if world.getEntityAt(position).isEmpty then
+      val entity = trollType match
         case TrollType.Base => EntityFactory.createBaseTroll(world, position)
         case TrollType.Warrior => EntityFactory.createWarriorTroll(world, position)
         case TrollType.Assassin => EntityFactory.createAssassinTroll(world, position)
         case TrollType.Thrower => EntityFactory.createThrowerTroll(world, position)
-      }
       ViewController.render()
-    } else {
+    else
       ViewController.showError(s"Cannot place ${trollType.toString} at $position. Cell is occupied.")
-    }
-  }
 
-  private def setupEventHandlers(): Unit = {
-    eventHandler.registerHandler(classOf[GameEvent.GridClicked]) { (event: GameEvent.GridClicked) =>
+  private def setupEventHandlers(): Unit =
+    eventHandler.registerHandler(classOf[GameEvent.GridClicked]): (event: GameEvent.GridClicked) =>
       handleGridClick(event.pos)
-    }
-  }
 
   private def handleGridClick(position: Position): Unit =
     state.selectedWizardType match
@@ -175,4 +173,3 @@ class GameController(world: World) {
     case Ice => ICE_WIZARD_COST
 
   private def isMenuPhase(phase: GamePhase): Boolean = phase.isMenu || phase == GamePhase.Paused
-}

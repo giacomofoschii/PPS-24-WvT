@@ -2,9 +2,8 @@ package it.unibo.pps.wvt.ecs.systems
 
 import it.unibo.pps.wvt.ecs.core.{EntityId, System, World}
 import it.unibo.pps.wvt.ecs.components.*
+import it.unibo.pps.wvt.utilities.GamePlayConstants.*
 
-import scala.:+
-import scala.collection.mutable
 
 
 case class HealthSystem(elixirSystem: ElixirSystem, private val entitiesToRemove: Set[EntityId] = Set[EntityId]()) extends System:
@@ -55,10 +54,10 @@ case class HealthSystem(elixirSystem: ElixirSystem, private val entitiesToRemove
   private def calculateElixirReward(world: World, entityId: EntityId): Int =
     world.getComponent[TrollTypeComponent](entityId) match
       case Some(trollType) => trollType.trollType match
-        case TrollType.Base => 25
-        case TrollType.Warrior => 75
-        case TrollType.Assassin => 100
-        case TrollType.Thrower => 125
+        case TrollType.Base => BASE_TROLL_REWARD
+        case TrollType.Warrior => WARRIOR_TROLL_REWARD
+        case TrollType.Assassin => ASSASSIN_TROLL_REWARD
+        case TrollType.Thrower => THROWER_TROLL_REWARD
       case None => 0
 
   // Get newly dead entities
