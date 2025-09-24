@@ -8,6 +8,8 @@ import it.unibo.pps.wvt.utilities.Position
 
 object EntityFactory {
 
+  // WIZARD IMPLEMENTATIONS
+
   def createGeneratorWizard(world: World, position: Position): EntityId =
     val entity = createBaseWizard(world, position, WizardType.Generator, 100, 50, "/generator_wizard.png")
     world.addComponent(entity, ElixirGeneratorComponent(5, 10))
@@ -30,6 +32,16 @@ object EntityFactory {
   def createIceWizard(world: World, position: Position): EntityId =
     val entity = createBaseWizard(world, position, WizardType.Ice, 85, 42, "/ice_wizard.png")
     world.addComponent(entity, AttackComponent(10, 2.0, 1000))
+    entity
+
+  private def createBaseWizard(world: World, position: Position, wizardType: WizardType,
+                               health: Int, cost: Int, spritePath: String): EntityId =
+    val entity = world.createEntity()
+    world.addComponent(entity, PositionComponent(position))
+    world.addComponent(entity, HealthComponent(health, health))
+    world.addComponent(entity, CostComponent(cost))
+    world.addComponent(entity, SpriteComponent(spritePath))
+    world.addComponent(entity, WizardTypeComponent(wizardType))
     entity
   
   // TROLL IMPLEMENTATIONS
@@ -65,17 +77,6 @@ object EntityFactory {
       THROWER_TROLL_COOLDOWN, "src/main/resources/troll/BASE_TROLL/WALK/WALK_005.png"
     )
     entity
-
-  private def createBaseWizard(world: World, position: Position, wizardType: WizardType,
-                               health: Int, cost: Int, spritePath: String): EntityId =
-    val entity = world.createEntity()
-    world.addComponent(entity, PositionComponent(position))
-    world.addComponent(entity, HealthComponent(health, health))
-    world.addComponent(entity, CostComponent(cost))
-    world.addComponent(entity, SpriteComponent(spritePath))
-    world.addComponent(entity, WizardTypeComponent(wizardType))
-    entity
-
 
   private def createStandardTroll(world: World, pos: Position, tType: TrollType,
                                   health: Int, speed: Double, damage: Int,
