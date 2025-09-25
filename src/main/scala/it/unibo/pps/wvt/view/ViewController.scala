@@ -4,19 +4,19 @@ import it.unibo.pps.wvt.controller.{GameController, GameEvent}
 import it.unibo.pps.wvt.ecs.core.World
 import scalafx.Includes.jfxScene2sfx
 import scalafx.scene.*
-import scalafx.application.JFXApp3
+import scalafx.application.{JFXApp3, Platform}
 import scalafx.application.JFXApp3.PrimaryStage
 import scalafx.scene.image.Image
 
 sealed trait ViewState
-object ViewState {
+object ViewState:
   case object MainMenu extends ViewState
   case object GameView extends ViewState
   case object InfoMenu extends ViewState
   case object PauseMenu extends ViewState
-}
 
-object ViewController extends JFXApp3 {
+
+object ViewController extends JFXApp3:
   private val world: World = new World()
   private var gameController: Option[GameController] = None
   private var currentViewState: ViewState = ViewState.MainMenu
@@ -38,10 +38,21 @@ object ViewController extends JFXApp3 {
       case ViewState.InfoMenu => InfoMenu()
       case ViewState.PauseMenu => PauseMenu()
 
-    if(viewState == ViewState.GameView || stage == null)
-      stage = createStandardStage(newRoot)
-    else
-      stage.scene().root = newRoot
+    Platform.runLater:
+      if stage != null then
+        stage.scene().root = newRoot
+        viewState match
+          case ViewState.GameView =>
+            stage.sizeToScene()
+            stage.centerOnScreen()
+          case _ =>
+            stage.width = Double.NaN
+            stage.height = Double.NaN
+            stage.sizeToScene()
+            stage.centerOnScreen()
+      else
+        stage = createStandardStage(newRoot)
+
 
 
   def requestMainMenu(): Unit =
@@ -86,4 +97,3 @@ object ViewController extends JFXApp3 {
   private def initializeWorld(): Unit =
     world.clear()
   //possibilità utente di aggiungere le prime entità? Si parte già con un generator?
-}
