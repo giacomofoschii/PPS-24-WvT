@@ -40,12 +40,12 @@ class EventHandler(engine: GameEngine):
 
         case GameEvent.Pause if currentPhase == GamePhase.Playing =>
           engine.pause()
-          handleMenuTransition(GamePhase.Paused)
+          handleMenuTransition(GamePhase.Paused, ViewState.PauseMenu)
           ViewController.hideGridStatus()
 
         case GameEvent.Resume if currentPhase == GamePhase.Paused =>
           engine.resume()
-          handleMenuTransition(GamePhase.Playing)
+          handleMenuTransition(GamePhase.Playing, ViewState.GameView)
 
         case _ =>
           // Fallback to registered handlers

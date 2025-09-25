@@ -13,6 +13,7 @@ object ViewState {
   case object MainMenu extends ViewState
   case object GameView extends ViewState
   case object InfoMenu extends ViewState
+  case object PauseMenu extends ViewState
 }
 
 object ViewController extends JFXApp3 {
@@ -35,6 +36,7 @@ object ViewController extends JFXApp3 {
         render()
         view
       case ViewState.InfoMenu => InfoMenu()
+      case ViewState.PauseMenu => PauseMenu()
 
     if(viewState == ViewState.GameView || stage == null)
       stage = createStandardStage(newRoot)
