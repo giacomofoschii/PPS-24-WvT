@@ -2,6 +2,8 @@ package it.unibo.pps.wvt.ecs.systems
 
 import it.unibo.pps.wvt.ecs.core.World
 import it.unibo.pps.wvt.ecs.components.*
+import it.unibo.pps.wvt.utilities.GamePlayConstants.*
+import it.unibo.pps.wvt.utilities.TestConstants.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -9,95 +11,95 @@ class HealthSystemTest extends AnyFlatSpec with Matchers:
 
   "HealthSystem" should "process damage components correctly" in:
     val world = World()
-    val elixirSystem = ElixirSystem(totalElixir = 100)
+    val elixirSystem = ElixirSystem(totalElixir = INITIAL_ELIXIR)
     val healthSystem = HealthSystem(elixirSystem)
     val entity = world.createEntity()
-    world.addComponent(entity, HealthComponent(currentHealth = 50, maxHealth = 100))
+    world.addComponent(entity, HealthComponent(currentHealth = TEST_ENTITY_HALF_HEALTH, maxHealth = TEST_ENTITY_MAX_HEALTH))
     val damageSource = world.createEntity()
-    world.addComponent(entity, DamageComponent(amount = 20, source = damageSource))
+    world.addComponent(entity, DamageComponent(amount = TEST_DAMAGE_HEAVY, source = damageSource))
     val updatedSystem = healthSystem.update(world).asInstanceOf[HealthSystem]
     val health = world.getComponent[HealthComponent](entity)
     health should be(defined)
-    health.get.currentHealth shouldBe 30
+    health.get.currentHealth shouldBe TEST_EXPECTED_HEALTH_AFTER_MEDIUM_DAMAGE
     world.getComponent[DamageComponent](entity) should be(empty)
 
   it should "kill entities when health reaches zero" in:
     val world = World()
-    val elixirSystem = ElixirSystem(totalElixir = 100)
+    val elixirSystem = ElixirSystem(totalElixir = INITIAL_ELIXIR)
     val healthSystem = HealthSystem(elixirSystem)
     val troll = world.createEntity()
-    world.addComponent(troll, HealthComponent(currentHealth = 20, maxHealth = 100))
+    world.addComponent(troll, HealthComponent(currentHealth = TEST_ENTITY_LOW_HEALTH, maxHealth = TEST_ENTITY_MAX_HEALTH))
     world.addComponent(troll, TrollTypeComponent(TrollType.Base))
     val damageSource = world.createEntity()
-    world.addComponent(troll, DamageComponent(amount = 30, source = damageSource))
+    world.addComponent(troll, DamageComponent(amount = TEST_DAMAGE_FATAL, source = damageSource))
     val updatedSystem = healthSystem.update(world).asInstanceOf[HealthSystem]
     world.getAllEntities should not contain troll
 
   it should "give elixir reward when troll dies" in:
     val world = World()
-    var elixirSystem = ElixirSystem(totalElixir = 100)
+    var elixirSystem = ElixirSystem(totalElixir = INITIAL_ELIXIR)
     var healthSystem = HealthSystem(elixirSystem)
     val troll = world.createEntity()
-    world.addComponent(troll, HealthComponent(currentHealth = 10, maxHealth = 50))
+    world.addComponent(troll, HealthComponent(currentHealth = TEST_ENTITY_VERY_LOW_HEALTH, maxHealth = TEST_ENTITY_HALF_HEALTH))
     world.addComponent(troll, TrollTypeComponent(TrollType.Base))
     val damageSource = world.createEntity()
-    world.addComponent(troll, DamageComponent(amount = 15, source = damageSource))
+    world.addComponent(troll, DamageComponent(amount = TEST_DAMAGE_MEDIUM, source = damageSource))
     healthSystem.update(world)
 
   it should "not give reward when wizard dies" in:
     val world = World()
-    val elixirSystem = ElixirSystem(totalElixir = 100)
+    val elixirSystem = ElixirSystem(totalElixir = INITIAL_ELIXIR)
     val healthSystem = HealthSystem(elixirSystem)
     val wizard = world.createEntity()
-    world.addComponent(wizard, HealthComponent(currentHealth = 10, maxHealth = 50))
+    world.addComponent(wizard, HealthComponent(currentHealth = TEST_ENTITY_VERY_LOW_HEALTH, maxHealth = TEST_ENTITY_HALF_HEALTH))
     world.addComponent(wizard, WizardTypeComponent(WizardType.Fire))
     val damageSource = world.createEntity()
-    healthSystem.createDamage(world, wizard, 15, damageSource)
+    healthSystem.createDamage(world, wizard, TEST_DAMAGE_MEDIUM, damageSource)
     val updatedSystem = healthSystem.update(world).asInstanceOf[HealthSystem]
     world.getAllEntities should not contain wizard
 
   it should "handle multiple damage components" in:
     val world = World()
-    val elixirSystem = ElixirSystem(totalElixir = 100)
+    val elixirSystem = ElixirSystem(totalElixir = INITIAL_ELIXIR)
     val healthSystem = HealthSystem(elixirSystem)
     val entity = world.createEntity()
-    world.addComponent(entity, HealthComponent(currentHealth = 100, maxHealth = 100))
+    world.addComponent(entity, HealthComponent(currentHealth = TEST_ENTITY_MAX_HEALTH, maxHealth = TEST_ENTITY_MAX_HEALTH))
     val source1 = world.createEntity()
-    world.addComponent(entity, DamageComponent(amount = 20, source = source1))
+    world.addComponent(entity, DamageComponent(amount = TEST_DAMAGE_HEAVY, source = source1))
     val updatedSystem = healthSystem.update(world).asInstanceOf[HealthSystem]
     val health = world.getComponent[HealthComponent](entity)
     health should be(defined)
-    health.get.currentHealth shouldBe 80
+    health.get.currentHealth shouldBe TEST_EXPECTED_HEALTH_AFTER_HEAVY_DAMAGE
 
   it should "ignore damage to dead entities" in:
     val world = World()
-    val elixirSystem = ElixirSystem(totalElixir = 100)
+    val elixirSystem = ElixirSystem(totalElixir = INITIAL_ELIXIR)
     val healthSystem = HealthSystem(elixirSystem)
     val entity = world.createEntity()
-    world.addComponent(entity, HealthComponent(currentHealth = 0, maxHealth = 100))
+    world.addComponent(entity, HealthComponent(currentHealth = TEST_ENTITY_DEAD_HEALTH, maxHealth = TEST_ENTITY_MAX_HEALTH))
     val damageSource = world.createEntity()
-    healthSystem.createDamage(world, entity, 10, damageSource)
+    healthSystem.createDamage(world, entity, TEST_DAMAGE_LIGHT, damageSource)
     val updatedSystem = healthSystem.update(world).asInstanceOf[HealthSystem]
     world.getAllEntities should not contain entity
 
   it should "ignore damage to entities without health component" in:
     val world = World()
-    val elixirSystem = ElixirSystem(totalElixir = 100)
+    val elixirSystem = ElixirSystem(totalElixir = INITIAL_ELIXIR)
     val healthSystem = HealthSystem(elixirSystem)
     val entity = world.createEntity()
     val damageSource = world.createEntity()
-    healthSystem.createDamage(world, entity, 10, damageSource)
+    healthSystem.createDamage(world, entity, TEST_DAMAGE_LIGHT, damageSource)
     val updatedSystem = healthSystem.update(world).asInstanceOf[HealthSystem]
     world.getComponent[DamageComponent](entity) should be(empty)
 
   it should "check if entity is alive correctly" in:
     val world = World()
-    val elixirSystem = ElixirSystem(totalElixir = 100)
+    val elixirSystem = ElixirSystem(totalElixir = INITIAL_ELIXIR)
     val healthSystem = HealthSystem(elixirSystem)
     val aliveEntity = world.createEntity()
-    world.addComponent(aliveEntity, HealthComponent(currentHealth = 50, maxHealth = 100))
+    world.addComponent(aliveEntity, HealthComponent(currentHealth = TEST_ENTITY_HALF_HEALTH, maxHealth = TEST_ENTITY_MAX_HEALTH))
     val deadEntity = world.createEntity()
-    world.addComponent(deadEntity, HealthComponent(currentHealth = 0, maxHealth = 100))
+    world.addComponent(deadEntity, HealthComponent(currentHealth = TEST_ENTITY_DEAD_HEALTH, maxHealth = TEST_ENTITY_MAX_HEALTH))
     val noHealthEntity = world.createEntity()
     healthSystem.isAlive(world, aliveEntity) shouldBe true
     healthSystem.isAlive(world, deadEntity) shouldBe false
@@ -105,64 +107,64 @@ class HealthSystemTest extends AnyFlatSpec with Matchers:
 
   it should "get current health correctly" in:
     val world = World()
-    val elixirSystem = ElixirSystem(totalElixir = 100)
+    val elixirSystem = ElixirSystem(totalElixir = INITIAL_ELIXIR)
     val healthSystem = HealthSystem(elixirSystem)
     val entity = world.createEntity()
-    world.addComponent(entity, HealthComponent(currentHealth = 75, maxHealth = 100))
+    world.addComponent(entity, HealthComponent(currentHealth = TEST_HEALTH_THREE_QUARTER, maxHealth = TEST_ENTITY_MAX_HEALTH))
     val noHealthEntity = world.createEntity()
-    healthSystem.getCurrentHealth(world, entity) shouldBe Some(75)
+    healthSystem.getCurrentHealth(world, entity) shouldBe Some(TEST_HEALTH_THREE_QUARTER)
     healthSystem.getCurrentHealth(world, noHealthEntity) shouldBe None
 
   it should "calculate health percentage correctly" in:
     val world = World()
-    val elixirSystem = ElixirSystem(totalElixir = 100)
+    val elixirSystem = ElixirSystem(totalElixir = INITIAL_ELIXIR)
     val healthSystem = HealthSystem(elixirSystem)
     val entity = world.createEntity()
-    world.addComponent(entity, HealthComponent(currentHealth = 25, maxHealth = 100))
+    world.addComponent(entity, HealthComponent(currentHealth = TEST_HEALTH_QUARTER, maxHealth = TEST_ENTITY_MAX_HEALTH))
     val fullHealthEntity = world.createEntity()
-    world.addComponent(fullHealthEntity, HealthComponent(currentHealth = 100, maxHealth = 100))
+    world.addComponent(fullHealthEntity, HealthComponent(currentHealth = TEST_ENTITY_MAX_HEALTH, maxHealth = TEST_ENTITY_MAX_HEALTH))
     val zeroMaxHealthEntity = world.createEntity()
-    world.addComponent(zeroMaxHealthEntity, HealthComponent(currentHealth = 50, maxHealth = 0))
-    healthSystem.getHealthPercentage(world, entity) shouldBe Some(0.25)
-    healthSystem.getHealthPercentage(world, fullHealthEntity) shouldBe Some(1.0)
-    healthSystem.getHealthPercentage(world, zeroMaxHealthEntity) shouldBe Some(0.0)
+    world.addComponent(zeroMaxHealthEntity, HealthComponent(currentHealth = TEST_ENTITY_HALF_HEALTH, maxHealth = TEST_ENTITY_DEAD_HEALTH))
+    healthSystem.getHealthPercentage(world, entity) shouldBe Some(TEST_HEALTH_PERCENTAGE_QUARTER)
+    healthSystem.getHealthPercentage(world, fullHealthEntity) shouldBe Some(TEST_HEALTH_PERCENTAGE_FULL)
+    healthSystem.getHealthPercentage(world, zeroMaxHealthEntity) shouldBe Some(TEST_HEALTH_PERCENTAGE_ZERO)
 
   it should "not remove entities marked for removal twice" in:
     val world = World()
-    val elixirSystem = ElixirSystem(totalElixir = 100)
+    val elixirSystem = ElixirSystem(totalElixir = INITIAL_ELIXIR)
     val healthSystem = HealthSystem(elixirSystem)
     val entity = world.createEntity()
-    world.addComponent(entity, HealthComponent(currentHealth = 10, maxHealth = 100))
+    world.addComponent(entity, HealthComponent(currentHealth = TEST_ENTITY_VERY_LOW_HEALTH, maxHealth = TEST_ENTITY_MAX_HEALTH))
     world.addComponent(entity, TrollTypeComponent(TrollType.Base))
     val damageSource = world.createEntity()
-    healthSystem.createDamage(world, entity, 15, damageSource)
+    healthSystem.createDamage(world, entity, TEST_DAMAGE_MEDIUM, damageSource)
     val updatedSystem1 = healthSystem.update(world).asInstanceOf[HealthSystem]
     world.getAllEntities should not contain entity
     val updatedSystem2 = updatedSystem1.update(world).asInstanceOf[HealthSystem]
 
   it should "handle entities dying from existing low health" in:
     val world = World()
-    val elixirSystem = ElixirSystem(totalElixir = 100)
+    val elixirSystem = ElixirSystem(totalElixir = INITIAL_ELIXIR)
     val healthSystem = HealthSystem(elixirSystem)
     val deadEntity = world.createEntity()
-    world.addComponent(deadEntity, HealthComponent(currentHealth = 0, maxHealth = 100))
+    world.addComponent(deadEntity, HealthComponent(currentHealth = TEST_ENTITY_DEAD_HEALTH, maxHealth = TEST_ENTITY_MAX_HEALTH))
     world.addComponent(deadEntity, TrollTypeComponent(TrollType.Base))
     val updatedSystem = healthSystem.update(world).asInstanceOf[HealthSystem]
     world.getAllEntities should not contain deadEntity
 
   it should "calculate correct rewards for different troll types" in:
     val world = World()
-    val elixirSystem = ElixirSystem(totalElixir = 100)
+    val elixirSystem = ElixirSystem(totalElixir = INITIAL_ELIXIR)
     val healthSystem = HealthSystem(elixirSystem)
     val baseTroll = world.createEntity()
-    world.addComponent(baseTroll, HealthComponent(currentHealth = 1, maxHealth = 100))
+    world.addComponent(baseTroll, HealthComponent(currentHealth = TEST_ENTITY_MINIMAL_HEALTH, maxHealth = TEST_ENTITY_MAX_HEALTH))
     world.addComponent(baseTroll, TrollTypeComponent(TrollType.Base))
     val warriorTroll = world.createEntity()
-    world.addComponent(warriorTroll, HealthComponent(currentHealth = 1, maxHealth = 100))
+    world.addComponent(warriorTroll, HealthComponent(currentHealth = TEST_ENTITY_MINIMAL_HEALTH, maxHealth = TEST_ENTITY_MAX_HEALTH))
     world.addComponent(warriorTroll, TrollTypeComponent(TrollType.Warrior))
     val source = world.createEntity()
-    healthSystem.createDamage(world, baseTroll, 5, source)
-    healthSystem.createDamage(world, warriorTroll, 5, source)
+    healthSystem.createDamage(world, baseTroll, TEST_ENTITY_MINIMAL_HEALTH + 1, source)
+    healthSystem.createDamage(world, warriorTroll, TEST_ENTITY_MINIMAL_HEALTH + 1, source)
     val updatedSystem = healthSystem.update(world).asInstanceOf[HealthSystem]
     world.getAllEntities should not contain baseTroll
     world.getAllEntities should not contain warriorTroll
