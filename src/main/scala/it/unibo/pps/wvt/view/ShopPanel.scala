@@ -21,27 +21,46 @@ object ShopPanel:
   private var lastElixirAmount: Int = -1
   private val buttonStates: mutable.Map[WizardType, Boolean] = mutable.Map.empty
   private lazy val renderSystem = new RenderSystem()
+  private var isShopOpen: Boolean = true
+  private var shopContent: Option[scalafx.scene.layout.VBox] = None
 
   def createShopPanel(): VBox =
     val elixirDisplay = createElixirDisplay()
     val wizardGrid = createWizardGrid()
-    val titleText = new Text("SHOP"):
-      font = Font.font("Times New Roman", FontWeight.Bold, 22)
-      fill = Color.Gold
 
-    val panel = new VBox:
+    // Create content container with the black background
+    val contentContainer = new scalafx.scene.layout.VBox:
       spacing = 16
       padding = Insets(20)
       alignment = Pos.TopCenter
-      prefWidth = 250
-      maxWidth = 250
       style = """-fx-background-color: rgba(0,0,0,0.85);
                  -fx-background-radius: 10;
                  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.7), 8,0,2,2);"""
-      children = Seq(titleText, elixirDisplay, wizardGrid)
+      children = Seq(elixirDisplay, wizardGrid)
+
+    shopContent = Some(contentContainer)
+
+    // Main panel with just content (no shop button)
+    val panel = new VBox:
+      spacing = 16
+      padding = Insets(120, 20, 20, 20)  // Extra top padding to leave space for shop button
+      alignment = Pos.TopCenter
+      prefWidth = 250
+      maxWidth = 250
+      children = Seq(contentContainer)
 
     currentElixirText = Some(elixirDisplay)
     panel
+
+  def createShopButton(): Button =
+    val shopButtonConfig = ButtonConfig("Shop", 200, 100, 20, "Times New Roman")
+    createStyledButton(shopButtonConfig)(toggleShop())
+
+  private def toggleShop(): Unit =
+    isShopOpen = !isShopOpen
+    shopContent.foreach: content =>
+      content.visible = isShopOpen
+      content.managed = isShopOpen
 
   private def createWizardGrid(): GridPane =
     val wizardTypes = WizardType.values.toSeq
