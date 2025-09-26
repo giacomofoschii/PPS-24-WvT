@@ -7,6 +7,12 @@ import it.unibo.pps.wvt.utilities.GamePlayConstants.*
 import it.unibo.pps.wvt.utilities.Position
 
 object EntityFactory:
+  def createProjectile(world: World, position:Position): EntityId =
+    val entity = world.createEntity()
+    world.addComponent(entity, PositionComponent(position))
+    world.addComponent(entity, MovementComponent(PROJECTILE_SPEED))
+    world.addComponent(entity, SpriteComponent("/projectile.png"))
+    entity
 
   // WIZARD IMPLEMENTATIONS
 

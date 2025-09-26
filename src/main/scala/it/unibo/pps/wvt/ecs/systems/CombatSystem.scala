@@ -1,9 +1,10 @@
 package it.unibo.pps.wvt.ecs.systems
 
-import it.unibo.pps.wvt.ecs.components.TrollType.{Assassin, Thrower, Warrior}
-import it.unibo.pps.wvt.ecs.components.{AttackComponent, CooldownComponent, DamageComponent, PositionComponent, TrollTypeComponent, WizardType, WizardTypeComponent}
+import it.unibo.pps.wvt.ecs.components.TrollType._
+import it.unibo.pps.wvt.ecs.components._
+import it.unibo.pps.wvt.ecs.factories.EntityFactory
 import it.unibo.pps.wvt.ecs.core.*
-import it.unibo.pps.wvt.utilities.GamePlayConstants.ASSASSIN_TROLL_DAMAGE
+import it.unibo.pps.wvt.utilities.GamePlayConstants._
 import it.unibo.pps.wvt.utilities.Position
 
 import scala.util.Random
@@ -41,7 +42,7 @@ case class CombatSystem() extends System:
       world.getEntityAt(targetPos).foreach: target =>
         world.getComponent[WizardTypeComponent](target).foreach: _ =>
           val damage = calculateMeleeDamage(attacker, target, attack.damage, world)
-          world.addComponent(target, DamageComponent(damage, attacker))
+          world.addComponent(target, CollisionComponent(damage))
           world.addComponent(attacker, CooldownComponent(attack.cooldown))
 
   private def processRangedAttacks(world: World): Unit =
@@ -60,15 +61,12 @@ case class CombatSystem() extends System:
       attack <- world.getComponent[AttackComponent](entity)
       if !isOnCooldown(entity, world)
       if hasTargetsInRange(entity, pos.position, attack.range, world)
-    yield (entity, pos.position, attack)
+    yield (pos.position, attack)
   
-    wizards.foreach { case (wizard, pos, attack) =>
-      // TODO: GIACOMO FOSCHI aggiungi qui la creazione del proiettile del mago
-      val projectile = world.createEntity()
-  
-      // Applica cooldown al mago
-      world.addComponent(wizard, CooldownComponent(attack.cooldown))
-    }
+    wizards.foreach: (pos, attack) =>
+      val projectile = EntityFactory.createProjectile(world, pos)
+      world.addComponent(projectile, DamageComponent(attack.damage, "wizard"))
+      
   
   private def hasTargetsInRange(wizardEntity: EntityId, wizardPos: Position, range: Double, world: World): Boolean =
     world.getEntitiesByType("troll").exists: trollEntity =>
@@ -90,13 +88,11 @@ case class CombatSystem() extends System:
       if pos.position.col <= 6
       attack <- world.getComponent[AttackComponent](entity)
       if !isOnCooldown(entity, world)
-    yield (entity, pos.position, attack)
+    yield (pos.position, attack)
 
-    throwers.foreach: (thrower, pos, attack) =>
-      // TODO: GIACOMO FOSCHI aggiungi qui la creazione del proiettile
-      val projectile = world.createEntity()
-
-      world.addComponent(thrower, CooldownComponent(attack.cooldown))
+    throwers.foreach: (pos, attack) =>
+      val projectile = EntityFactory.createProjectile(world, pos)
+      world.addComponent(projectile, DamageComponent(attack.damage, "troll"))
 
   private def calculateMeleeDamage(attacker: EntityId, target: EntityId, baseDamage: Int,
                                    world: World): Int =

@@ -20,7 +20,8 @@ case class ElixirGeneratorComponent(elixirPerSecond: Int, cooldown: Long) extend
 
 // Combat components
 case class AttackComponent(damage: Int, range: Double, cooldown: Long) extends Component
-case class DamageComponent(amount: Int, source: EntityId) extends Component
+case class DamageComponent(amount: Int, entityType: String) extends Component
+case class CollisionComponent(amount: Int) extends Component
 case class CooldownComponent(remainingTime: Long) extends Component
 
 // UI components

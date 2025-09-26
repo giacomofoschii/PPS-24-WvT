@@ -10,25 +10,25 @@ case class HealthSystem(elixirSystem: ElixirSystem, private val entitiesToRemove
   
 
   override def update(world: World): System =
-    processDamageComponents(world)
+    processCollisionComponents(world)
       .processDeaths(world)
       .removeDeadEntities(world)
 
   // Process all DamageComponent in the world
-  private def processDamageComponents(world: World): HealthSystem =
-    val entitiesWithDamage = world.getEntitiesWithComponent[DamageComponent]
+  private def processCollisionComponents(world: World): HealthSystem =
+    val entitiesWithDamage = world.getEntitiesWithComponent[CollisionComponent]
     entitiesWithDamage.foldLeft(this): (currentSystem, entityId) =>
-      world.getComponent[DamageComponent](entityId) match
-        case Some(damageComp) =>
-          world.removeComponent[DamageComponent](entityId)
-          currentSystem.applyDamageToEntity(world, entityId, damageComp)
+      world.getComponent[CollisionComponent](entityId) match
+        case Some(collisionComp) =>
+          world.removeComponent[CollisionComponent](entityId)
+          currentSystem.applyCollisionToEntity(world, entityId, collisionComp)
         case None => currentSystem
 
   // Apply damage to a specific entity
-  private def applyDamageToEntity(world: World, entityId: EntityId, damageComp: DamageComponent): HealthSystem =
+  private def applyCollisionToEntity(world: World, entityId: EntityId, collisionComp: CollisionComponent): HealthSystem =
     world.getComponent[HealthComponent](entityId) match
       case Some(healthComp) if healthComp.isAlive =>
-        val newHealth = math.max(0, healthComp.currentHealth - damageComp.amount)
+        val newHealth = math.max(0, healthComp.currentHealth - collisionComp.amount)
         val newHealthComp = healthComp.copy(currentHealth = newHealth)
         world.removeComponent[HealthComponent](entityId)
         world.addComponent(entityId, newHealthComp)
@@ -94,5 +94,5 @@ case class HealthSystem(elixirSystem: ElixirSystem, private val entitiesToRemove
       else 0.0
 
   // Create damage component for testing
-  def createDamage(world: World, targetId: EntityId, damage: Int, sourceId: EntityId): Unit =
-    world.addComponent(targetId, DamageComponent(damage, sourceId))
+  def createCollision(world: World, targetId: EntityId, damage: Int): Unit =
+    world.addComponent(targetId, CollisionComponent(damage))

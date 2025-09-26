@@ -232,11 +232,11 @@ object InfoMenu {
 
   private def createWizardsView(): GridPane =
     val cards = Seq(
-      ("Generator", "♦ 5   ♥ 20", "Produces elixir", "/generator.png", Seq(("\u2666","5"),("\u2665","20"))),
-      ("Wind",      "♦ 6 ♥ 15 ✖ 8 → 3", "Base", "/wind.png", Seq(("\u2666","6"),("\u2665","15"),("\u2716","8"),("\u2192","3"))),
-      ("Fire",      "♦ 7 ♥ 12 ✖ 12 → 3", "Burns enemies", "/fire.png", Seq(("\u2666","7"),("\u2665","12"),("\u2716","12"),("\u2192","3"))),
-      ("Ice",       "♦ 6 ♥ 10 ✖ 10 → 3", "Slows enemies", "/ice.png", Seq(("\u2666","6"),("\u2665","10"),("\u2716","10"),("\u2192","3"))),
-      ("Barrier",   "♦ 8 ♥ 30", "Blocks damage", "/barrier.png", Seq(("\u2666","8"),("\u2665","30")))
+      ("Generator", "♦ 5   ♥ 20", "Produces elixir", "/wizard/generator.png", Seq(("\u2666","5"),("\u2665","20"))),
+      ("Wind",      "♦ 6 ♥ 15 ✖ 8 → 3", "Base", "/wizard/wind.png", Seq(("\u2666","6"),("\u2665","15"),("\u2716","8"),("\u2192","3"))),
+      ("Fire",      "♦ 7 ♥ 12 ✖ 12 → 3", "Burns enemies", "/wizard/fire.png", Seq(("\u2666","7"),("\u2665","12"),("\u2716","12"),("\u2192","3"))),
+      ("Ice",       "♦ 6 ♥ 10 ✖ 10 → 3", "Slows enemies", "/wizard/ice.png", Seq(("\u2666","6"),("\u2665","10"),("\u2716","10"),("\u2192","3"))),
+      ("Barrier",   "♦ 8 ♥ 30", "Blocks damage", "/wizard/barrier.png", Seq(("\u2666","8"),("\u2665","30")))
     )
     createGrid(cards, cols = 4)
 
