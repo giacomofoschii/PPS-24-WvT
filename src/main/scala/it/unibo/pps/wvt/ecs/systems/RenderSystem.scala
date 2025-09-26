@@ -18,7 +18,6 @@ class RenderSystem extends System:
       GameView.clearGrid()
       GameView.renderEntities(entities)
       lastRenderedState = Some(currentState)
-
     this
 
   private def collectEntitiesWithImages(world: World): Seq[(GridMapper.PhysicalCoords, String)] =
@@ -33,7 +32,6 @@ class RenderSystem extends System:
         pos <- world.getComponent[PositionComponent](entity)
         trollType <- world.getComponent[TrollTypeComponent](entity)
       yield (GridMapper.logicalToPhysical(pos.position), getTrollImagePath(trollType.trollType))
-
     (wizardEntities ++ trollEntities).toSeq
 
   private def generateStateHash(entities: Seq[(GridMapper.PhysicalCoords, String)]): String =

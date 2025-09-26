@@ -14,7 +14,9 @@ case class HealthSystem(elixirSystem: ElixirSystem, private val entitiesToRemove
       .processDeaths(world)
       .removeDeadEntities(world)
 
-  // Process all DamageComponent in the world
+  /* Process all collision components to apply damage
+   * Remove collision components after processing
+   */
   private def processCollisionComponents(world: World): HealthSystem =
     val entitiesWithDamage = world.getEntitiesWithComponent[CollisionComponent]
     entitiesWithDamage.foldLeft(this): (currentSystem, entityId) =>
@@ -24,7 +26,9 @@ case class HealthSystem(elixirSystem: ElixirSystem, private val entitiesToRemove
           currentSystem.applyCollisionToEntity(world, entityId, collisionComp)
         case None => currentSystem
 
-  // Apply damage to a specific entity
+  /* Apply collision damage to entity's health
+   * If health drops to 0 or below, mark entity for removal and give elixir reward
+   */
   private def applyCollisionToEntity(world: World, entityId: EntityId, collisionComp: CollisionComponent): HealthSystem =
     world.getComponent[HealthComponent](entityId) match
       case Some(healthComp) if healthComp.isAlive =>
@@ -38,19 +42,25 @@ case class HealthSystem(elixirSystem: ElixirSystem, private val entitiesToRemove
         else this
       case _ => this
 
-  // Handle entity deaths
+  /* Process deaths by identifying newly dead entities
+   * Mark them for removal
+   */
   private def processDeaths(world: World): HealthSystem =
     val deadEntities = getNewlyDeadEntities(world)
     deadEntities.foldLeft(this): (currentSystem, entityId) =>
       currentSystem.markForRemoval(entityId)
 
-  // Give elixir reward when entity dies
+  /* Give elixir reward to player based on entity type
+   * Only applies to trolls
+   */
   private def giveElixirReward(world: World, deadEntityId: EntityId): Unit =
     val rewardAmount = calculateElixirReward(world, deadEntityId)
     if rewardAmount > 0 then
       elixirSystem.addElixir(rewardAmount)
 
-  // Calculate elixir reward based on entity type
+  /* Calculate elixir reward based on troll type
+   * Returns 0 for non-troll entities
+   */
   private def calculateElixirReward(world: World, entityId: EntityId): Int =
     world.getComponent[TrollTypeComponent](entityId) match
       case Some(trollType) => trollType.trollType match
@@ -59,40 +69,33 @@ case class HealthSystem(elixirSystem: ElixirSystem, private val entitiesToRemove
         case TrollType.Assassin => ASSASSIN_TROLL_REWARD
         case TrollType.Thrower => THROWER_TROLL_REWARD
       case None => 0
-
-  // Get newly dead entities
+  
   private def getNewlyDeadEntities(world: World): List[EntityId] =
     world.getEntitiesWithComponent[HealthComponent].filter: entityId =>
       world.getComponent[HealthComponent](entityId).exists(!_.isAlive)
     .toList.filterNot(entitiesToRemove.contains)
-
-  // Mark entity for removal
+  
   private def markForRemoval(entityId: EntityId): HealthSystem =
     if entitiesToRemove.contains(entityId) then this
     else copy(entitiesToRemove = entitiesToRemove + entityId)
 
-  // Remove dead entities from world
   private def removeDeadEntities(world: World): HealthSystem =
     entitiesToRemove.foreach: entityId =>
       if world.getAllEntities.contains(entityId) then
         world.destroyEntity(entityId)
     copy(entitiesToRemove = Set.empty)
 
-  // Check if entity is alive
   def isAlive(world: World, entityId: EntityId): Boolean =
     world.getComponent[HealthComponent](entityId).exists(_.isAlive)
 
-  // Get current health of entity
   def getCurrentHealth(world: World, entityId: EntityId): Option[Int] =
     world.getComponent[HealthComponent](entityId).map(_.currentHealth)
 
-  // Get health percentage (0.0 - 1.0)
   def getHealthPercentage(world: World, entityId: EntityId): Option[Double] =
     world.getComponent[HealthComponent](entityId).map: healthComp =>
       if healthComp.maxHealth > 0 then
         healthComp.currentHealth.toDouble / healthComp.maxHealth.toDouble
       else 0.0
 
-  // Create damage component for testing
   def createCollision(world: World, targetId: EntityId, damage: Int): Unit =
     world.addComponent(targetId, CollisionComponent(damage))

@@ -21,7 +21,6 @@ case class InputSystem():
   def handleMouseClick(screenX: Int, screenY: Int): ClickResult =
     val click = MouseClick(screenX, screenY)
     val result = processor.processClick(click)
-    logClick(click, result)
     result
 
   def positionToScreen(position: Position): Option[(Double, Double)] =
@@ -30,8 +29,4 @@ case class InputSystem():
   def isValidPosition(position: Position): Boolean =
     processor.isValidPosition(position)
 
-  private def logClick(click: MouseClick, result: ClickResult): Unit =
-    if result.isValid then
-      println(s"[INPUT] Click (${click.x}, ${click.y}) -> Position(${result.position.row}, ${result.position.col})")
-    else
-      println(s"[INPUT] Click non valido")
+  

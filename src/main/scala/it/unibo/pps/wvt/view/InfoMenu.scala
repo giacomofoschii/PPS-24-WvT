@@ -17,17 +17,13 @@ object InfoMenu {
   def apply(): Parent =
     lazy val backgroundImage = createBackgroundView("/main_menu.jpg", MENU_SCALE_FACTOR).getOrElse(new ImageView())
     val contentArea = new StackPane()
-
     lazy val rulesView  = createRulesView()
     lazy val wizardsView = createWizardsView()
     lazy val trollsView = createTrollsView()
-
     contentArea.children = Seq(rulesView)
-
     val (rulesButton, wizardsButton, trollsButton) = createNavigationButtons(contentArea, rulesView, wizardsView, trollsView)
     val topBar = createTopBar(rulesButton, wizardsButton, trollsButton)
     val bottomBar = createBottomBar()
-
     val layout = new BorderPane {
       top = topBar
       center = new VBox {
@@ -37,7 +33,6 @@ object InfoMenu {
       }
       bottom = bottomBar
     }
-
     new StackPane {
       children = Seq(backgroundImage, layout)
     }
@@ -48,7 +43,6 @@ object InfoMenu {
       "wizards" -> ButtonConfig("Wizards", 140, 60, 16, "Times New Roman"),
       "trolls"  -> ButtonConfig("Trolls", 140, 60, 16, "Times New Roman")
     )
-
     val rulesButton = createStyledButton(buttonConfigs("rules")) { /* azione definita dopo */ }
     val wizardsButton = createStyledButton(buttonConfigs("wizards")) { /* azione definita dopo */ }
     val trollsButton = createStyledButton(buttonConfigs("trolls")) { /* azione definita dopo */ }
@@ -58,22 +52,18 @@ object InfoMenu {
       wizardsButton.opacity = if (activeButton == "wizards") 1.0 else 0.7
       trollsButton.opacity = if (activeButton == "trolls") 1.0 else 0.7
     }
-
     rulesButton.onAction = _ => {
       contentArea.children = Seq(rulesView)
       updateButtonStyles("rules")
     }
-
     wizardsButton.onAction = _ => {
       contentArea.children = Seq(wizardsView)
       updateButtonStyles("wizards")
     }
-
     trollsButton.onAction = _ => {
       contentArea.children = Seq(trollsView)
       updateButtonStyles("trolls")
     }
-
     updateButtonStyles("rules")
     (rulesButton, wizardsButton, trollsButton)
   }
