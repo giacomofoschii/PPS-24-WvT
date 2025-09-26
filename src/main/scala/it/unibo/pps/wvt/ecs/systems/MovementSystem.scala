@@ -35,8 +35,9 @@ case class MovementSystem() extends System:
         .getOrElse(defaultMovementStrategy)
     else if world.getEntitiesByType("projectile").contains(entity) then
       world.getComponent[ProjectileTypeComponent](entity)
-        .map(proj => if proj.projectileType == ProjectileType.Troll 
-          then straightLeftMovement else straightRightMovement)
+        .map(proj => if proj.projectileType == ProjectileType.Troll
+        then straightRightMovement
+        else straightRightMovement)
         .getOrElse(defaultMovementStrategy)
     else
       defaultMovementStrategy
@@ -51,10 +52,10 @@ case class MovementSystem() extends System:
     Option.when(pos.col > 0 && speed > 0)(
       Position(pos.row, (pos.col - math.ceil(speed).toInt).max(0))
     )
-    
+
   private val straightRightMovement: MovementStrategy = (pos, speed, _, _) =>
-    Option.when(pos.col < 9 && speed > 0)(
-      Position(pos.row, (pos.col + math.ceil(speed).toInt).min(9))
+    Option.when(pos.col < 8 && speed > 0)(
+      Position(pos.row, (pos.col + math.ceil(speed).toInt).min(8))
     )
 
   private val zigzagMovement: MovementStrategy = (pos, speed, _, _) =>
