@@ -17,7 +17,7 @@ object ButtonFactory {
       font = Font.font(config.fontFamily, FontWeight.Bold, config.fontSize)
       prefWidth = config.width
       prefHeight = config.height
-      style = "-fx-background-image: url('/pause_menu.png'); " +
+      style = "-fx-background-image: url('/button_background.png'); " +
         s"-fx-background-size: ${config.width}px ${config.height}px; " +
         "-fx-background-repeat: no-repeat; " +
         "-fx-background-position: center; " +
