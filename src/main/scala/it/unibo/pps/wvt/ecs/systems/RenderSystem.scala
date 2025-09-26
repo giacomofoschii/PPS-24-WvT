@@ -13,7 +13,7 @@ class RenderSystem extends System:
     val entities = collectEntitiesWithImages(world)
     val currentState = generateStateHash(entities)
 
-    // Only render if something actually changed
+    // Only render if something actually changed OR if we need to force render
     if lastRenderedState.isEmpty || !lastRenderedState.contains(currentState) then
       GameView.clearGrid()
       GameView.renderEntities(entities)
@@ -53,4 +53,7 @@ class RenderSystem extends System:
     case TrollType.Thrower => "/troll/THROW_TROLL/WALK_005.png"
 
   def forceRender(): Unit =
+    lastRenderedState = None
+
+  def clearCache(): Unit =
     lastRenderedState = None

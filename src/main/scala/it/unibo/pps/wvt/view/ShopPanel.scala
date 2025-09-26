@@ -11,6 +11,7 @@ import scalafx.scene.image.ImageView
 import scalafx.scene.layout.{GridPane, VBox}
 import scalafx.scene.paint.Color
 import scalafx.scene.text.{Font, FontWeight, Text}
+import scalafx.application.Platform
 
 import scala.collection.mutable
 
@@ -23,6 +24,11 @@ object ShopPanel:
   private lazy val renderSystem = new RenderSystem()
 
   def createShopPanel(): VBox =
+    // Reset state when creating new panel
+    wizardButtons.clear()
+    buttonStates.clear()
+    lastElixirAmount = -1
+
     val elixirDisplay = createElixirDisplay()
     val wizardGrid = createWizardGrid()
     val titleText = new Text("SHOP"):
@@ -58,18 +64,20 @@ object ShopPanel:
     grid
 
   def createElixirDisplay(): Text =
-    val currentElixir = ViewController.getController.map(_.getCurrentElixir).getOrElse(0)
+    val currentElixir = ViewController.getController.map(_.getCurrentElixir).getOrElse(INITIAL_ELIXIR)
     new Text(s"Elixir: $currentElixir"):
       font = Font.font("Arial", FontWeight.Bold, 13)
       fill = Color.LightBlue
 
   def updateElixir(): Unit =
-    val currentElixir = ViewController.getController.map(_.getCurrentElixir).getOrElse(0)
+    Platform.runLater {
+      val currentElixir = ViewController.getController.map(_.getCurrentElixir).getOrElse(INITIAL_ELIXIR)
 
-    if currentElixir != lastElixirAmount then
-      currentElixirText.foreach(_.text = s"Elixir: $currentElixir")
-      updateButtonStates(currentElixir)
-      lastElixirAmount = currentElixir
+      if currentElixir != lastElixirAmount then
+        currentElixirText.foreach(_.text = s"Elixir: $currentElixir")
+        updateButtonStates(currentElixir)
+        lastElixirAmount = currentElixir
+    }
 
   private def updateButtonStates(currentElixir: Int): Unit =
     wizardButtons.foreach: (wizardType, button) =>

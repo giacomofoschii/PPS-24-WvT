@@ -25,6 +25,8 @@ class EventHandler(engine: GameEngine):
     val result = Try:
       event match
         case GameEvent.ShowMainMenu =>
+          if currentPhase == GamePhase.Paused || currentPhase == GamePhase.Playing then
+            engine.stop()
           handleMenuTransition(GamePhase.MainMenu, ViewState.MainMenu)
 
         case GameEvent.ShowGameView =>
@@ -46,6 +48,8 @@ class EventHandler(engine: GameEngine):
         case GameEvent.Resume if currentPhase == GamePhase.Paused =>
           engine.resume()
           handleMenuTransition(GamePhase.Playing, ViewState.GameView)
+          // Force a render update to redraw existing entities
+          ViewController.render()
 
         case _ =>
           // Fallback to registered handlers

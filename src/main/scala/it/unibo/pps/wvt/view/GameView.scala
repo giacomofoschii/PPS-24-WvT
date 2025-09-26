@@ -20,8 +20,14 @@ object GameView {
   private var gridPane: Option[Pane] = None
   private var entityPane: Option[Pane] = None
   private var wizardButtons: Map[WizardType, Button] = Map.empty
+  private var gameStackPane: Option[StackPane] = None
 
   def apply(): Parent =
+    gridPane = None
+    entityPane = None
+    gameStackPane = None
+    wizardButtons = Map.empty
+
     lazy val backgroundImage =
       createBackgroundView("/background_grid.png", GAME_MAP_SCALE_FACTOR).getOrElse(new ImageView())
 
@@ -41,6 +47,7 @@ object GameView {
 
     entityPane = Some(entityOverlay)
     gridPane = Some(gridOverlay)
+    gameStackPane = Some(stackPane)
 
     stackPane
 
@@ -95,6 +102,7 @@ object GameView {
     }
 
   private def handleGridClick(x: Double, y: Double): Unit =
+    println(s"[GameView] Click at ($x, $y)")
     ViewController.getController match
       case Some(controller) =>
         // Check if the game is in pause after to process the click
@@ -130,6 +138,12 @@ object GameView {
       }
       left = shopPanel
     }
+
+  def cleanup(): Unit =
+    gridPane = None
+    entityPane = None
+    gameStackPane = None
+    wizardButtons = Map.empty
 
 
 }

@@ -20,6 +20,7 @@ object ViewController extends JFXApp3:
   private val world: World = new World()
   private var gameController: Option[GameController] = None
   private var currentViewState: ViewState = ViewState.MainMenu
+  private var gameViewRoot: Option[Parent] = None
 
   override def start(): Unit =
     gameController = Some(GameController(world))
@@ -27,14 +28,31 @@ object ViewController extends JFXApp3:
     updateView(ViewState.MainMenu)
 
   def updateView(viewState: ViewState): Unit =
+    val previousState = currentViewState
     currentViewState = viewState
     val newRoot = viewState match
-      case ViewState.MainMenu => MainMenu()
+      case ViewState.MainMenu =>
+        if previousState == ViewState.PauseMenu || previousState == ViewState.GameView then
+          cleanupGame()
+        gameViewRoot = None
+        MainMenu()
       case ViewState.GameView =>
-        initializeWorld()
-        val view = GameView()
-        render()
-        view
+        if previousState == ViewState.MainMenu then
+          cleanupGame()
+          initializeWorld()
+          val view = GameView()
+          gameViewRoot = Some(view)
+          render()
+          view
+        else if previousState == ViewState.PauseMenu && gameViewRoot.isDefined then
+          gameViewRoot.get
+        else
+          // Fallback: create new game
+          initializeWorld()
+          val view = GameView()
+          gameViewRoot = Some(view)
+          render()
+          view
       case ViewState.InfoMenu => InfoMenu()
       case ViewState.PauseMenu => PauseMenu()
 
@@ -52,8 +70,6 @@ object ViewController extends JFXApp3:
             stage.centerOnScreen()
       else
         stage = createStandardStage(newRoot)
-
-
 
   def requestMainMenu(): Unit =
     gameController.foreach(_.postEvent(GameEvent.ShowMainMenu))
@@ -96,4 +112,15 @@ object ViewController extends JFXApp3:
 
   private def initializeWorld(): Unit =
     world.clear()
+    gameController.foreach: controller =>
+      controller.stop()
+      controller.initialize()
   //possibilità utente di aggiungere le prime entità? Si parte già con un generator?
+
+  private def cleanupGame(): Unit =
+    gameController.foreach(_.stop())
+    world.clear()
+    GameView.cleanup()
+    gameViewRoot = None
+    ImageFactory.clearCache()
+    ShopPanel.updateElixir()
