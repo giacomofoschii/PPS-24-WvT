@@ -47,10 +47,10 @@ class RenderSystem extends System:
     case WizardType.Ice => "/wizard/ice.png"
 
   private def getTrollImagePath(trollType: TrollType): String = trollType match
-    case TrollType.Base => "/troll/BASE_TROLL/WALK/WALK_005.png"
-    case TrollType.Warrior => "/troll/WAR_TROLL/WALK/WALK_005.png"
-    case TrollType.Assassin => "/troll/ASS_TROLL/WALK/WALK_005.png"
-    case TrollType.Thrower => "/troll/BASE_TROLL/WALK/WALK_005.png"
+    case TrollType.Base => "/troll/BASE_TROLL/WALK_005.png"
+    case TrollType.Warrior => "/troll/WAR_TROLL/WALK_005.png"
+    case TrollType.Assassin => "/troll/Assassin.png"
+    case TrollType.Thrower => "/troll/THROW_TROLL/WALK_005.png"
 
   def forceRender(): Unit =
     lastRenderedState = None
