@@ -143,7 +143,8 @@ object GameView:
     shopPanel.maxHeight <== overlayPane.height - 20
 
     // Center shop button relative to shop panel (panel width is 250, button width is 200)
-    shopButton.layoutX = 35  // 10 (panel x) + (250-200)/2 = 35 for centering
+    // Center shop button relative to shop panel
+    shopButton.layoutX = shopPanel.layoutX.value + (250 - 200) / 2 // 10 (panel x) + (250-200)/2 = 35 for centering
     shopButton.layoutY = 30
 
     // Position pause button at same height as shop button

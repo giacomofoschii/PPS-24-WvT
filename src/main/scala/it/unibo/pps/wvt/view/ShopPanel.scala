@@ -12,6 +12,7 @@ import scalafx.scene.layout.{GridPane, VBox}
 import scalafx.scene.paint.Color
 import scalafx.scene.text.{Font, FontWeight, Text}
 import scalafx.application.Platform
+import scalafx.scene.Cursor
 
 import scala.collection.mutable
 
@@ -19,6 +20,7 @@ object ShopPanel:
 
   private var currentElixirText: Option[Text] = None
   private val wizardButtons: mutable.Map[WizardType, Button] = mutable.Map.empty
+  private val wizardCards: mutable.Map[WizardType, VBox] = mutable.Map.empty
   private var lastElixirAmount: Int = -1
   private val buttonStates: mutable.Map[WizardType, Boolean] = mutable.Map.empty
   private lazy val renderSystem = new RenderSystem()
@@ -29,6 +31,7 @@ object ShopPanel:
   def createShopPanel(): VBox =
     // Reset state when creating new panel
     wizardButtons.clear()
+    wizardCards.clear()
     buttonStates.clear()
     lastElixirAmount = -1
 
@@ -51,6 +54,7 @@ object ShopPanel:
       alignment = Pos.TopCenter
       prefWidth = 250
       maxWidth = 250
+      minWidth = 250  // Assicura che la larghezza sia esattamente 250
       children = Seq(contentContainer)
 
     currentElixirText = Some(elixirDisplay)
@@ -84,8 +88,8 @@ object ShopPanel:
   private def createWizardGrid(): GridPane =
     val wizardTypes = WizardType.values.toSeq
     val grid = new GridPane:
-      hgap = 14
-      vgap = 14
+      hgap = 10  // Ridotto leggermente per compensare le card più piccole
+      vgap = 10  // Ridotto leggermente per compensare le card più piccole
       alignment = Pos.Center
 
     wizardTypes.zipWithIndex.foreach: (wizardType, index) =>
@@ -107,47 +111,72 @@ object ShopPanel:
 
       if currentElixir != lastElixirAmount then
         currentElixirText.foreach(_.text = s"Elixir: $currentElixir")
-        updateButtonStates(currentElixir)
+        updateCardStates(currentElixir)
         lastElixirAmount = currentElixir
     }
 
-  private def updateButtonStates(currentElixir: Int): Unit =
-    wizardButtons.foreach: (wizardType, button) =>
+  private def updateCardStates(currentElixir: Int): Unit =
+    wizardCards.foreach: (wizardType, card) =>
       val cost = getWizardCost(wizardType)
       val canAfford = currentElixir >= cost
       val previousState = buttonStates.getOrElse(wizardType, !canAfford)
 
       if canAfford != previousState then
-        button.disable = !canAfford
         buttonStates.update(wizardType, canAfford)
+        updateCardStyle(card, canAfford, wizardType)
+      else if previousState == canAfford then
+        // Assicurati che lo stile sia applicato anche se lo stato non è cambiato
+        updateCardStyle(card, canAfford, wizardType)
 
-        if canAfford then
-          button.style = """-fx-background-color: linear-gradient(#4a90e2, #357abd);
-                           -fx-text-fill: white;
-                           -fx-background-radius: 10;
-                           -fx-border-radius: 10;
-                           -fx-cursor: hand;"""
-          button.onAction = _ => handleWizardPurchase(wizardType)
-          button.onMouseEntered = _ =>
-            button.style = """-fx-background-color: linear-gradient(#5ba0f2, #4589cd);
-                             -fx-text-fill: white;
-                             -fx-background-radius: 10;
-                             -fx-border-radius: 10;
-                             -fx-cursor: hand;"""
-          button.onMouseExited = _ =>
-            button.style = """-fx-background-color: linear-gradient(#4a90e2, #357abd);
-                             -fx-text-fill: white;
-                             -fx-background-radius: 10;
-                             -fx-border-radius: 10;
-                             -fx-cursor: hand;"""
-        else
-          button.style = """-fx-background-color: #666666;
-                           -fx-text-fill: #cccccc;
-                           -fx-background-radius: 10;
-                           -fx-border-radius: 10;"""
-          button.onAction = null
-          button.onMouseEntered = null
-          button.onMouseExited = null
+  private def updateCardStyle(card: VBox, canAfford: Boolean, wizardType: WizardType): Unit =
+    println(s"[ShopPanel] Updating card style for $wizardType, canAfford: $canAfford")
+
+    if canAfford then
+      card.style = """-fx-background-color: rgba(40,40,40,0.9);
+                      -fx-background-radius: 6;
+                      -fx-padding: 12;
+                      -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 3,0,1,1);
+                      -fx-border-color: #4a90e2;
+                      -fx-border-width: 2;
+                      -fx-border-radius: 6;"""
+      card.cursor = Cursor.Hand
+      card.onMouseClicked = event => {
+        println(s"[ShopPanel] Card clicked for $wizardType")
+        event.consume() // Consuma l'evento per evitare propagazione
+        Platform.runLater(() => handleWizardPurchase(wizardType))
+      }
+      card.onMouseEntered = _ =>
+        card.style = """-fx-background-color: rgba(60,60,60,0.95);
+                        -fx-background-radius: 6;
+                        -fx-padding: 12;
+                        -fx-effect: dropshadow(gaussian, rgba(74,144,226,0.6), 5,0,1,1);
+                        -fx-border-color: #5ba0f2;
+                        -fx-border-width: 2;
+                        -fx-border-radius: 6;"""
+      card.onMouseExited = _ =>
+        card.style = """-fx-background-color: rgba(40,40,40,0.9);
+                        -fx-background-radius: 6;
+                        -fx-padding: 12;
+                        -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 3,0,1,1);
+                        -fx-border-color: #4a90e2;
+                        -fx-border-width: 2;
+                        -fx-border-radius: 6;"""
+    else
+      card.style = """-fx-background-color: rgba(40,40,40,0.6);
+                      -fx-background-radius: 6;
+                      -fx-padding: 12;
+                      -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 3,0,1,1);
+                      -fx-border-color: #666666;
+                      -fx-border-width: 1;
+                      -fx-border-radius: 6;"""
+      card.cursor = Cursor.Default
+      card.onMouseClicked = null
+      card.onMouseEntered = null
+      card.onMouseExited = null
+
+  private def getDisplayName(wizardType: WizardType): String = wizardType match
+    case WizardType.Generator => "Gen"  // Abbrevia Generator
+    case other => other.toString
 
   private def createWizardCard(wizardType: WizardType): VBox =
     val cost = getWizardCost(wizardType)
@@ -162,64 +191,40 @@ object ShopPanel:
         img
       case Left(_) => new ImageView()
 
-    val nameText = new Text(wizardType.toString):
+    val nameText = new Text(getDisplayName(wizardType)):
       font = Font.font("Arial", FontWeight.Bold, 12)
       fill = Color.White
+      wrappingWidth = 100 // Limita la larghezza del testo
+      textAlignment = scalafx.scene.text.TextAlignment.Center
 
-    val buyButton = createWizardBuyButton(wizardType, cost, canAfford)
-    wizardButtons.update(wizardType, buyButton)
+    val costText = new Text(s"$cost ♦"):
+      font = Font.font("Arial", FontWeight.Bold, 11)
+      fill = if canAfford then Color.LightBlue else Color.Gray
 
-    new VBox:
+    val card = new VBox:
       spacing = 4
       alignment = Pos.Center
-      prefWidth = 120
-      prefHeight = 120
-      style = """-fx-background-color: rgba(40,40,40,0.9);
-                 -fx-background-radius: 6;
-                 -fx-padding: 12;
-                 -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 3,0,1,1);"""
-      children = Seq(nameText, imageView, buyButton)
+      prefWidth = 100  // Dimensione fissa
+      prefHeight = 110 // Dimensione fissa
+      minWidth = 100   // Dimensione minima
+      minHeight = 110  // Dimensione minima
+      maxWidth = 100   // Dimensione massima
+      maxHeight = 110  // Dimensione massima
+      children = Seq(nameText, imageView, costText)
 
-  private def createWizardBuyButton(wizardType: WizardType, cost: Int, canAfford: Boolean): Button =
-    val buttonText = s"$cost ♦"
-    val buttonConfig = ButtonConfig(buttonText, 130, 40, 11, "Arial")
+    // Store card reference for later updates
+    wizardCards.update(wizardType, card)
 
-    val button = new Button(buttonText):
-      font = Font.font(buttonConfig.fontFamily, FontWeight.Bold, buttonConfig.fontSize)
-      prefWidth = buttonConfig.width
-      prefHeight = buttonConfig.height
-      disable = !canAfford
+    // Set initial state and ensure click handlers are properly set
+    updateCardStyle(card, canAfford, wizardType)
+    buttonStates.update(wizardType, canAfford)
 
-      if canAfford then
-        style = """-fx-background-color: linear-gradient(#4a90e2, #357abd);
-                   -fx-text-fill: white;
-                   -fx-background-radius: 10;
-                   -fx-border-radius: 10;
-                   -fx-cursor: hand;"""
-        onAction = _ => handleWizardPurchase(wizardType)
-        onMouseEntered = _ =>
-          style = """-fx-background-color: linear-gradient(#5ba0f2, #4589cd);
-                     -fx-text-fill: white;
-                     -fx-background-radius: 10;
-                     -fx-border-radius: 10;
-                     -fx-cursor: hand;"""
-        onMouseExited = _ =>
-          style = """-fx-background-color: linear-gradient(#4a90e2, #357abd);
-                     -fx-text-fill: white;
-                     -fx-background-radius: 10;
-                     -fx-border-radius: 10;
-                     -fx-cursor: hand;"""
-      else
-        style = """-fx-background-color: #666666;
-                   -fx-text-fill: #cccccc;
-                   -fx-background-radius: 10;
-                   -fx-border-radius: 10;"""
-
-    button
+    card
 
   private def handleWizardPurchase(wizardType: WizardType): Unit =
     ViewController.getController.foreach: controller =>
       controller.selectWizard(wizardType)
+      println(s"[ShopPanel] Wizard $wizardType selected. Now click on the game grid to place it.")
 
   private def getWizardCost(wizardType: WizardType): Int = wizardType match
     case WizardType.Generator => GENERATOR_WIZARD_COST
