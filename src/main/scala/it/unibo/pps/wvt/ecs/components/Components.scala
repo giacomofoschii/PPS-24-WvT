@@ -20,7 +20,7 @@ case class ElixirGeneratorComponent(elixirPerSecond: Int, cooldown: Long) extend
 
 // Combat components
 case class AttackComponent(damage: Int, range: Double, cooldown: Long) extends Component
-case class DamageComponent(amount: Int, entityType: String) extends Component
+case class DamageComponent(amount: Int, projectileType: ProjectileType) extends Component
 case class CollisionComponent(amount: Int) extends Component
 case class CooldownComponent(remainingTime: Long) extends Component
 
@@ -31,6 +31,7 @@ case class SpriteComponent(spritePath: String) extends Component
 sealed trait EntityTypeComponent extends Component
 case class WizardTypeComponent(wizardType: WizardType) extends EntityTypeComponent
 case class TrollTypeComponent(trollType: TrollType) extends EntityTypeComponent
+case class ProjectileTypeComponent(projectileType: ProjectileType) extends EntityTypeComponent
 
 enum WizardType {
   case Generator, Wind, Barrier, Fire, Ice
@@ -38,4 +39,8 @@ enum WizardType {
 
 enum TrollType {
   case Base, Warrior, Assassin, Thrower
+}
+
+enum ProjectileType {
+  case Base, Fire, Ice, Troll
 }

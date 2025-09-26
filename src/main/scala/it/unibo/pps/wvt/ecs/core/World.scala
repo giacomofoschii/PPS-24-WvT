@@ -32,6 +32,8 @@ class World {
         entitiesByType.getOrElseUpdate("wizard", mutable.Buffer()).append(entity)
       case _ : TrollTypeComponent =>
         entitiesByType.getOrElseUpdate("troll", mutable.Buffer()).append(entity)
+      case _ : ProjectileTypeComponent =>
+        entitiesByType.getOrElseUpdate("projectile", mutable.Buffer()).append(entity)
       case _ : Component =>
   // Do nothing for other component types
 

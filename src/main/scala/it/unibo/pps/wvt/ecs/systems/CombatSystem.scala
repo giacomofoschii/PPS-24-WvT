@@ -1,10 +1,10 @@
 package it.unibo.pps.wvt.ecs.systems
 
-import it.unibo.pps.wvt.ecs.components.TrollType._
-import it.unibo.pps.wvt.ecs.components._
+import it.unibo.pps.wvt.ecs.components.TrollType.*
+import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.factories.EntityFactory
 import it.unibo.pps.wvt.ecs.core.*
-import it.unibo.pps.wvt.utilities.GamePlayConstants._
+import it.unibo.pps.wvt.utilities.GamePlayConstants.*
 import it.unibo.pps.wvt.utilities.Position
 
 import scala.util.Random
@@ -61,11 +61,15 @@ case class CombatSystem() extends System:
       attack <- world.getComponent[AttackComponent](entity)
       if !isOnCooldown(entity, world)
       if hasTargetsInRange(entity, pos.position, attack.range, world)
-    yield (pos.position, attack)
+    yield (wizardType.wizardType, pos.position, attack)
   
-    wizards.foreach: (pos, attack) =>
+    wizards.foreach: (wizardType, pos, attack) =>
+      val projType = wizardType match
+          case WizardType.Fire => ProjectileType.Fire
+          case WizardType.Ice => ProjectileType.Ice
+          case _ => ProjectileType.Base
       val projectile = EntityFactory.createProjectile(world, pos)
-      world.addComponent(projectile, DamageComponent(attack.damage, "wizard"))
+      world.addComponent(projectile, DamageComponent(attack.damage, projType))
       
   
   private def hasTargetsInRange(wizardEntity: EntityId, wizardPos: Position, range: Double, world: World): Boolean =
@@ -92,7 +96,7 @@ case class CombatSystem() extends System:
 
     throwers.foreach: (pos, attack) =>
       val projectile = EntityFactory.createProjectile(world, pos)
-      world.addComponent(projectile, DamageComponent(attack.damage, "troll"))
+      world.addComponent(projectile, DamageComponent(attack.damage, ProjectileType.Troll))
 
   private def calculateMeleeDamage(attacker: EntityId, target: EntityId, baseDamage: Int,
                                    world: World): Int =

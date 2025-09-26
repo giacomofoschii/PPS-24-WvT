@@ -29,19 +29,32 @@ case class MovementSystem() extends System:
     yield newPos
 
   private def selectMovementStrategy(entity: EntityId, world: World): MovementStrategy =
-    world.getComponent[TrollTypeComponent](entity)
-      .map(trollMovementStrategy)
-      .getOrElse(defaultMovementStrategy)
+    if world.getEntitiesByType("troll").contains(entity) then
+      world.getComponent[TrollTypeComponent](entity)
+        .map(trollMovementStrategy)
+        .getOrElse(defaultMovementStrategy)
+    else if world.getEntitiesByType("projectile").contains(entity) then
+      world.getComponent[ProjectileTypeComponent](entity)
+        .map(proj => if proj.projectileType == ProjectileType.Troll 
+          then straightLeftMovement else straightRightMovement)
+        .getOrElse(defaultMovementStrategy)
+    else
+      defaultMovementStrategy
 
   private val trollMovementStrategy: TrollTypeComponent => MovementStrategy = trollType =>
     trollType.trollType match
-      case Base | Warrior => straightMovement
+      case Base | Warrior => straightLeftMovement
       case Assassin => zigzagMovement
       case Thrower => conditionalMovement(6)
 
-  private val straightMovement: MovementStrategy = (pos, speed, _, _) =>
+  private val straightLeftMovement: MovementStrategy = (pos, speed, _, _) =>
     Option.when(pos.col > 0 && speed > 0)(
       Position(pos.row, (pos.col - math.ceil(speed).toInt).max(0))
+    )
+    
+  private val straightRightMovement: MovementStrategy = (pos, speed, _, _) =>
+    Option.when(pos.col < 9 && speed > 0)(
+      Position(pos.row, (pos.col + math.ceil(speed).toInt).min(9))
     )
 
   private val zigzagMovement: MovementStrategy = (pos, speed, _, _) =>

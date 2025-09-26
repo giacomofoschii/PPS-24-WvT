@@ -7,4 +7,4 @@ case class Position(row: Int, col: Int, allowInvalid: Boolean = false):
     require(row >= 0 && row < GRID_ROWS, s"Row must be between 0 and ${GRID_ROWS - 1}")
     require(col >= 0 && col < GRID_COLS, s"Col must be between 0 and ${GRID_COLS - 1}")
 
-  def isValid: Boolean = row >= 0 && row < GRID_ROWS && col >= 0 && col < GRID_COLS
+  def isValid: Boolean = GridMapper.isValidPosition(this)

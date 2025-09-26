@@ -6,6 +6,9 @@ object GridMapper {
 
   type PhysicalCoords = (Double, Double)
 
+  def isValidPosition(pos: Position): Boolean =
+    pos.row >= 0 && pos.row < GRID_ROWS && pos.col >= 0 && pos.col < GRID_COLS
+    
   def logicalToPhysical(position: Position): PhysicalCoords =
     (GRID_OFFSET_X + position.col * CELL_WIDTH, GRID_OFFSET_Y + position.row * CELL_HEIGHT)
 
@@ -25,7 +28,4 @@ object GridMapper {
   private def getCellCenter(position: Position): PhysicalCoords =
     val (x, y) = logicalToPhysical(position)
     (x + CELL_WIDTH / 2.0, y + CELL_HEIGHT / 2.0)
-
-  private def isValidPosition(pos: Position): Boolean =
-    pos.row >= 0 && pos.row < GRID_ROWS && pos.col >= 0 && pos.col < GRID_COLS
 }
