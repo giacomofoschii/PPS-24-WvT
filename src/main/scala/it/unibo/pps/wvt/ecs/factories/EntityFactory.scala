@@ -5,6 +5,8 @@ import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.components.TrollType.*
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
 import it.unibo.pps.wvt.utilities.Position
+import it.unibo.pps.wvt.utilities.ViewConstants.*
+import scalafx.scene.paint.Color
 
 object EntityFactory:
   def createProjectile(world: World, position:Position): EntityId =
@@ -48,6 +50,11 @@ object EntityFactory:
     world.addComponent(entity, CostComponent(cost))
     world.addComponent(entity, SpriteComponent(spritePath))
     world.addComponent(entity, WizardTypeComponent(wizardType))
+    world.addComponent(entity, HealthBarComponent(
+      barColor = Color.Blue,
+      barWidth = HEALTH_BAR_WIDTH,
+      offsetY = HEALTH_BAR_OFFSET_Y,
+    ))
     entity
 
   // TROLL IMPLEMENTATIONS
@@ -98,4 +105,9 @@ object EntityFactory:
       cooldown = cooldown
     ))
     world.addComponent(entity, SpriteComponent(spritePath))
+    world.addComponent(entity, HealthBarComponent(
+      barColor = Color.Red,
+      barWidth = HEALTH_BAR_WIDTH,
+      offsetY = HEALTH_BAR_OFFSET_Y,
+    ))
     entity

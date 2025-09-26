@@ -61,6 +61,8 @@ class GameController(world: World):
 
     def canAfford(cost: Int): Boolean = elixir.canAfford(cost)
 
+    def reset(): GameSystemsState = GameSystemsState.initial()
+
   object GameSystemsState:
     def initial(): GameSystemsState =
       val elixir = ElixirSystem()
@@ -79,10 +81,23 @@ class GameController(world: World):
 
   // Mutable state
   private var state: GameSystemsState = GameSystemsState.initial()
+  private var isInitialized: Boolean = false
 
   def initialize(): Unit =
-    gameEngine.initialize(this)
-    setupEventHandlers()
+    // Reset state
+    state = GameSystemsState.initial()
+
+    // Only initialize engine if not already done
+    if !isInitialized then
+      gameEngine.initialize(this)
+      setupEventHandlers()
+      isInitialized = true
+    else
+      // If already initialized, just reset the event handler phase
+      eventHandler.clearQueue()
+
+    // Force render system to clear its cache
+    state.render.clearCache()
 
   def update(): Unit =
     if eventHandler.getCurrentPhase == GamePhase.Playing && !gameEngine.isPaused then

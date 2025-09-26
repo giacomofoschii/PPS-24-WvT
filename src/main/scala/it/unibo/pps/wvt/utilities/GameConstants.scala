@@ -89,3 +89,6 @@ object ViewConstants:
   val TITLE_SCALE_FACTOR = 0.4
 
   val PADDING_MENU = 15
+
+  val HEALTH_BAR_WIDTH: Double = 40.0
+  val HEALTH_BAR_OFFSET_Y: Int = -5

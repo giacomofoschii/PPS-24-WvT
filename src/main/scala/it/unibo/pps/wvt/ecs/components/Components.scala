@@ -1,7 +1,7 @@
 package it.unibo.pps.wvt.ecs.components
 
-import it.unibo.pps.wvt.ecs.core.EntityId
 import it.unibo.pps.wvt.utilities.Position
+import scalafx.scene.paint.Color
 
 sealed trait Component
 
@@ -26,6 +26,23 @@ case class CooldownComponent(remainingTime: Long) extends Component
 
 // UI components
 case class SpriteComponent(spritePath: String) extends Component
+case class HealthBarComponent(
+                               visible: Boolean = true,
+                               barColor: Color = Color.Green,
+                               barWidth: Double = 40.0,
+                               barHeight: Double = 4.0,
+                               offsetY: Double = -10.0
+                             ) extends Component:
+
+  def updateColorByHealthPercentage(percentage: Double): HealthBarComponent =
+    val newColor = percentage match
+      case p if p > 0.6 => Color.Green
+      case p if p > 0.3 => Color.Yellow
+      case _ => Color.Red
+    copy(barColor = newColor)
+
+  def withVisibility(isVisible: Boolean): HealthBarComponent =
+    copy(visible = isVisible)
 
 // Entities types components
 sealed trait EntityTypeComponent extends Component
