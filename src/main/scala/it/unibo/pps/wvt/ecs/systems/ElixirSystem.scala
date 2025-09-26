@@ -13,7 +13,10 @@ case class ElixirSystem(
     updatePeriodicElixirGeneration()
       .updateGeneratorWizardElixir(world)
 
-  // Manage periodic elixir generation
+  /*
+    * Every ELIXIR_GENERATION_INTERVAL milliseconds, add PERIODIC_ELIXIR to totalElixir
+    * If not enough time has passed, return the current system state unchanged
+    */
   private def updatePeriodicElixirGeneration(): ElixirSystem =
     val currentTime = System.currentTimeMillis()
     if currentTime - lastPeriodicGeneration >= ELIXIR_GENERATION_INTERVAL then
@@ -23,7 +26,9 @@ case class ElixirSystem(
       )
     else this
 
-  // Manage elixir generation from Generator Wizards
+  /* For each generator wizard in the world, if its cooldown has elapsed, add its elixirPerSecond to totalElixir
+   * and reset its cooldown
+   */
   private def updateGeneratorWizardElixir(world: World): ElixirSystem =
     val generatorEntities = world.getEntitiesWithTwoComponents[WizardTypeComponent, ElixirGeneratorComponent]
     val currentTime = System.currentTimeMillis()
@@ -43,22 +48,18 @@ case class ElixirSystem(
             world.addComponent(entityId, newCooldown)
     updatedSystem
 
-  // Remove elixir if enough is available
+  
   def spendElixir(amount: Int): (ElixirSystem, Boolean) =
     if totalElixir >= amount then
       (copy(totalElixir = totalElixir - amount), true)
     else (this, false)
-
-  // Add elixir to total
+  
   def addElixir(amount: Int): ElixirSystem =
     copy(totalElixir = totalElixir + amount)
-
-  // Get current amount of elixir
+  
   def getCurrentElixir: Int = totalElixir
-
-  // Check if can afford amount
+  
   def canAfford(amount: Int): Boolean = totalElixir >= amount
-
-  // System reset
+  
   def reset(): ElixirSystem =
     copy(totalElixir = INITIAL_ELIXIR, lastPeriodicGeneration = System.currentTimeMillis())

@@ -12,13 +12,10 @@ class RenderSystem extends System:
   override def update(world: World): System =
     val entities = collectEntitiesWithImages(world)
     val currentState = generateStateHash(entities)
-
-    // Only render if something actually changed
     if lastRenderedState.isEmpty || !lastRenderedState.contains(currentState) then
       GameView.clearGrid()
       GameView.renderEntities(entities)
       lastRenderedState = Some(currentState)
-
     this
 
   private def collectEntitiesWithImages(world: World): Seq[(GridMapper.PhysicalCoords, String)] =
@@ -33,7 +30,6 @@ class RenderSystem extends System:
         pos <- world.getComponent[PositionComponent](entity)
         trollType <- world.getComponent[TrollTypeComponent](entity)
       yield (GridMapper.logicalToPhysical(pos.position), getTrollImagePath(trollType.trollType))
-
     (wizardEntities ++ trollEntities).toSeq
 
   private def generateStateHash(entities: Seq[(GridMapper.PhysicalCoords, String)]): String =

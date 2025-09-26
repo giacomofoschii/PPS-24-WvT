@@ -15,15 +15,9 @@ case class CombatSystem() extends System:
   type DamageModifier = Int => Int
 
   override def update(world: World): System =
-    // Manage the troll's attacks
     processMeleeAttacks(world)
-
-    // Manage projectile creation
     processRangedAttacks(world)
-
-    //update cooldown
     updateCooldowns(world)
-
     this
 
   private def processMeleeAttacks(world: World): Unit =
@@ -35,10 +29,8 @@ case class CombatSystem() extends System:
       attack <- world.getComponent[AttackComponent](entity)
       if !isOnCooldown(entity, world)
     yield (entity, pos.position, attack)
-
     meleeAttackers.foreach: (attacker, pos, attack) =>
       val targetPos = Position(pos.row, pos.col - 1)
-
       world.getEntityAt(targetPos).foreach: target =>
         world.getComponent[WizardTypeComponent](target).foreach: _ =>
           val damage = calculateMeleeDamage(attacker, target, attack.damage, world)
@@ -46,10 +38,7 @@ case class CombatSystem() extends System:
           world.addComponent(attacker, CooldownComponent(attack.cooldown))
 
   private def processRangedAttacks(world: World): Unit =
-    // Process wizard's fire
     processWizardProjectiles(world)
-
-    // Process thrower's fire
     processThrowerProjectiles(world)
 
   private def processWizardProjectiles(world: World): Unit =
@@ -62,7 +51,6 @@ case class CombatSystem() extends System:
       if !isOnCooldown(entity, world)
       if hasTargetsInRange(entity, pos.position, attack.range, world)
     yield (wizardType.wizardType, pos.position, attack)
-  
     wizards.foreach: (wizardType, pos, attack) =>
       val projType = wizardType match
           case WizardType.Fire => ProjectileType.Fire
@@ -93,7 +81,6 @@ case class CombatSystem() extends System:
       attack <- world.getComponent[AttackComponent](entity)
       if !isOnCooldown(entity, world)
     yield (pos.position, attack)
-
     throwers.foreach: (pos, attack) =>
       val projectile = EntityFactory.createProjectile(world, pos)
       world.addComponent(projectile, DamageComponent(attack.damage, ProjectileType.Troll))
@@ -105,7 +92,6 @@ case class CombatSystem() extends System:
         case Assassin if Random.nextDouble() < 0.05 => Seq(ASSASSIN_TROLL_DAMAGE * 2)
         case _ => Seq.empty
     .getOrElse(Seq.empty)
-
     attackerModifiers.foldLeft(baseDamage)(_ * _)
 
   private def isOnCooldown(entity: EntityId, world: World): Boolean =
