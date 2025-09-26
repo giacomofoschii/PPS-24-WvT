@@ -15,6 +15,7 @@ import scalafx.scene.paint.Color
 import scalafx.scene.shape.Rectangle
 import scalafx.application.Platform
 
+
 object GameView {
   private var gridPane: Option[Pane] = None
   private var entityPane: Option[Pane] = None
@@ -71,8 +72,12 @@ object GameView {
         entities.foreach { case ((x, y), spritePath) =>
           createImageView(spritePath, CELL_WIDTH) match
             case Right(imageView) =>
+              // Center the image in the cell
               imageView.x = x
               imageView.y = y
+              imageView.fitWidth = CELL_WIDTH
+              imageView.fitHeight = CELL_HEIGHT
+              imageView.preserveRatio = false  // Force exact cell dimensions
               pane.children.add(imageView)
             case Left(error) =>
               println(s"Error loading entity image: $error")
@@ -116,18 +121,15 @@ object GameView {
       "pause" -> ButtonConfig("Pause", 200, 100, 20, "Times New Roman"),
     )
     val pauseButton = createStyledButton(buttonConfigs("pause"))(handleAction(PauseGame))
+    val shopPanel = ShopPanel.createShopPanel()
 
     new BorderPane {
       top = new BorderPane {
         padding = Insets(5)
         right = pauseButton
       }
+      left = shopPanel
     }
 
-  private def getWizardCost(wizardType: WizardType): Int = wizardType match
-    case WizardType.Generator => 50
-    case WizardType.Wind => 100
-    case WizardType.Barrier => 50
-    case WizardType.Fire => 150
-    case WizardType.Ice => 175
+
 }

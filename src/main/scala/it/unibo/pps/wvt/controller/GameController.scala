@@ -10,6 +10,7 @@ import it.unibo.pps.wvt.ecs.factories.EntityFactory
 import it.unibo.pps.wvt.ecs.systems.*
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
 import it.unibo.pps.wvt.utilities.Position
+import it.unibo.pps.wvt.view.ShopPanel
 
 class GameController(world: World):
 
@@ -86,6 +87,7 @@ class GameController(world: World):
   def update(): Unit =
     if eventHandler.getCurrentPhase == GamePhase.Playing && !gameEngine.isPaused then
       state = state.updateAll(world)
+      ShopPanel.updateElixir()
 
   def getCurrentElixir: Int = state.getCurrentElixir
   def getRenderSystem: RenderSystem = state.render

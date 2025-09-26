@@ -5,17 +5,52 @@ import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.core.*
 import it.unibo.pps.wvt.view.GameView
 
-class RenderSystem extends System{
+class RenderSystem extends System:
+
+  private var lastRenderedState: Option[String] = None
+
   override def update(world: World): System =
-    val trollPositions = world.getEntitiesByType("troll").flatMap(entity =>
-      world.getComponent[PositionComponent](entity).map(_.position)
-    ).map(GridMapper.logicalToPhysical).toSeq
+    val entities = collectEntitiesWithImages(world)
+    val currentState = generateStateHash(entities)
 
-    val wizardPositions = world.getEntitiesByType("wizard").flatMap(entity =>
-      world.getComponent[PositionComponent](entity).map(_.position)
-    ).map(GridMapper.logicalToPhysical).toSeq
+    // Only render if something actually changed
+    if lastRenderedState.isEmpty || !lastRenderedState.contains(currentState) then
+      GameView.clearGrid()
+      GameView.renderEntities(entities)
+      lastRenderedState = Some(currentState)
 
-    GameView.drawGrid(wizardPositions, trollPositions)
     this
 
-}
+  private def collectEntitiesWithImages(world: World): Seq[(GridMapper.PhysicalCoords, String)] =
+    val wizardEntities = world.getEntitiesByType("wizard").flatMap: entity =>
+      for
+        pos <- world.getComponent[PositionComponent](entity)
+        wizardType <- world.getComponent[WizardTypeComponent](entity)
+      yield (GridMapper.logicalToPhysical(pos.position), getWizardImagePath(wizardType.wizardType))
+
+    val trollEntities = world.getEntitiesByType("troll").flatMap: entity =>
+      for
+        pos <- world.getComponent[PositionComponent](entity)
+        trollType <- world.getComponent[TrollTypeComponent](entity)
+      yield (GridMapper.logicalToPhysical(pos.position), getTrollImagePath(trollType.trollType))
+
+    (wizardEntities ++ trollEntities).toSeq
+
+  private def generateStateHash(entities: Seq[(GridMapper.PhysicalCoords, String)]): String =
+    entities.map { case ((x, y), imagePath) => s"$x,$y,$imagePath" }.mkString(";")
+
+  def getWizardImagePath(wizardType: WizardType): String = wizardType match
+    case WizardType.Generator => "/wizard/generator.png"
+    case WizardType.Wind => "/wizard/wind.png"
+    case WizardType.Barrier => "/wizard/barrier.png"
+    case WizardType.Fire => "/wizard/fire.png"
+    case WizardType.Ice => "/wizard/ice.png"
+
+  private def getTrollImagePath(trollType: TrollType): String = trollType match
+    case TrollType.Base => "/troll/BASE_TROLL/WALK/WALK_005.png"
+    case TrollType.Warrior => "/troll/WAR_TROLL/WALK/WALK_005.png"
+    case TrollType.Assassin => "/troll/ASS_TROLL/WALK/WALK_005.png"
+    case TrollType.Thrower => "/troll/BASE_TROLL/WALK/WALK_005.png"
+
+  def forceRender(): Unit =
+    lastRenderedState = None

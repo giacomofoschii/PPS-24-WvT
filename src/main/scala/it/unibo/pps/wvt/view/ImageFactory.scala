@@ -1,8 +1,12 @@
 package it.unibo.pps.wvt.view
 
 import scalafx.scene.image.{Image, ImageView}
+import scala.collection.mutable
 
 object ImageFactory {
+
+  private val imageCache: mutable.Map[String, Image] = mutable.Map.empty
+
   def createBackgroundView(path: String, factor: Double): Option[ImageView] =
     loadImage(path).map(myImage => new ImageView(myImage) {
       fitWidth = myImage.width.value * factor
@@ -18,7 +22,16 @@ object ImageFactory {
       preserveRatio = true
     }
 
-
   private def loadImage(path: String): Option[Image] =
-    Option(getClass.getResourceAsStream(path)).map(new Image(_))
+    imageCache.get(path) match
+      case Some(cachedImage) => Some(cachedImage)
+      case None =>
+        Option(getClass.getResourceAsStream(path)).map { stream =>
+          val image = new Image(stream)
+          imageCache.update(path, image)
+          image
+        }
+
+  def clearCache(): Unit =
+    imageCache.clear()
 }
