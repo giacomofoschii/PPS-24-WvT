@@ -15,7 +15,6 @@ import scalafx.scene.paint.Color
 import scalafx.scene.shape.Rectangle
 import scalafx.application.Platform
 
-
 object GameView:
   private var gridPane: Option[Pane] = None
   private var entityPane: Option[Pane] = None
@@ -56,7 +55,6 @@ object GameView:
     stackPane
 
   def drawGrid(greenCells: Seq[PhysicalCoords], redCells: Seq[PhysicalCoords]): Unit =
-    // Ensure UI updates happen on JavaFX Application Thread
     Platform.runLater:
       gridPane.foreach: pane =>
         pane.children.clear()
@@ -78,12 +76,11 @@ object GameView:
         entities.foreach { case ((x, y), spritePath) =>
           createImageView(spritePath, CELL_WIDTH) match
             case Right(imageView) =>
-              // Center the image in the cell
               imageView.x = x
               imageView.y = y
               imageView.fitWidth = CELL_WIDTH
               imageView.fitHeight = CELL_HEIGHT
-              imageView.preserveRatio = false  // Force exact cell dimensions
+              imageView.preserveRatio = false
               pane.children.add(imageView)
             case Left(error) =>
               println(s"Error loading entity image: $error")
@@ -98,17 +95,16 @@ object GameView:
 
   def showError(message: String) : Unit =
     Platform.runLater:
-      new Alert(AlertType.Error):
+      val alert = new Alert(AlertType.Error):
         title = "Error"
         headerText = "An error occurred"
         contentText = message
-      .showAndWait()
+      alert.showAndWait()
 
   private def handleGridClick(x: Double, y: Double): Unit =
     println(s"[GameView] Click at ($x, $y)")
     ViewController.getController match
       case Some(controller) =>
-        // Check if the game is in pause after to process the click
         if !controller.getEngine.isPaused then
           controller.handleMouseClick(x.toInt, y.toInt)
         else
@@ -132,13 +128,13 @@ object GameView:
     )
     val pauseButton = createStyledButton(buttonConfigs("pause"))(handleAction(PauseGame))
     val shopPanel = ShopPanel.createShopPanel()
-    val shopButton = ShopPanel.createShopButton()  // Get shop button separately
+    val shopButton = ShopPanel.createShopButton()
 
     val overlayPane = new Pane {
       children = Seq(shopPanel, pauseButton, shopButton)
     }
 
-    // Position shop panel - the content will expand vertically
+    // Position shop panel
     shopPanel.layoutX = 10
     shopPanel.layoutY = 10
 
@@ -146,8 +142,8 @@ object GameView:
     shopPanel.prefHeight <== overlayPane.height - 20
     shopPanel.maxHeight <== overlayPane.height - 20
 
-    // Position shop button at fixed coordinates (same as pause button height)
-    shopButton.layoutX = 10
+    // Center shop button relative to shop panel (panel width is 250, button width is 200)
+    shopButton.layoutX = 35  // 10 (panel x) + (250-200)/2 = 35 for centering
     shopButton.layoutY = 30
 
     // Position pause button at same height as shop button
@@ -158,7 +154,6 @@ object GameView:
 
   private def renderSingleHealthBar(pane: Pane): ((PhysicalCoords, Double, Color, Double, Double, Double)) => Unit =
     case ((myX, myY), percentage, color, barWidth, barHeight, offsetY) =>
-      // Background della health bar
       val backgroundBar = new Rectangle:
         this.x = myX + (CELL_WIDTH - barWidth) / 2
         this.y = myY + offsetY

@@ -24,6 +24,7 @@ object ShopPanel:
   private lazy val renderSystem = new RenderSystem()
   private var isShopOpen: Boolean = true
   private var shopContent: Option[scalafx.scene.layout.VBox] = None
+  private var shopPanel: Option[VBox] = None
 
   def createShopPanel(): VBox =
     // Reset state when creating new panel
@@ -34,28 +35,29 @@ object ShopPanel:
     val elixirDisplay = createElixirDisplay()
     val wizardGrid = createWizardGrid()
 
-    // Create content container with the black background
+    // Create content container (just the shop content, no background)
     val contentContainer = new scalafx.scene.layout.VBox:
       spacing = 16
-      padding = Insets(20)
+      padding = Insets(10, 20, 20, 20)
       alignment = Pos.TopCenter
-      style = """-fx-background-color: rgba(0,0,0,0.85);
-                 -fx-background-radius: 10;
-                 -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.7), 8,0,2,2);"""
       children = Seq(elixirDisplay, wizardGrid)
 
     shopContent = Some(contentContainer)
 
-    // Main panel with just content (no shop button)
+    // Main panel that will show black background only when shop is open
     val panel = new VBox:
       spacing = 16
-      padding = Insets(120, 20, 20, 20)  // Extra top padding to leave space for shop button
+      padding = Insets(120, 20, 20, 20)  // Keep space for the fixed shop button above
       alignment = Pos.TopCenter
       prefWidth = 250
       maxWidth = 250
       children = Seq(contentContainer)
 
     currentElixirText = Some(elixirDisplay)
+
+    // Save panel reference and set initial background
+    shopPanel = Some(panel)
+    updatePanelBackground(panel)
     panel
 
   def createShopButton(): Button =
@@ -67,6 +69,17 @@ object ShopPanel:
     shopContent.foreach: content =>
       content.visible = isShopOpen
       content.managed = isShopOpen
+
+    // Update panel background based on shop state
+    shopPanel.foreach(updatePanelBackground)
+
+  private def updatePanelBackground(panel: VBox): Unit =
+    if isShopOpen then
+      panel.style = """-fx-background-color: rgba(0,0,0,0.85);
+                       -fx-background-radius: 10;
+                       -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.7), 8,0,2,2);"""
+    else
+      panel.style = "" // No background when closed
 
   private def createWizardGrid(): GridPane =
     val wizardTypes = WizardType.values.toSeq
