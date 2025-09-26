@@ -1,10 +1,10 @@
 package it.unibo.pps.wvt.view
 
 import it.unibo.pps.wvt.ecs.components.WizardType
+import it.unibo.pps.wvt.utilities.GridMapper.PhysicalCoords
 import it.unibo.pps.wvt.view.ButtonFactory.*
 import it.unibo.pps.wvt.view.ImageFactory.*
 import it.unibo.pps.wvt.utilities.ViewConstants.*
-import it.unibo.pps.wvt.utilities.GridMapper.PhysicalCoords
 import scalafx.geometry.Insets
 import scalafx.scene.Parent
 import scalafx.scene.control.Alert.AlertType
@@ -16,11 +16,12 @@ import scalafx.scene.shape.Rectangle
 import scalafx.application.Platform
 
 
-object GameView {
+object GameView:
   private var gridPane: Option[Pane] = None
   private var entityPane: Option[Pane] = None
   private var wizardButtons: Map[WizardType, Button] = Map.empty
   private var gameStackPane: Option[StackPane] = None
+  private var healthBarPane: Option[Pane] = None
 
   def apply(): Parent =
     gridPane = None
@@ -38,13 +39,16 @@ object GameView {
 
     val uiOverlay = createUIOverlay
 
-    val stackPane = new StackPane {
+    val healthBarOverlay = new Pane()
+    healthBarOverlay.mouseTransparent = true
+
+    val stackPane = new StackPane:
       children = Seq(backgroundImage, gridOverlay, entityOverlay, uiOverlay)
 
       onMouseClicked = event =>
         handleGridClick(event.getX, event.getY)
-    }
 
+    healthBarPane = Some(healthBarOverlay)
     entityPane = Some(entityOverlay)
     gridPane = Some(gridOverlay)
     gameStackPane = Some(stackPane)
@@ -53,27 +57,22 @@ object GameView {
 
   def drawGrid(greenCells: Seq[PhysicalCoords], redCells: Seq[PhysicalCoords]): Unit =
     // Ensure UI updates happen on JavaFX Application Thread
-    Platform.runLater {
-      gridPane.foreach { pane =>
+    Platform.runLater:
+      gridPane.foreach: pane =>
         pane.children.clear()
 
-        greenCells.foreach { case (x, y) =>
+        greenCells.foreach: (x, y) =>
           pane.children.add(createStatusCell(x, y, Color.Green))
-        }
 
-        redCells.foreach { case (x, y) =>
+        redCells.foreach: (x, y) =>
           pane.children.add(createStatusCell(x, y, Color.Red))
-        }
-      }
-    }
 
   def clearGrid(): Unit =
-    Platform.runLater {
+    Platform.runLater:
       gridPane.foreach(_.children.clear())
-    }
 
   def renderEntities(entities: Seq[(PhysicalCoords, String)]): Unit =
-    Platform.runLater {
+    Platform.runLater:
       entityPane.foreach(pane =>
         pane.children.clear()
         entities.foreach { case ((x, y), spritePath) =>
@@ -90,23 +89,27 @@ object GameView {
               println(s"Error loading entity image: $error")
         }
       )
-    }
 
+  def renderHealthBars(healthBars: Seq[(PhysicalCoords, Double, Color, Double, Double, Double)]): Unit =
+    Platform.runLater:
+      healthBarPane.foreach: pane =>
+        pane.children.clear()
+        healthBars.foreach(renderSingleHealthBar(pane))
+  
   def showError(message: String) : Unit =
-    Platform.runLater {
-      new Alert(AlertType.Error) {
+    Platform.runLater:
+      new Alert(AlertType.Error):
         title = "Error"
         headerText = "An error occurred"
         contentText = message
-      }.showAndWait()
-    }
+      .showAndWait()
 
   private def handleGridClick(x: Double, y: Double): Unit =
     println(s"[GameView] Click at ($x, $y)")
     ViewController.getController match
       case Some(controller) =>
         // Check if the game is in pause after to process the click
-        if(!controller.getEngine.isPaused)
+        if !controller.getEngine.isPaused then
           controller.handleMouseClick(x.toInt, y.toInt)
         else
           println("[INPUT] Click ignored - game is paused")
@@ -114,7 +117,7 @@ object GameView {
         println("[ERROR] No controller available for input handling")
 
   private def createStatusCell(myX: Double, myY: Double, color: Color): Rectangle =
-    new Rectangle {
+    new Rectangle:
       x = myX
       y = myY
       width = CELL_WIDTH
@@ -122,7 +125,6 @@ object GameView {
       fill = color
       opacity = CELL_OPACITY
       stroke = Color.White
-    }
 
   private def createUIOverlay: Pane =
     val buttonConfigs = Map(
@@ -131,19 +133,35 @@ object GameView {
     val pauseButton = createStyledButton(buttonConfigs("pause"))(handleAction(PauseGame))
     val shopPanel = ShopPanel.createShopPanel()
 
-    new BorderPane {
-      top = new BorderPane {
+    new BorderPane:
+      top = new BorderPane:
         padding = Insets(5)
         right = pauseButton
-      }
       left = shopPanel
-    }
+
+  private def renderSingleHealthBar(pane: Pane): ((PhysicalCoords, Double, Color, Double, Double, Double)) => Unit =
+    case ((myX, myY), percentage, color, barWidth, barHeight, offsetY) =>
+      // Background della health bar
+      val backgroundBar = new Rectangle:
+        this.x = myX + (CELL_WIDTH - barWidth) / 2
+        this.y = myY + offsetY
+        width = barWidth
+        height = barHeight
+        fill = Color.DarkGray
+        stroke = Color.Black
+        strokeWidth = 0.5
+      
+      val healthBar = new Rectangle:
+        this.x = myX + (CELL_WIDTH - barWidth) / 2
+        this.y = myY + offsetY
+        width = barWidth * percentage
+        height = barHeight
+        fill = color
+
+      pane.children.addAll(backgroundBar, healthBar)
 
   def cleanup(): Unit =
     gridPane = None
     entityPane = None
     gameStackPane = None
     wizardButtons = Map.empty
-
-
-}

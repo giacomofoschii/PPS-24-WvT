@@ -5,20 +5,37 @@ import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.core.*
 import it.unibo.pps.wvt.view.GameView
 
-class RenderSystem extends System:
+case class RenderSystem(
+                         private val healthBarSystem: HealthBarRenderSystem = HealthBarRenderSystem()
+                       ) extends System:
 
   private var lastRenderedState: Option[String] = None
 
   override def update(world: World): System =
+    val updatedHealthBars = healthBarSystem.update(world).asInstanceOf[HealthBarRenderSystem]
     val entities = collectEntitiesWithImages(world)
-    val currentState = generateStateHash(entities)
+    val healthBars = updatedHealthBars.getHealthBarsToRender
+    val currentState = generateStateHash(entities, healthBars)
 
-    // Only render if something actually changed OR if we need to force render
-    if lastRenderedState.isEmpty || !lastRenderedState.contains(currentState) then
+    if shouldRender(currentState) then
       GameView.clearGrid()
       GameView.renderEntities(entities)
+      GameView.renderHealthBars(healthBars)
       lastRenderedState = Some(currentState)
-    this
+      copy(healthBarSystem = updatedHealthBars)
+    else
+      copy(healthBarSystem = updatedHealthBars)
+
+  private def shouldRender(currentState: String): Boolean =
+    !lastRenderedState.contains(currentState)
+
+  private def generateStateHash(
+                                 entities: Seq[(GridMapper.PhysicalCoords, String)],
+                                 healthBars: Seq[(GridMapper.PhysicalCoords, Double, scalafx.scene.paint.Color, Double, Double, Double)]
+                               ): String =
+    val entitiesHash = entities.map { case ((x, y), path) => s"$x,$y,$path" }.mkString(";")
+    val healthHash = healthBars.map { case ((x, y), p, _, _, _, _) => s"$x,$y,$p" }.mkString(";")
+    s"$entitiesHash|$healthHash"
 
   private def collectEntitiesWithImages(world: World): Seq[(GridMapper.PhysicalCoords, String)] =
     val wizardEntities = world.getEntitiesByType("wizard").flatMap: entity =>
@@ -33,9 +50,6 @@ class RenderSystem extends System:
         trollType <- world.getComponent[TrollTypeComponent](entity)
       yield (GridMapper.logicalToPhysical(pos.position), getTrollImagePath(trollType.trollType))
     (wizardEntities ++ trollEntities).toSeq
-
-  private def generateStateHash(entities: Seq[(GridMapper.PhysicalCoords, String)]): String =
-    entities.map { case ((x, y), imagePath) => s"$x,$y,$imagePath" }.mkString(";")
 
   def getWizardImagePath(wizardType: WizardType): String = wizardType match
     case WizardType.Generator => "/wizard/generator.png"
