@@ -43,7 +43,7 @@ object GameView:
     healthBarOverlay.mouseTransparent = true
 
     val stackPane = new StackPane:
-      children = Seq(backgroundImage, gridOverlay, entityOverlay, uiOverlay)
+      children = Seq(backgroundImage, gridOverlay, entityOverlay, uiOverlay, healthBarOverlay)
 
       onMouseClicked = event =>
         handleGridClick(event.getX, event.getY)
@@ -95,7 +95,7 @@ object GameView:
       healthBarPane.foreach: pane =>
         pane.children.clear()
         healthBars.foreach(renderSingleHealthBar(pane))
-  
+
   def showError(message: String) : Unit =
     Platform.runLater:
       new Alert(AlertType.Error):
@@ -150,7 +150,7 @@ object GameView:
         fill = Color.DarkGray
         stroke = Color.Black
         strokeWidth = 0.5
-      
+
       val healthBar = new Rectangle:
         this.x = myX + (CELL_WIDTH - barWidth) / 2
         this.y = myY + offsetY
