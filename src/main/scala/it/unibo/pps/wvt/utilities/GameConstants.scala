@@ -85,8 +85,15 @@ object ViewConstants:
 
   // Window's and menu's objects dimensions
   val MENU_SCALE_FACTOR = 0.7
+  val PAUSE_MENU_SCALE_FACTOR = 0.5
   val GAME_MAP_SCALE_FACTOR = 0.4
   val TITLE_SCALE_FACTOR = 0.4
+  val PAUSE_TITLE_SCALE_FACTOR = 0.5
+
+  val PAUSE_BUTTON_WIDTH = 175
+  val PAUSE_BUTTON_HEIGHT = 100
+  val PAUSE_BUTTON_FONT_SIZE = 18
+  val PAUSE_BUTTON_SPICING = 20
 
   val PADDING_MENU = 15
 
