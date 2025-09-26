@@ -132,12 +132,29 @@ object GameView:
     )
     val pauseButton = createStyledButton(buttonConfigs("pause"))(handleAction(PauseGame))
     val shopPanel = ShopPanel.createShopPanel()
+    val shopButton = ShopPanel.createShopButton()  // Get shop button separately
 
-    new BorderPane:
-      top = new BorderPane:
-        padding = Insets(5)
-        right = pauseButton
-      left = shopPanel
+    val overlayPane = new Pane {
+      children = Seq(shopPanel, pauseButton, shopButton)
+    }
+
+    // Position shop panel - the content will expand vertically
+    shopPanel.layoutX = 10
+    shopPanel.layoutY = 10
+
+    // Bind shop height to the overlay pane height minus padding
+    shopPanel.prefHeight <== overlayPane.height - 20
+    shopPanel.maxHeight <== overlayPane.height - 20
+
+    // Position shop button at fixed coordinates (same as pause button height)
+    shopButton.layoutX = 10
+    shopButton.layoutY = 30
+
+    // Position pause button at same height as shop button
+    pauseButton.layoutX = 1050
+    pauseButton.layoutY = 30
+
+    overlayPane
 
   private def renderSingleHealthBar(pane: Pane): ((PhysicalCoords, Double, Color, Double, Double, Double)) => Unit =
     case ((myX, myY), percentage, color, barWidth, barHeight, offsetY) =>
