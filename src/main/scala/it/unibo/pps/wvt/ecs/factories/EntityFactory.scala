@@ -19,27 +19,27 @@ object EntityFactory:
   // WIZARD IMPLEMENTATIONS
 
   def createGeneratorWizard(world: World, position: Position): EntityId =
-    val entity = createBaseWizard(world, position, WizardType.Generator, 100, 50, "/generator_wizard.png")
-    world.addComponent(entity, ElixirGeneratorComponent(5, 10))
+    val entity = createBaseWizard(world, position, WizardType.Generator, GENERATOR_WIZARD_HEALTH, GENERATOR_WIZARD_COST, "/generator_wizard.png")
+    world.addComponent(entity, ElixirGeneratorComponent(GENERATOR_WIZARD_ELIXIR_PER_SECOND, GENERATOR_WIZARD_COOLDOWN))
     entity
 
   def createWindWizard(world: World, position: Position): EntityId =
-    val entity = createBaseWizard(world, position, WizardType.Wind, 80, 40, "/wind_wizard.png")
-    world.addComponent(entity, AttackComponent(15, 3.0, 2000))
+    val entity = createBaseWizard(world, position, WizardType.Wind, WIND_WIZARD_HEALTH, WIND_WIZARD_COST, "/wind_wizard.png")
+    world.addComponent(entity, AttackComponent(WIND_WIZARD_ATTACK_DAMAGE, WIND_WIZARD_RANGE, WIND_WIZARD_COOLDOWN))
     entity
 
   def createBarrierWizard(world: World, position: Position): EntityId =
-    val entity = createBaseWizard(world, position, WizardType.Barrier, 120, 60, "/barrier_wizard.png")
+    val entity = createBaseWizard(world, position, WizardType.Barrier, BARRIER_WIZARD_HEALTH, BARRIER_WIZARD_COST, "/barrier_wizard.png")
     entity
 
   def createFireWizard(world: World, position: Position): EntityId =
-    val entity = createBaseWizard(world, position, WizardType.Fire, 90, 45, "/fire_wizard.png")
-    world.addComponent(entity, AttackComponent(20, 2.5, 1500))
+    val entity = createBaseWizard(world, position, WizardType.Fire, FIRE_WIZARD_HEALTH, FIRE_WIZARD_COST, "/fire_wizard.png")
+    world.addComponent(entity, AttackComponent(FIRE_WIZARD_ATTACK_DAMAGE, FIRE_WIZARD_RANGE, FIRE_WIZARD_COOLDOWN))
     entity
 
   def createIceWizard(world: World, position: Position): EntityId =
-    val entity = createBaseWizard(world, position, WizardType.Ice, 85, 42, "/ice_wizard.png")
-    world.addComponent(entity, AttackComponent(10, 2.0, 1000))
+    val entity = createBaseWizard(world, position, WizardType.Ice, ICE_WIZARD_HEALTH, ICE_WIZARD_COST, "/ice_wizard.png")
+    world.addComponent(entity, AttackComponent(ICE_WIZARD_ATTACK_DAMAGE, ICE_WIZARD_RANGE, ICE_WIZARD_COOLDOWN))
     entity
 
   private def createBaseWizard(world: World, position: Position, wizardType: WizardType,
