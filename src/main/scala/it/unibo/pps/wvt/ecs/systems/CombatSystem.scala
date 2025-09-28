@@ -30,12 +30,13 @@ case class CombatSystem() extends System:
       if !isOnCooldown(entity, world)
     yield (entity, pos.position, attack)
     meleeAttackers.foreach: (attacker, pos, attack) =>
-      val targetPos = Position(pos.row, pos.col - 1)
-      world.getEntityAt(targetPos).foreach: target =>
-        world.getComponent[WizardTypeComponent](target).foreach: _ =>
-          val damage = calculateMeleeDamage(attacker, target, attack.damage, world)
-          world.addComponent(target, CollisionComponent(damage))
-          world.addComponent(attacker, CooldownComponent(attack.cooldown))
+      if pos.col > 0 then
+        val targetPos = Position(pos.row, pos.col - 1)
+        world.getEntityAt(targetPos).foreach: target =>
+          world.getComponent[WizardTypeComponent](target).foreach: _ =>
+            val damage = calculateMeleeDamage(attacker, target, attack.damage, world)
+            world.addComponent(target, CollisionComponent(damage))
+            world.addComponent(attacker, CooldownComponent(attack.cooldown))
 
   private def processRangedAttacks(world: World): Unit =
     processWizardProjectiles(world)
