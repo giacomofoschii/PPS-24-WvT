@@ -9,7 +9,7 @@ import scalafx.scene.Parent
 import scalafx.scene.control.Alert.AlertType
 import scalafx.scene.control.{Alert, Button}
 import scalafx.scene.image.ImageView
-import scalafx.scene.layout.{BorderPane, Pane, StackPane}
+import scalafx.scene.layout.{Pane, StackPane}
 import scalafx.scene.paint.Color
 import scalafx.scene.shape.Rectangle
 import scalafx.application.Platform
@@ -17,6 +17,7 @@ import scalafx.application.Platform
 object GameView:
   private var gridPane: Option[Pane] = None
   private var entityPane: Option[Pane] = None
+  private var projectilePane: Option[Pane] = None
   private var wizardButtons: Map[WizardType, Button] = Map.empty
   private var gameStackPane: Option[StackPane] = None
   private var healthBarPane: Option[Pane] = None
@@ -24,6 +25,7 @@ object GameView:
   def apply(): Parent =
     gridPane = None
     entityPane = None
+    projectilePane = None
     gameStackPane = None
     wizardButtons = Map.empty
 
@@ -35,19 +37,23 @@ object GameView:
 
     val entityOverlay = new Pane()
 
+    val projectileOverlay = new Pane()
+    projectileOverlay.mouseTransparent = true
+
     val uiOverlay = createUIOverlay
 
     val healthBarOverlay = new Pane()
     healthBarOverlay.mouseTransparent = true
 
     val stackPane = new StackPane:
-      children = Seq(backgroundImage, gridOverlay, entityOverlay, uiOverlay, healthBarOverlay)
+      children = Seq(backgroundImage, gridOverlay, entityOverlay, projectileOverlay, uiOverlay, healthBarOverlay)
 
       onMouseClicked = event =>
         handleGridClick(event.getX, event.getY)
 
     healthBarPane = Some(healthBarOverlay)
     entityPane = Some(entityOverlay)
+    projectilePane = Some(projectileOverlay)
     gridPane = Some(gridOverlay)
     gameStackPane = Some(stackPane)
 
@@ -70,21 +76,13 @@ object GameView:
 
   def renderEntities(entities: Seq[(PhysicalCoords, String)]): Unit =
     Platform.runLater:
-      entityPane.foreach(pane =>
-        pane.children.clear()
-        entities.foreach { case ((x, y), spritePath) =>
-          createImageView(spritePath, CELL_WIDTH) match
-            case Right(imageView) =>
-              // Centra l'immagine nella cella
-              imageView.x = x + (CELL_WIDTH - 73) / 2
-              imageView.y = y + (CELL_HEIGHT - 90) / 2
-              imageView.preserveRatio = true
-              pane.children.add(imageView)
-            case Left(error) =>
-              println(s"Error loading entity image: $error")
-        }
-      )
-  
+      val (projectiles, others) = entities.partition { case (_, path) => path.contains("/projectile/") }
+      entityPane.foreach: pane =>
+        pane.children.addAll(createEntitiesPane(others).children)
+      projectilePane.foreach: pane =>
+        pane.children.addAll(createEntitiesPane(projectiles).children)
+
+
   def renderHealthBars(healthBars: Seq[(PhysicalCoords, Double, Color, Double, Double, Double)]): Unit =
     Platform.runLater:
       healthBarPane.foreach: pane =>
@@ -119,6 +117,23 @@ object GameView:
       fill = color
       opacity = CELL_OPACITY
       stroke = Color.White
+
+  private def createEntitiesPane(entities: Seq[(PhysicalCoords, String)]): Pane =
+    val pane = new Pane()
+    pane.children.clear()
+    entities.foreach { case ((x, y), spritePath) =>
+      val isProjectile = spritePath.contains("/projectile/")
+      createImageView(spritePath, CELL_WIDTH) match
+        case Right(imageView) =>
+          imageView.preserveRatio = true
+          // Centra l'immagine nella cella
+          imageView.x = x + (CELL_WIDTH - 75) / 2
+          imageView.y = y + (CELL_HEIGHT - 90) / 2
+          pane.children.add(imageView)
+        case Left(error) =>
+          println(s"Error loading image: $error")
+    }
+    pane
 
   private def createUIOverlay: Pane =
     val buttonConfigs = Map(

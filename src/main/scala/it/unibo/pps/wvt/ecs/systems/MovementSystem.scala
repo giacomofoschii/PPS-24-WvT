@@ -92,4 +92,21 @@ case class MovementSystem(
   private val defaultMovementStrategy: MovementStrategy = (_, _, _, _) => None
 
   private def isValidPosition(pos: Position, entity: EntityId, world: World): Boolean =
-    pos.isValid && world.getEntityAt(pos).forall(_ == entity)
+    if !pos.isValid then return false
+
+    val entitiesAtPos = world.getEntityAt(pos)
+    if entitiesAtPos.isEmpty then return true
+    if entitiesAtPos.forall(_ == entity) then return true
+
+    val canOverlap = canEntitesOverlap(entity, entitiesAtPos.get, world)
+    canOverlap
+
+  private def canEntitesOverlap(entity: EntityId, others: EntityId, world: World): Boolean =
+    val entityType = world.getEntityType(entity)
+    val otherType = world.getEntityType(others)
+
+    (entityType, otherType) match
+      case (Some(_: ProjectileTypeComponent), _) => true
+      case (_, Some(_: ProjectileTypeComponent)) => true
+      case (Some(_: TrollTypeComponent), Some(_: TrollTypeComponent)) => true
+      case _ => false

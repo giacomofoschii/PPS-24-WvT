@@ -63,6 +63,11 @@ class World {
     getEntitiesWithComponent[PositionComponent].find { entity =>
       getComponent[PositionComponent](entity).exists(_.position == position)
     }
+    
+  def getEntityType(entity: EntityId): Option[EntityTypeComponent] =
+    getComponent[WizardTypeComponent](entity)
+      .orElse(getComponent[TrollTypeComponent](entity))
+      .orElse(getComponent[ProjectileTypeComponent](entity))
 
   def clear(): Unit =
     entities.clear()
