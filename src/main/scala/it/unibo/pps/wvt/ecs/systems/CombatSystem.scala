@@ -2,6 +2,7 @@ package it.unibo.pps.wvt.ecs.systems
 
 import it.unibo.pps.wvt.ecs.components.TrollType.*
 import it.unibo.pps.wvt.ecs.components.*
+import it.unibo.pps.wvt.ecs.components.ProjectileType.{Fire, Troll}
 import it.unibo.pps.wvt.ecs.factories.EntityFactory
 import it.unibo.pps.wvt.ecs.core.*
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
@@ -53,11 +54,13 @@ case class CombatSystem() extends System:
     yield (wizardType.wizardType, pos.position, attack)
     wizards.foreach: (wizardType, pos, attack) =>
       val projType = wizardType match
-          case WizardType.Fire => ProjectileType.Fire
+          case WizardType.Fire => 
+            ProjectileType.Fire
           case WizardType.Ice => ProjectileType.Ice
           case _ => ProjectileType.Base
       val projectile = EntityFactory.createProjectile(world, pos)
       world.addComponent(projectile, DamageComponent(attack.damage, projType))
+      addImageProjectile(projectile, projType, world)
       
   
   private def hasTargetsInRange(wizardEntity: EntityId, wizardPos: Position, range: Double, world: World): Boolean =
@@ -67,7 +70,19 @@ case class CombatSystem() extends System:
           val distance = calculateDistance(wizardPos, trollPos.position)
           distance <= range
         case None => false
-  
+        
+  private def addImageProjectile(projectile: EntityId, projType: ProjectileType, world: World): Unit =
+    projType match
+      case ProjectileType.Fire => 
+        world.addComponent(projectile, ImageComponent("/wizard/Charge.png"))
+      case ProjectileType.Ice =>
+        world.addComponent(projectile, ImageComponent("/wizard/Charge_1.png"))
+      case ProjectileType.Troll =>
+        world.addComponent(projectile, ImageComponent("/troll/Charge_2.png"))
+      case _ =>
+        world.addComponent(projectile, ImageComponent("/wizard/Charge_3.png"))
+
+
   private def calculateDistance(pos1: Position, pos2: Position): Double =
     math.sqrt(math.pow(pos1.col - pos2.col, 2) + math.pow(pos1.row - pos2.row, 2))
 
