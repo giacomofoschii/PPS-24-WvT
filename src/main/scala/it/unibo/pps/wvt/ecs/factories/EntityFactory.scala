@@ -9,10 +9,20 @@ import it.unibo.pps.wvt.utilities.ViewConstants.*
 import scalafx.scene.paint.Color
 
 object EntityFactory:
-  def createProjectile(world: World, position:Position): EntityId =
+  def createProjectile(world: World, position:Position, projectileType: ProjectileType): EntityId =
     val entity = world.createEntity()
     world.addComponent(entity, PositionComponent(position))
     world.addComponent(entity, MovementComponent(PROJECTILE_SPEED))
+    world.addComponent(entity, ProjectileTypeComponent(projectileType))
+
+    val (damage, imagePath) = projectileType match
+      case ProjectileType.Fire => (FIRE_WIZARD_ATTACK_DAMAGE, "/projectile/fire.png")
+      case ProjectileType.Ice => (ICE_WIZARD_ATTACK_DAMAGE, "/projectile/ice.png")
+      case ProjectileType.Troll => (THROWER_TROLL_DAMAGE, "/projectile/troll.png")
+      case ProjectileType.Base => (WIND_WIZARD_ATTACK_DAMAGE, "/projectile/base.png")
+      
+    world.addComponent(entity, DamageComponent(damage, projectileType))
+    world.addComponent(entity, ImageComponent(imagePath))
     entity
 
   // WIZARD IMPLEMENTATIONS

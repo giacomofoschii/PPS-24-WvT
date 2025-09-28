@@ -52,17 +52,15 @@ case class CombatSystem() extends System:
       attack <- world.getComponent[AttackComponent](entity)
       if !isOnCooldown(entity, world)
       if hasTargetsInRange(entity, pos.position, attack.range, world)
-    yield (wizardType.wizardType, pos.position, attack)
-    wizards.foreach: (wizardType, pos, attack) =>
+    yield (entity, wizardType.wizardType, pos.position, attack)
+    
+    wizards.foreach: (entity, wizardType, pos, attack) =>
       val projType = wizardType match
-          case WizardType.Fire => 
-            ProjectileType.Fire
+          case WizardType.Fire => ProjectileType.Fire
           case WizardType.Ice => ProjectileType.Ice
           case _ => ProjectileType.Base
-      val projectile = EntityFactory.createProjectile(world, pos)
-      world.addComponent(projectile, DamageComponent(attack.damage, projType))
-      addImageProjectile(projectile, projType, world)
-      
+      val projectile = EntityFactory.createProjectile(world, pos, projType)
+      world.addComponent(entity, CooldownComponent(attack.cooldown))
   
   private def hasTargetsInRange(wizardEntity: EntityId, wizardPos: Position, range: Double, world: World): Boolean =
     world.getEntitiesByType("troll").exists: trollEntity =>
@@ -71,19 +69,7 @@ case class CombatSystem() extends System:
           val distance = calculateDistance(wizardPos, trollPos.position)
           distance <= range
         case None => false
-        
-  private def addImageProjectile(projectile: EntityId, projType: ProjectileType, world: World): Unit =
-    projType match
-      case ProjectileType.Fire => 
-        world.addComponent(projectile, ImageComponent("/wizard/Charge.png"))
-      case ProjectileType.Ice =>
-        world.addComponent(projectile, ImageComponent("/wizard/Charge_1.png"))
-      case ProjectileType.Troll =>
-        world.addComponent(projectile, ImageComponent("/troll/Charge_2.png"))
-      case _ =>
-        world.addComponent(projectile, ImageComponent("/wizard/Charge_3.png"))
-
-
+  
   private def calculateDistance(pos1: Position, pos2: Position): Double =
     math.sqrt(math.pow(pos1.col - pos2.col, 2) + math.pow(pos1.row - pos2.row, 2))
 
@@ -96,10 +82,11 @@ case class CombatSystem() extends System:
       if pos.position.col <= 6
       attack <- world.getComponent[AttackComponent](entity)
       if !isOnCooldown(entity, world)
-    yield (pos.position, attack)
-    throwers.foreach: (pos, attack) =>
-      val projectile = EntityFactory.createProjectile(world, pos)
-      world.addComponent(projectile, DamageComponent(attack.damage, ProjectileType.Troll))
+    yield (entity, pos.position, attack)
+    
+    throwers.foreach: (entity, pos, attack) =>
+      val projectile = EntityFactory.createProjectile(world, pos, ProjectileType.Troll)
+      world.addComponent(entity, CooldownComponent(attack.cooldown))
 
   private def calculateMeleeDamage(attacker: EntityId, target: EntityId, baseDamage: Int,
                                    world: World): Int =
