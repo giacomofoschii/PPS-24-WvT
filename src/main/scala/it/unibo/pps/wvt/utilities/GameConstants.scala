@@ -71,7 +71,7 @@ object GamePlayConstants:
   val ICE_WIZARD_RANGE: Int = 3
   val ICE_WIZARD_COOLDOWN: Int = 5
 
-  val PROJECTILE_SPEED: Double = 3.0
+  val PROJECTILE_SPEED: Double = 0.008
 
 object ViewConstants:
   //Grid dimensions

@@ -71,9 +71,8 @@ case class MovementSystem(
 
   private val straightRightMovement: MovementStrategy = (pos, speed, _, _) =>
     val steps = speed.toInt
-    val newCol = pos.col + steps
-    Option.when(pos.col < 8 && steps > 0 && newCol <= 8)(
-      Position(pos.row, newCol.min(8))
+    Option.when(pos.col < 8 && steps > 0)(
+      Position(pos.row, (pos.col + steps).min(8))
     )
 
   private val zigzagMovement: MovementStrategy = (pos, speed, _, _) =>
