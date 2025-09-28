@@ -96,6 +96,8 @@ class GameController(world: World):
   private var isInitialized: Boolean = false
 
   def initialize(): Unit =
+    // Clear world
+    world.clear()
     // Reset state
     state = GameSystemsState.initial()
 
