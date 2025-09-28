@@ -23,7 +23,7 @@ object ShopPanel:
   private val wizardCards: mutable.Map[WizardType, VBox] = mutable.Map.empty
   private var lastElixirAmount: Int = -1
   private val buttonStates: mutable.Map[WizardType, Boolean] = mutable.Map.empty
-  private lazy val renderSystem = new RenderSystem()
+  private lazy val renderSystem = RenderSystem()
   private var isShopOpen: Boolean = true
   private var shopContent: Option[scalafx.scene.layout.VBox] = None
   private var shopPanel: Option[VBox] = None
@@ -180,7 +180,7 @@ object ShopPanel:
 
   private def createWizardCard(wizardType: WizardType): VBox =
     val cost = getWizardCost(wizardType)
-    val imagePath = renderSystem.getWizardImagePath(wizardType)
+    val imagePath = getWizardImagePath(wizardType)
     val canAfford = ViewController.getController.exists(_.getCurrentElixir >= cost)
 
     val imageView = createImageView(imagePath, 50) match
@@ -226,9 +226,16 @@ object ShopPanel:
       controller.selectWizard(wizardType)
       println(s"[ShopPanel] Wizard $wizardType selected. Now click on the game grid to place it.")
 
-  private def getWizardCost(wizardType: WizardType): Int = wizardType match
+  def getWizardCost(wizardType: WizardType): Int = wizardType match
     case WizardType.Generator => GENERATOR_WIZARD_COST
     case WizardType.Wind => WIND_WIZARD_COST
     case WizardType.Barrier => BARRIER_WIZARD_COST
     case WizardType.Fire => FIRE_WIZARD_COST
     case WizardType.Ice => ICE_WIZARD_COST
+    
+  private def getWizardImagePath(wizardType: WizardType): String = wizardType match
+        case WizardType.Generator => "/wizard/generator.png"
+        case WizardType.Wind => "/wizard/wind.png"
+        case WizardType.Barrier => "/wizard/barrier.png"
+        case WizardType.Fire => "/wizard/fire.png"
+        case WizardType.Ice => "/wizard/ice.png"

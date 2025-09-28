@@ -147,11 +147,9 @@ class GameController(world: World):
     if clickResult.isValid then
       handleGridClick(clickResult.position)
       ViewController.render()
-    else
-      ViewController.showError(clickResult.error.get)
 
   def placeWizard(wizardType: WizardType, position: Position): Unit =
-    val cost = getWizardCost(wizardType)
+    val cost = ShopPanel.getWizardCost(wizardType)
     val result = for
       _ <- Either.cond(world.getEntityAt(position).isEmpty, (), s"Cell at $position is occupied")
       _ <- Either.cond(state.canAfford(cost), (), s"Insufficient elixir (need $cost, have ${state.getCurrentElixir})")
@@ -193,12 +191,5 @@ class GameController(world: World):
       case Wind => EntityFactory.createWindWizard(world, position)
       case Fire => EntityFactory.createFireWizard(world, position)
       case Ice => EntityFactory.createIceWizard(world, position)
-
-  private def getWizardCost(wizardType: WizardType): Int = wizardType match
-    case Generator => GENERATOR_WIZARD_COST
-    case Barrier => BARRIER_WIZARD_COST
-    case Wind => WIND_WIZARD_COST
-    case Fire => FIRE_WIZARD_COST
-    case Ice => ICE_WIZARD_COST
 
   private def isMenuPhase(phase: GamePhase): Boolean = phase.isMenu || phase == GamePhase.Paused

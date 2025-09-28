@@ -1,4 +1,3 @@
-// src/main/scala/it/unibo/pps/wvt/ecs/systems/HealthBarRenderSystem.scala
 package it.unibo.pps.wvt.ecs.systems
 
 import it.unibo.pps.wvt.ecs.core.*

@@ -13,32 +13,36 @@ object EntityFactory:
     val entity = world.createEntity()
     world.addComponent(entity, PositionComponent(position))
     world.addComponent(entity, MovementComponent(PROJECTILE_SPEED))
-    world.addComponent(entity, SpriteComponent("/projectile.png"))
     entity
 
   // WIZARD IMPLEMENTATIONS
 
   def createGeneratorWizard(world: World, position: Position): EntityId =
-    val entity = createBaseWizard(world, position, WizardType.Generator, GENERATOR_WIZARD_HEALTH, GENERATOR_WIZARD_COST, "/generator_wizard.png")
+    val entity = createBaseWizard(world, position, WizardType.Generator, GENERATOR_WIZARD_HEALTH,
+      GENERATOR_WIZARD_COST, "/wizard/generator.png")
     world.addComponent(entity, ElixirGeneratorComponent(GENERATOR_WIZARD_ELIXIR_PER_SECOND, GENERATOR_WIZARD_COOLDOWN))
     entity
 
   def createWindWizard(world: World, position: Position): EntityId =
-    val entity = createBaseWizard(world, position, WizardType.Wind, WIND_WIZARD_HEALTH, WIND_WIZARD_COST, "/wind_wizard.png")
+    val entity = createBaseWizard(world, position, WizardType.Wind, WIND_WIZARD_HEALTH,
+      WIND_WIZARD_COST, "/wizard/wind.png")
     world.addComponent(entity, AttackComponent(WIND_WIZARD_ATTACK_DAMAGE, WIND_WIZARD_RANGE, WIND_WIZARD_COOLDOWN))
     entity
 
   def createBarrierWizard(world: World, position: Position): EntityId =
-    val entity = createBaseWizard(world, position, WizardType.Barrier, BARRIER_WIZARD_HEALTH, BARRIER_WIZARD_COST, "/barrier_wizard.png")
+    val entity = createBaseWizard(world, position, WizardType.Barrier, BARRIER_WIZARD_HEALTH,
+      BARRIER_WIZARD_COST, "/wizard/barrier.png")
     entity
 
   def createFireWizard(world: World, position: Position): EntityId =
-    val entity = createBaseWizard(world, position, WizardType.Fire, FIRE_WIZARD_HEALTH, FIRE_WIZARD_COST, "/fire_wizard.png")
+    val entity = createBaseWizard(world, position, WizardType.Fire, FIRE_WIZARD_HEALTH,
+      FIRE_WIZARD_COST, "/wizard/fire.png")
     world.addComponent(entity, AttackComponent(FIRE_WIZARD_ATTACK_DAMAGE, FIRE_WIZARD_RANGE, FIRE_WIZARD_COOLDOWN))
     entity
 
   def createIceWizard(world: World, position: Position): EntityId =
-    val entity = createBaseWizard(world, position, WizardType.Ice, ICE_WIZARD_HEALTH, ICE_WIZARD_COST, "/ice_wizard.png")
+    val entity = createBaseWizard(world, position, WizardType.Ice, ICE_WIZARD_HEALTH,
+      ICE_WIZARD_COST, "/wizard/ice.png")
     world.addComponent(entity, AttackComponent(ICE_WIZARD_ATTACK_DAMAGE, ICE_WIZARD_RANGE, ICE_WIZARD_COOLDOWN))
     entity
 
@@ -48,7 +52,7 @@ object EntityFactory:
     world.addComponent(entity, PositionComponent(position))
     world.addComponent(entity, HealthComponent(health, health))
     world.addComponent(entity, CostComponent(cost))
-    world.addComponent(entity, SpriteComponent(spritePath))
+    world.addComponent(entity, ImageComponent(spritePath))
     world.addComponent(entity, WizardTypeComponent(wizardType))
     world.addComponent(entity, HealthBarComponent(
       barColor = Color.Blue,
@@ -63,7 +67,7 @@ object EntityFactory:
     val entity = createStandardTroll(world, pos, TrollType.Base,
       BASE_TROLL_HEALTH, BASE_TROLL_SPEED,
       BASE_TROLL_DAMAGE, BASE_TROLL_RANGE,
-      BASE_TROLL_COOLDOWN, "/troll/BASE_TROLL/WALK_005.png"
+      BASE_TROLL_COOLDOWN, "/troll/BaseTroll.png"
     )
     entity
 
@@ -71,7 +75,7 @@ object EntityFactory:
     val entity = createStandardTroll(world, pos, TrollType.Warrior,
       WARRIOR_TROLL_HEALTH, WARRIOR_TROLL_SPEED,
       WARRIOR_TROLL_DAMAGE, WARRIOR_TROLL_RANGE,
-      WARRIOR_TROLL_COOLDOWN, "/troll/WAR_TROLL/WALK_005.png"
+      WARRIOR_TROLL_COOLDOWN, "/troll/WarriorTroll.png"
     )
     entity
 
@@ -87,7 +91,7 @@ object EntityFactory:
     val entity = createStandardTroll(world, pos, TrollType.Thrower,
       THROWER_TROLL_HEALTH, THROWER_TROLL_SPEED,
       THROWER_TROLL_DAMAGE, THROWER_TROLL_RANGE,
-      THROWER_TROLL_COOLDOWN, "/troll/THROW_TROLL/WALK_005.png"
+      THROWER_TROLL_COOLDOWN, "/troll/ThrowerTroll.png"
     )
     entity
 
@@ -104,7 +108,7 @@ object EntityFactory:
       range = range,
       cooldown = cooldown
     ))
-    world.addComponent(entity, SpriteComponent(spritePath))
+    world.addComponent(entity, ImageComponent(spritePath))
     world.addComponent(entity, HealthBarComponent(
       barColor = Color.Red,
       barWidth = HEALTH_BAR_WIDTH,

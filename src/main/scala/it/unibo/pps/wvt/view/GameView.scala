@@ -5,7 +5,6 @@ import it.unibo.pps.wvt.utilities.GridMapper.PhysicalCoords
 import it.unibo.pps.wvt.view.ButtonFactory.*
 import it.unibo.pps.wvt.view.ImageFactory.*
 import it.unibo.pps.wvt.utilities.ViewConstants.*
-import scalafx.geometry.Insets
 import scalafx.scene.Parent
 import scalafx.scene.control.Alert.AlertType
 import scalafx.scene.control.{Alert, Button}
@@ -76,17 +75,16 @@ object GameView:
         entities.foreach { case ((x, y), spritePath) =>
           createImageView(spritePath, CELL_WIDTH) match
             case Right(imageView) =>
-              imageView.x = x
-              imageView.y = y
-              imageView.fitWidth = CELL_WIDTH
-              imageView.fitHeight = CELL_HEIGHT
-              imageView.preserveRatio = false
+              // Centra l'immagine nella cella
+              imageView.x = x + (CELL_WIDTH - 73) / 2
+              imageView.y = y + (CELL_HEIGHT - 90) / 2
+              imageView.preserveRatio = true
               pane.children.add(imageView)
             case Left(error) =>
               println(s"Error loading entity image: $error")
         }
       )
-
+  
   def renderHealthBars(healthBars: Seq[(PhysicalCoords, Double, Color, Double, Double, Double)]): Unit =
     Platform.runLater:
       healthBarPane.foreach: pane =>
