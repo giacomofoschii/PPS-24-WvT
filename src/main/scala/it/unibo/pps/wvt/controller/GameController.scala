@@ -19,6 +19,7 @@ class GameController(world: World):
                                combat: CombatSystem,
                                elixir: ElixirSystem,
                                health: HealthSystem,
+                               spawn: SpawnSystem,
                                render: RenderSystem,
                                selectedWizardType: Option[WizardType] = None,
                                currentWave: Int = 1
@@ -31,6 +32,7 @@ class GameController(world: World):
         .copy(elixirSystem = updatedElixir)
         .update(world)
         .asInstanceOf[HealthSystem]
+      val updatedSpawn = spawn.update(world).asInstanceOf[SpawnSystem]
       val updatedRender = render.update(world).asInstanceOf[RenderSystem]
 
       copy(
@@ -38,6 +40,7 @@ class GameController(world: World):
         combat = updatedCombat,
         elixir = updatedElixir,
         health = updatedHealth,
+        spawn = updatedSpawn,
         render = updatedRender
       )
 
@@ -57,6 +60,10 @@ class GameController(world: World):
     def clearWizardSelection: GameSystemsState =
       copy(selectedWizardType = None)
 
+    def getCurrentWave: Int = currentWave
+
+    def incrementWave(): GameSystemsState = copy(currentWave = currentWave + 1)
+
     def getCurrentElixir: Int = elixir.getCurrentElixir
 
     def canAfford(cost: Int): Boolean = elixir.canAfford(cost)
@@ -64,6 +71,10 @@ class GameController(world: World):
     def reset(): GameSystemsState = GameSystemsState.initial()
 
   object GameSystemsState:
+
+    def getSpawnIntervalForWave: Long =
+      2000L // TODO SPRINT 3, rendere dinamico questo intervallo per le wave a difficoltà crescenti
+
     def initial(): GameSystemsState =
       val elixir = ElixirSystem()
       GameSystemsState(
@@ -71,6 +82,7 @@ class GameController(world: World):
         combat = CombatSystem(),
         elixir = elixir,
         health = HealthSystem(elixir, Set.empty),
+        spawn = SpawnSystem(getSpawnIntervalForWave),
         render = RenderSystem()
       )
 
