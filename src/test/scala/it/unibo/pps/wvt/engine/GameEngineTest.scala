@@ -7,7 +7,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterEach
 
-class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
+class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
 
   private var engine: GameEngine = _
   private var controller: GameController = _
@@ -23,49 +23,44 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
     }
     Thread.sleep(SHORT_DELAY)
 
-  "GameEngine" should "initialize with correct default state" in {
+  "GameEngine" should "initialize with correct default state" in:
     engine.isRunning shouldBe false
     engine.isPaused shouldBe false
     engine.currentState.phase shouldBe GamePhase.MainMenu
     engine.currentState.isPaused shouldBe false
     engine.currentState.elapsedTime shouldBe INITIAL_TIME
-  }
 
-  it should "start correctly" in {
+  it should "start correctly" in:
     engine.isRunning shouldBe false
 
     engine.start()
     engine.isRunning shouldBe true
     engine.isPaused shouldBe false
-  }
 
-  it should "stop correctly" in {
+  it should "stop correctly" in:
     engine.start()
     engine.isRunning shouldBe true
 
     engine.stop()
     engine.isRunning shouldBe false
     engine.isPaused shouldBe false
-  }
 
-  it should "be idempotent on multiple starts" in {
+  it should "be idempotent on multiple starts" in:
     engine.start()
     engine.isRunning shouldBe true
 
     engine.start()
     engine.isRunning shouldBe true
-  }
 
-  it should "be idempotent on multiple stops" in {
+  it should "be idempotent on multiple stops" in:
     engine.start()
     engine.stop()
     engine.isRunning shouldBe false
 
     engine.stop()
     engine.isRunning shouldBe false
-  }
 
-  it should "pause and resume correctly" in {
+  it should "pause and resume correctly" in:
     engine.start()
     engine.isRunning shouldBe true
     engine.isPaused shouldBe false
@@ -79,25 +74,23 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
     engine.isRunning shouldBe true
     engine.isPaused shouldBe false
     engine.currentState.isPaused shouldBe false
-  }
 
-  it should "not pause when not running" in {
+  it should "not pause when not running" in:
     engine.isRunning shouldBe false
 
     engine.pause()
     engine.isPaused shouldBe false
     engine.currentState.isPaused shouldBe false
-  }
 
-  it should "not resume when not paused" in {
+
+  it should "not resume when not paused" in:
     engine.start()
     engine.isPaused shouldBe false
 
     engine.resume()
     engine.isPaused shouldBe false
-  }
 
-  it should "reset pause state when stopped" in {
+  it should "reset pause state when stopped" in:
     engine.start()
     engine.pause()
     engine.isPaused shouldBe true
@@ -105,35 +98,31 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
     engine.stop()
     engine.isRunning shouldBe false
     engine.isPaused shouldBe false
-  }
 
-  it should "update elapsed time when running and not paused" in {
+  it should "update elapsed time when running and not paused" in:
     engine.start()
 
     val initialTime = engine.currentState.elapsedTime
     engine.update(STANDARD_DELTA_TIME)
 
     engine.currentState.elapsedTime should be >= initialTime
-  }
 
-  it should "not update when not running" in {
+  it should "not update when not running" in:
     engine.isRunning shouldBe false
     val initialState = engine.currentState
 
     engine.update(STANDARD_DELTA_TIME)
     engine.currentState.elapsedTime shouldBe initialState.elapsedTime
-  }
 
-  it should "not update elapsed time when paused" in {
+  it should "not update elapsed time when paused" in:
     engine.start()
     engine.pause()
 
     val pausedTime = engine.currentState.elapsedTime
     engine.update(STANDARD_DELTA_TIME)
     engine.currentState.elapsedTime shouldBe pausedTime
-  }
 
-  it should "update game phase correctly" in {
+  it should "update game phase correctly" in:
     engine.currentState.phase shouldBe GamePhase.MainMenu
 
     engine.updatePhase(GamePhase.Playing)
@@ -141,9 +130,8 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
     engine.updatePhase(GamePhase.Paused)
     engine.currentState.phase shouldBe GamePhase.Paused
-  }
 
-  it should "handle multiple pause/resume cycles" in {
+  it should "handle multiple pause/resume cycles" in:
     engine.start()
 
     for (_ <- 1 to SMALL_ITERATION_COUNT)
@@ -155,9 +143,8 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
     engine.isRunning shouldBe true
     engine.isPaused shouldBe false
-  }
 
-  it should "maintain state consistency during lifecycle" in {
+  it should "maintain state consistency during lifecycle" in:
     engine.isRunning shouldBe false
     engine.isPaused shouldBe false
     engine.currentState.phase shouldBe GamePhase.MainMenu
@@ -180,5 +167,3 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
     engine.stop()
     engine.isRunning shouldBe false
     engine.isPaused shouldBe false
-  }
-}

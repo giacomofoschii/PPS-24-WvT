@@ -51,3 +51,17 @@ object TestConstants:
   val TEST_HEALTH_PERCENTAGE_QUARTER: Double = 0.25
   val TEST_HEALTH_PERCENTAGE_FULL: Double = 1.0
   val TEST_HEALTH_PERCENTAGE_ZERO: Double = 0.0
+
+  // Spawn system test constants
+  val SPAWN_INTERVAL_SHORT: Long = 100L
+  val SPAWN_INTERVAL_MEDIUM: Long = 500L
+  val SPAWN_INTERVAL_LONG: Long = 1000L
+  val SPAWN_INTERVAL_FACTORY: Long = 3000L
+  val SLEEP_AFTER_SPAWN: Long = 150L
+  val SLEEP_BEFORE_UPDATE: Long = 200L
+  val SLEEP_BETWEEN_BATCHES: Long = 60L
+  val SLEEP_AFTER_INTERVAL: Long = 200L
+  val MAX_ATTEMPTS: Int = 20
+  val RANDOM_SEED: Int = 42
+  val FACTORY_SEED: Long = 12345L
+  val MULTI_BATCH_COUNT: Int = 10
