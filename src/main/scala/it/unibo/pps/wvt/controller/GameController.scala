@@ -2,15 +2,13 @@ package it.unibo.pps.wvt.controller
 
 import it.unibo.pps.wvt.engine.*
 import it.unibo.pps.wvt.input.InputSystem
-import it.unibo.pps.wvt.view.ViewController
+import it.unibo.pps.wvt.view.{ShopPanel, ViewController}
 import it.unibo.pps.wvt.ecs.core.*
 import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.components.WizardType.*
 import it.unibo.pps.wvt.ecs.factories.EntityFactory
 import it.unibo.pps.wvt.ecs.systems.*
-import it.unibo.pps.wvt.utilities.GamePlayConstants.*
-import it.unibo.pps.wvt.utilities.Position
-import it.unibo.pps.wvt.view.ShopPanel
+import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 
 class GameController(world: World):
 
@@ -143,6 +141,11 @@ class GameController(world: World):
 
   def selectWizard(wizardType: WizardType): Unit =
     state = state.selectWizard(wizardType)
+    val wizardCells = getWorld.getEntitiesByType("wizard").flatMap(
+      entity => getWorld.getComponent[PositionComponent](entity).map(_.position)
+        .map(p => GridMapper.logicalToPhysical(p))).toSeq
+    val freeCells = GridMapper.allCells.diff(wizardCells)
+    ViewController.drawPlacementGrid(freeCells, wizardCells)
 
   def handleMouseClick(x: Int, y: Int): Unit =
     val clickResult = inputSystem.handleMouseClick(x, y)
@@ -163,7 +166,7 @@ class GameController(world: World):
 
     result.left.foreach: error =>
       ViewController.showError(s"Cannot place ${wizardType.toString}: $error")
-
+      
   def placeTroll(trollType: TrollType, position: Position): Unit =
     if world.getEntityAt(position).isEmpty then
       val entity = trollType match
@@ -172,8 +175,6 @@ class GameController(world: World):
         case TrollType.Assassin => EntityFactory.createAssassinTroll(world, position)
         case TrollType.Thrower => EntityFactory.createThrowerTroll(world, position)
       ViewController.render()
-    else
-      ViewController.showError(s"Cannot place ${trollType.toString} at $position. Cell is occupied.")
 
   private def setupEventHandlers(): Unit =
     eventHandler.registerHandler(classOf[GameEvent.GridClicked]): (event: GameEvent.GridClicked) =>
@@ -185,6 +186,8 @@ class GameController(world: World):
         placeWizard(wizardType, position)
       case None =>
         ViewController.showError("No wizard selected. Please select a wizard to place.")
+        
+      ViewController.hidePlacementGrid()
 
   private def createWizardEntity(wizardType: WizardType, position: Position): EntityId =
     wizardType match

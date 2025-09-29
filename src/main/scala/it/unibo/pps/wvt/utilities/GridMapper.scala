@@ -2,9 +2,15 @@ package it.unibo.pps.wvt.utilities
 
 import it.unibo.pps.wvt.utilities.ViewConstants._
 
-object GridMapper {
+object GridMapper:
 
   type PhysicalCoords = (Double, Double)
+  
+  def allCells: Seq[PhysicalCoords] =
+    for  
+      row <- 0 until GRID_ROWS
+      col <- 0 until GRID_COLS
+    yield logicalToPhysical(Position(row, col))
 
   def isValidPosition(pos: Position): Boolean =
     pos.row >= 0 && pos.row < GRID_ROWS && pos.col >= 0 && pos.col < GRID_COLS
@@ -28,4 +34,3 @@ object GridMapper {
   private def getCellCenter(position: Position): PhysicalCoords =
     val (x, y) = logicalToPhysical(position)
     (x + CELL_WIDTH / 2.0, y + CELL_HEIGHT / 2.0)
-}

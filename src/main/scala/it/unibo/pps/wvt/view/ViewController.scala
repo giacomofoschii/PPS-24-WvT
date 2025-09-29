@@ -1,7 +1,9 @@
 package it.unibo.pps.wvt.view
 
 import it.unibo.pps.wvt.controller.{GameController, GameEvent}
+import it.unibo.pps.wvt.ecs.components.WizardType
 import it.unibo.pps.wvt.ecs.core.World
+import it.unibo.pps.wvt.utilities.GridMapper.PhysicalCoords
 import scalafx.Includes.jfxScene2sfx
 import scalafx.scene.*
 import scalafx.application.{JFXApp3, Platform}
@@ -88,8 +90,12 @@ object ViewController extends JFXApp3:
 
   def requestResumeGame(): Unit =
     gameController.foreach(_.postEvent(GameEvent.Resume))
+    
+  def requestPlaceWizard(wizardType: WizardType): Unit =
+    ViewController.getController.foreach(_.selectWizard(wizardType))
 
-  def hideGridStatus(): Unit = GameView.clearGrid()
+  def drawPlacementGrid(green: Seq[PhysicalCoords], red: Seq[PhysicalCoords]): Unit = GameView.drawGrid(green, red)
+  def hidePlacementGrid(): Unit = GameView.clearGrid()
   def render(): Unit = gameController.foreach(_.getRenderSystem.update(world))
   def getWorld: World = world
   def getController: Option[GameController] = gameController

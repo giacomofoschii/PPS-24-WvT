@@ -47,9 +47,7 @@ object ButtonFactory {
     case StartGame => ViewController.requestGameView()
     case ShowInfo => ViewController.requestInfoMenu()
     case BackToMenu => ViewController.requestMainMenu()
-    case PlacingWizard(wizardType) =>
-      ViewController.getController.foreach(_.selectWizard(wizardType))
-      println(s"Selected wizard: $wizardType for placement")
+    case PlacingWizard(wizardType) => ViewController.requestPlaceWizard(wizardType)
     case PauseGame => ViewController.requestPauseGame()
     case ResumeGame => ViewController.requestResumeGame()
     case ExitGame => ViewController.requestExitGame()

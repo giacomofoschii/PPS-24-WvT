@@ -43,7 +43,6 @@ class EventHandler(engine: GameEngine):
         case GameEvent.Pause if currentPhase == GamePhase.Playing =>
           engine.pause()
           handleMenuTransition(GamePhase.Paused, ViewState.PauseMenu)
-          ViewController.hideGridStatus()
 
         case GameEvent.Resume if currentPhase == GamePhase.Paused =>
           engine.resume()

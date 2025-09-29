@@ -147,20 +147,12 @@ object GameView:
       children = Seq(shopPanel, pauseButton, shopButton)
     }
 
-    // Position shop panel
     shopPanel.layoutX = 10
     shopPanel.layoutY = 10
-
-    // Bind shop height to the overlay pane height minus padding
     shopPanel.prefHeight <== overlayPane.height - 20
     shopPanel.maxHeight <== overlayPane.height - 20
-
-    // Center shop button relative to shop panel (panel width is 250, button width is 200)
-    // Center shop button relative to shop panel
-    shopButton.layoutX = shopPanel.layoutX.value + (250 - 200) / 2 // 10 (panel x) + (250-200)/2 = 35 for centering
+    shopButton.layoutX = shopPanel.layoutX.value + (250 - 200) / 2
     shopButton.layoutY = 30
-
-    // Position pause button at same height as shop button
     pauseButton.layoutX = 1050
     pauseButton.layoutY = 30
 
@@ -189,5 +181,7 @@ object GameView:
   def cleanup(): Unit =
     gridPane = None
     entityPane = None
+    projectilePane = None
     gameStackPane = None
+    healthBarPane = None
     wizardButtons = Map.empty
