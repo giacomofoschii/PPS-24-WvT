@@ -25,7 +25,7 @@ case class CollisionComponent(amount: Int) extends Component
 case class CooldownComponent(remainingTime: Long) extends Component
 
 // UI components
-case class ImageComponent(imagePath: String) extends Component // rinominato da SpriteComponent
+case class ImageComponent(imagePath: String) extends Component
 case class HealthBarComponent(
                                visible: Boolean = true,
                                barColor: Color = Color.Green,

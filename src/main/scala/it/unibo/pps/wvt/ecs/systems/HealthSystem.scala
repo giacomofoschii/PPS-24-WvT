@@ -4,10 +4,8 @@ import it.unibo.pps.wvt.ecs.core.{EntityId, System, World}
 import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
 
-
-
-case class HealthSystem(elixirSystem: ElixirSystem, private val entitiesToRemove: Set[EntityId] = Set[EntityId]()) extends System:
-  
+case class HealthSystem(elixirSystem: ElixirSystem,
+                        private val entitiesToRemove: Set[EntityId] = Set[EntityId]()) extends System:
 
   override def update(world: World): System =
     processCollisionComponents(world)

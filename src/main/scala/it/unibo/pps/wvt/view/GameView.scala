@@ -74,6 +74,12 @@ object GameView:
     Platform.runLater:
       gridPane.foreach(_.children.clear())
 
+  def clearBeforeRender(): Unit =
+    Platform.runLater:
+      entityPane.foreach(_.children.clear())
+      projectilePane.foreach(_.children.clear())
+      healthBarPane.foreach(_.children.clear())
+
   def renderEntities(entities: Seq[(PhysicalCoords, String)]): Unit =
     Platform.runLater:
       val (projectiles, others) = entities.partition { case (_, path) => path.contains("/projectile/") }
@@ -98,15 +104,11 @@ object GameView:
       alert.showAndWait()
 
   private def handleGridClick(x: Double, y: Double): Unit =
-    println(s"[GameView] Click at ($x, $y)")
     ViewController.getController match
       case Some(controller) =>
         if !controller.getEngine.isPaused then
           controller.handleMouseClick(x.toInt, y.toInt)
-        else
-          println("[INPUT] Click ignored - game is paused")
       case None =>
-        println("[ERROR] No controller available for input handling")
 
   private def createStatusCell(myX: Double, myY: Double, color: Color): Rectangle =
     new Rectangle:

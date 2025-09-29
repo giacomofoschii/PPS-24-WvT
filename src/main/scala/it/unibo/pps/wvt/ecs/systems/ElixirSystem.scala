@@ -12,11 +12,7 @@ case class ElixirSystem(
   override def update(world: World): System =
     updatePeriodicElixirGeneration()
       .updateGeneratorWizardElixir(world)
-
-  /*
-    * Every ELIXIR_GENERATION_INTERVAL milliseconds, add PERIODIC_ELIXIR to totalElixir
-    * If not enough time has passed, return the current system state unchanged
-    */
+  
   private def updatePeriodicElixirGeneration(): ElixirSystem =
     val currentTime = System.currentTimeMillis()
     if currentTime - lastPeriodicGeneration >= ELIXIR_GENERATION_INTERVAL then
@@ -25,10 +21,7 @@ case class ElixirSystem(
         lastPeriodicGeneration = currentTime
       )
     else this
-
-  /* For each generator wizard in the world, if its cooldown has elapsed, add its elixirPerSecond to totalElixir
-   * and reset its cooldown
-   */
+  
   private def updateGeneratorWizardElixir(world: World): ElixirSystem =
     val generatorEntities = world.getEntitiesWithTwoComponents[WizardTypeComponent, ElixirGeneratorComponent]
     val currentTime = System.currentTimeMillis()
