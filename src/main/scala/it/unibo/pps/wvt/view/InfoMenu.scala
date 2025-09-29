@@ -17,9 +17,9 @@ object InfoMenu:
   def apply(): Parent =
     lazy val backgroundImage = createBackgroundView("/main_menu.jpg", MENU_SCALE_FACTOR).getOrElse(new ImageView())
     val contentArea = new StackPane()
-    contentArea.prefHeight = 350
-    contentArea.minHeight = 350
-    contentArea.maxHeight = 350
+    contentArea.prefHeight = INFO_CONTENT_AREA_HEIGHT
+    contentArea.minHeight = INFO_CONTENT_AREA_HEIGHT
+    contentArea.maxHeight = INFO_CONTENT_AREA_HEIGHT
     lazy val rulesView = createRulesView()
     lazy val wizardsView = createWizardsView()
     lazy val trollsView = createTrollsView()
@@ -31,7 +31,7 @@ object InfoMenu:
       top = topBar
       center = new VBox:
         alignment = Pos.TopCenter
-        padding = Insets(10, 30, 10, 30)
+        padding = Insets(INFO_CENTER_PADDING_VERTICAL, INFO_CENTER_PADDING_HORIZONTAL, INFO_CENTER_PADDING_VERTICAL, INFO_CENTER_PADDING_HORIZONTAL)
         children = Seq(contentArea)
       bottom = bottomBar
     new StackPane:
@@ -39,18 +39,18 @@ object InfoMenu:
 
   private def createNavigationButtons(contentArea: StackPane, rulesView: VBox, wizardsView: GridPane, trollsView: GridPane) =
     val buttonConfigs = Map(
-      "rules" -> ButtonConfig("Rules", 140, 60, 16, "Times New Roman"),
-      "wizards" -> ButtonConfig("Wizards", 140, 60, 16, "Times New Roman"),
-      "trolls" -> ButtonConfig("Trolls", 140, 60, 16, "Times New Roman")
+      "rules" -> ButtonConfig("Rules", INFO_NAV_BUTTON_WIDTH, INFO_NAV_BUTTON_HEIGHT, INFO_NAV_BUTTON_FONT_SIZE, "Times New Roman"),
+      "wizards" -> ButtonConfig("Wizards", INFO_NAV_BUTTON_WIDTH, INFO_NAV_BUTTON_HEIGHT, INFO_NAV_BUTTON_FONT_SIZE, "Times New Roman"),
+      "trolls" -> ButtonConfig("Trolls", INFO_NAV_BUTTON_WIDTH, INFO_NAV_BUTTON_HEIGHT, INFO_NAV_BUTTON_FONT_SIZE, "Times New Roman")
     )
     val rulesButton = createStyledButton(buttonConfigs("rules")) {}
     val wizardsButton = createStyledButton(buttonConfigs("wizards")) {}
     val trollsButton = createStyledButton(buttonConfigs("trolls")) {}
 
     def updateButtonStyles(activeButton: String): Unit =
-      rulesButton.opacity = if activeButton == "rules" then 1.0 else 0.7
-      wizardsButton.opacity = if activeButton == "wizards" then 1.0 else 0.7
-      trollsButton.opacity = if activeButton == "trolls" then 1.0 else 0.7
+      rulesButton.opacity = if activeButton == "rules" then INFO_BUTTON_ACTIVE_OPACITY else INFO_BUTTON_INACTIVE_OPACITY
+      wizardsButton.opacity = if activeButton == "wizards" then INFO_BUTTON_ACTIVE_OPACITY else INFO_BUTTON_INACTIVE_OPACITY
+      trollsButton.opacity = if activeButton == "trolls" then INFO_BUTTON_ACTIVE_OPACITY else INFO_BUTTON_INACTIVE_OPACITY
 
     rulesButton.onAction = _ =>
       contentArea.children = Seq(rulesView)
@@ -69,54 +69,54 @@ object InfoMenu:
 
   private def createTopBar(rulesButton: Button, wizardsButton: Button, trollsButton: Button): HBox =
     new HBox:
-      spacing = 20
+      spacing = INFO_TOP_BAR_SPACING
       alignment = Pos.Center
-      padding = Insets(20)
+      padding = Insets(INFO_TOP_BAR_PADDING)
       children = Seq(rulesButton, wizardsButton, trollsButton)
 
   private def createBottomBar(): BorderPane =
     new BorderPane:
       padding = Insets(PADDING_MENU)
-      left = createStyledButton(ButtonConfig("Main Menu", 150, 80, 15, "Times New Roman"))(handleAction(BackToMenu))
-      right = createStyledButton(ButtonConfig("Exit", 150, 80, 15, "Times New Roman"))(handleAction(ExitGame))
+      left = createStyledButton(ButtonConfig("Main Menu", INFO_BOTTOM_BUTTON_WIDTH, INFO_BOTTOM_BUTTON_HEIGHT, INFO_BOTTOM_BUTTON_FONT_SIZE, "Times New Roman"))(handleAction(BackToMenu))
+      right = createStyledButton(ButtonConfig("Exit", INFO_BOTTOM_BUTTON_WIDTH, INFO_BOTTOM_BUTTON_HEIGHT, INFO_BOTTOM_BUTTON_FONT_SIZE, "Times New Roman"))(handleAction(ExitGame))
 
-  private def createGoldTitle(text: String, fontSize: Int = 16): Text =
+  private def createGoldTitle(text: String, fontSize: Int = INFO_GOLD_TITLE_FONT_SIZE): Text =
     new Text(text):
       font = Font.font("Times New Roman", FontWeight.Bold, fontSize)
       fill = Color.Gold
 
   private def createStatText(symbol: String, value: String): VBox =
     new VBox:
-      spacing = 2
+      spacing = INFO_STAT_TEXT_SPACING
       alignment = Pos.Center
       children = Seq(
         new Text(symbol):
-          font = Font.font("Arial", FontWeight.Bold, 12)
+          font = Font.font("Arial", FontWeight.Bold, INFO_STAT_SYMBOL_FONT_SIZE)
           fill = Color.White
         ,
         new Text(value):
-          font = Font.font("Arial", 10)
+          font = Font.font("Arial", INFO_STAT_VALUE_FONT_SIZE)
           fill = Color.LightGray
       )
 
   private def legendItem(symbol: String, textLabel: String): VBox =
     new VBox:
-      spacing = 4
+      spacing = INFO_LEGEND_SPACING
       alignment = Pos.Center
       children = Seq(
         new Text(symbol):
-          font = Font.font("Arial", FontWeight.Bold, 18)
+          font = Font.font("Arial", FontWeight.Bold, INFO_LEGEND_SYMBOL_FONT_SIZE)
           fill = Color.White
         ,
         new Text(textLabel):
-          font = Font.font("Arial", 12)
+          font = Font.font("Arial", INFO_LEGEND_TEXT_FONT_SIZE)
           fill = Color.LightGray
       )
 
-  private def createGrid(cards: Seq[(String, String, String, String, Seq[(String, String)])], cols: Int = 4): GridPane =
+  private def createGrid(cards: Seq[(String, String, String, String, Seq[(String, String)])], cols: Int = INFO_CARD_COLUMNS): GridPane =
     val grid = new GridPane:
-      hgap = 12
-      vgap = 12
+      hgap = INFO_CARD_GRID_GAP
+      vgap = INFO_CARD_GRID_GAP
       alignment = Pos.Center
     for (card, idx) <- cards.zipWithIndex do
       val (name, stat, ability, imagePath, icons) = card
@@ -124,34 +124,31 @@ object InfoMenu:
     grid
 
   private def createCard(name: String, stat: String, ability: String, imagePath: String, icons: Seq[(String, String)]): VBox =
-    val imageView = createImageView(imagePath, 60) match
+    val imageView = createImageView(imagePath, INFO_CARD_IMAGE_SIZE) match
       case Right(img) =>
-        img.fitWidth = 60
-        img.fitHeight = 60
+        img.fitWidth = INFO_CARD_IMAGE_SIZE
+        img.fitHeight = INFO_CARD_IMAGE_SIZE
         img.preserveRatio = true
         img
       case Left(_) => new ImageView()
 
     val statBox = new HBox:
-      spacing = 4
+      spacing = INFO_CARD_STAT_BOX_SPACING
       alignment = Pos.Center
       children = icons.map((symbol, value) => createStatText(symbol, value))
 
     val abilityBox = new Text(ability):
-      font = Font.font("Arial", FontWeight.Normal, 10)
+      font = Font.font("Arial", FontWeight.Normal, INFO_CARD_ABILITY_FONT_SIZE)
       fill = Color.LightBlue
-      wrappingWidth = 120
+      wrappingWidth = INFO_CARD_ABILITY_WIDTH
       textAlignment = TextAlignment.Center
 
     new VBox:
-      spacing = 4
+      spacing = INFO_CARD_SPACING
       alignment = Pos.TopCenter
-      prefWidth = 130
-      prefHeight = 160
-      style = """-fx-background-color: rgba(0,0,0,0.80);
-                 -fx-background-radius: 15;
-                 -fx-padding: 6;
-                 -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.65), 6,0,0,2);"""
+      prefWidth = INFO_CARD_WIDTH
+      prefHeight = INFO_CARD_HEIGHT
+      style = createCardStyle()
       children = Seq(
         createGoldTitle(name),
         imageView,
@@ -159,10 +156,22 @@ object InfoMenu:
         abilityBox
       )
 
+  private def createCardStyle(): String =
+    s"""-fx-background-color: rgba($INFO_CARD_BG_R,$INFO_CARD_BG_G,$INFO_CARD_BG_B,$INFO_CARD_BG_OPACITY);
+       -fx-background-radius: $INFO_CARD_BORDER_RADIUS;
+       -fx-padding: $INFO_CARD_PADDING;
+       -fx-effect: dropshadow(gaussian, rgba($INFO_CARD_SHADOW_R,$INFO_CARD_SHADOW_G,$INFO_CARD_SHADOW_B,$INFO_CARD_SHADOW_OPACITY), $INFO_CARD_SHADOW_RADIUS,0,0,$INFO_CARD_SHADOW_OFFSET);"""
+
+  private def createRulesBoxStyle(): String =
+    s"""-fx-background-color: rgba($INFO_RULES_BG_R,$INFO_RULES_BG_G,$INFO_RULES_BG_B,$INFO_RULES_BG_OPACITY);
+       -fx-background-radius: $INFO_RULES_BORDER_RADIUS;
+       -fx-padding: $INFO_RULES_PADDING;
+       -fx-effect: dropshadow(gaussian, rgba($INFO_RULES_SHADOW_R,$INFO_RULES_SHADOW_G,$INFO_RULES_SHADOW_B,$INFO_RULES_SHADOW_OPACITY), $INFO_RULES_SHADOW_RADIUS,0,0,$INFO_RULES_SHADOW_OFFSET);"""
+
   private def createRulesView(): VBox =
     val rulesContent = new VBox:
       alignment = Pos.TopCenter
-      spacing = 12
+      spacing = INFO_RULES_CONTENT_SPACING
       children = Seq(
         new Text(s"\u2666 You start with $INITIAL_ELIXIR elixir to buy wizards"):
           style = baseRuleStyle
@@ -177,9 +186,9 @@ object InfoMenu:
           style = baseRuleStyle
         ,
         new HBox:
-          spacing = 15
+          spacing = INFO_RULES_LEGEND_SPACING
           alignment = Pos.Center
-          padding = Insets(10, 0, 0, 0)
+          padding = Insets(INFO_RULES_LEGEND_TOP_PADDING, 0, 0, 0)
           children = Seq(
             legendItem("\u2666", "Elixir"),
             legendItem("\u2665", "Health"),
@@ -192,40 +201,46 @@ object InfoMenu:
       alignment = Pos.Center
       children = Seq(
         new VBox:
-          spacing = 15
+          spacing = INFO_RULES_BOX_SPACING
           alignment = Pos.TopCenter
-          prefWidth = 350
-          prefHeight = 280
-          maxWidth = 350
-          maxHeight = 280
-          style = """-fx-background-color: rgba(0,0,0,0.85);
-                     -fx-background-radius: 20;
-                     -fx-padding: 20;
-                     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.7), 10,0,0,4);"""
+          prefWidth = INFO_RULES_BOX_WIDTH
+          prefHeight = INFO_RULES_BOX_HEIGHT
+          maxWidth = INFO_RULES_BOX_WIDTH
+          maxHeight = INFO_RULES_BOX_HEIGHT
+          style = createRulesBoxStyle()
           children = Seq(
-            createGoldTitle("Game Rules", 24),
+            createGoldTitle("Game Rules", INFO_RULES_TITLE_FONT_SIZE),
             rulesContent
           )
       )
 
   private def createWizardsView(): GridPane =
     val cards = Seq(
-      ("Generator", "♦ 5   ♥ 20", "Produces elixir", "/wizard/generator.png", Seq(("\u2666", "5"), ("\u2665", "20"))),
-      ("Wind", "♦ 6 ♥ 15 ✖ 8 → 3", "Base", "/wizard/wind.png", Seq(("\u2666", "6"), ("\u2665", "15"), ("\u2716", "8"), ("\u2192", "3"))),
-      ("Fire", "♦ 7 ♥ 12 ✖ 12 → 3", "Burns enemies", "/wizard/fire.png", Seq(("\u2666", "7"), ("\u2665", "12"), ("\u2716", "12"), ("\u2192", "3"))),
-      ("Ice", "♦ 6 ♥ 10 ✖ 10 → 3", "Slows enemies", "/wizard/ice.png", Seq(("\u2666", "6"), ("\u2665", "10"), ("\u2716", "10"), ("\u2192", "3"))),
-      ("Barrier", "♦ 8 ♥ 30", "Blocks damage", "/wizard/barrier.png", Seq(("\u2666", "8"), ("\u2665", "30")))
+      ("Generator", "", "Produces elixir", "/wizard/generator.png",
+        Seq(("\u2666", GENERATOR_WIZARD_COST.toString), ("\u2665", GENERATOR_WIZARD_HEALTH.toString))),
+      ("Wind", "", "Base attack", "/wizard/wind.png",
+        Seq(("\u2666", WIND_WIZARD_COST.toString), ("\u2665", WIND_WIZARD_HEALTH.toString), ("\u2716", WIND_WIZARD_ATTACK_DAMAGE.toString), ("\u2192", WIND_WIZARD_RANGE.toString))),
+      ("Fire", "", "Burns enemies", "/wizard/fire.png",
+        Seq(("\u2666", FIRE_WIZARD_COST.toString), ("\u2665", FIRE_WIZARD_HEALTH.toString), ("\u2716", FIRE_WIZARD_ATTACK_DAMAGE.toString), ("\u2192", FIRE_WIZARD_RANGE.toString))),
+      ("Ice", "", "Slows enemies", "/wizard/ice.png",
+        Seq(("\u2666", ICE_WIZARD_COST.toString), ("\u2665", ICE_WIZARD_HEALTH.toString), ("\u2716", ICE_WIZARD_ATTACK_DAMAGE.toString), ("\u2192", ICE_WIZARD_RANGE.toString))),
+      ("Barrier", "", "Blocks damage", "/wizard/barrier.png",
+        Seq(("\u2666", BARRIER_WIZARD_COST.toString), ("\u2665", BARRIER_WIZARD_HEALTH.toString)))
     )
-    createGrid(cards, cols = 4)
+    createGrid(cards, cols = INFO_CARD_COLUMNS)
 
   private def createTrollsView(): GridPane =
     val cards = Seq(
-      ("Base", "♥ 50   ✖ 6 → 2", "Base", "/troll/BaseTroll.png", Seq(("\u2665", "50"), ("\u2716", "6"), ("\u2192", "2"))),
-      ("Warrior", "♥ 40   ✖ 8 → 2", "Slow but tough", "/troll/WarriorTroll.png", Seq(("\u2665", "40"), ("\u2716", "8"), ("\u2192", "2"))),
-      ("Assassin", "♥ 20   ✖ 15 → 4", "Fast killer", "/troll/Assassin.png", Seq(("\u2665", "20"), ("\u2716", "15"), ("\u2192", "4"))),
-      ("Thrower", "♥ 25   ✖ 10 → 3", "Ranged", "/troll/ThrowerTroll.png", Seq(("\u2665", "25"), ("\u2716", "10"), ("\u2192", "3")))
+      ("Base", "", "Standard troll", "/troll/BaseTroll.png",
+        Seq(("\u2665", BASE_TROLL_HEALTH.toString), ("\u2716", BASE_TROLL_DAMAGE.toString), ("\u2192", BASE_TROLL_RANGE.toString))),
+      ("Warrior", "", "Slow but tough", "/troll/WarriorTroll.png",
+        Seq(("\u2665", WARRIOR_TROLL_HEALTH.toString), ("\u2716", WARRIOR_TROLL_DAMAGE.toString), ("\u2192", WARRIOR_TROLL_RANGE.toString))),
+      ("Assassin", "", "Fast killer", "/troll/Assassin.png",
+        Seq(("\u2665", ASSASSIN_TROLL_HEALTH.toString), ("\u2716", ASSASSIN_TROLL_DAMAGE.toString), ("\u2192", ASSASSIN_TROLL_RANGE.toString))),
+      ("Thrower", "", "Ranged attacker", "/troll/ThrowerTroll.png",
+        Seq(("\u2665", THROWER_TROLL_HEALTH.toString), ("\u2716", THROWER_TROLL_DAMAGE.toString), ("\u2192", THROWER_TROLL_RANGE.toString)))
     )
-    createGrid(cards, cols = 4)
+    createGrid(cards, cols = INFO_CARD_COLUMNS)
 
   private def baseRuleStyle: String =
-    "-fx-font-family: Arial; -fx-font-size: 16; -fx-fill: white;"
+    s"-fx-font-family: Arial; -fx-font-size: $INFO_RULES_TEXT_FONT_SIZE; -fx-fill: white;"
