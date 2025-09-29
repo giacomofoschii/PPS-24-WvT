@@ -124,28 +124,18 @@ object ViewConstants:
   val SHOP_PANEL_Y_POSITION: Int = 10
   val PAUSE_BUTTON_X_POSITION: Int = 1050
   
-  val INFO_CARD_BG_R: Int = 0
-  val INFO_CARD_BG_G: Int = 0
-  val INFO_CARD_BG_B: Int = 0
+
   val INFO_CARD_BG_OPACITY: Double = 0.80
   val INFO_CARD_BORDER_RADIUS: Int = 15
   val INFO_CARD_PADDING: Int = 6
-  val INFO_CARD_SHADOW_R: Int = 0
-  val INFO_CARD_SHADOW_G: Int = 0
-  val INFO_CARD_SHADOW_B: Int = 0
   val INFO_CARD_SHADOW_OPACITY: Double = 0.65
   val INFO_CARD_SHADOW_RADIUS: Int = 6
   val INFO_CARD_SHADOW_OFFSET: Int = 2
   
-  val INFO_RULES_BG_R: Int = 0
-  val INFO_RULES_BG_G: Int = 0
-  val INFO_RULES_BG_B: Int = 0
+ 
   val INFO_RULES_BG_OPACITY: Double = 0.85
   val INFO_RULES_BORDER_RADIUS: Int = 20
   val INFO_RULES_PADDING: Int = 20
-  val INFO_RULES_SHADOW_R: Int = 0
-  val INFO_RULES_SHADOW_G: Int = 0
-  val INFO_RULES_SHADOW_B: Int = 0
   val INFO_RULES_SHADOW_OPACITY: Double = 0.7
   val INFO_RULES_SHADOW_RADIUS: Int = 10
   val INFO_RULES_SHADOW_OFFSET: Int = 4

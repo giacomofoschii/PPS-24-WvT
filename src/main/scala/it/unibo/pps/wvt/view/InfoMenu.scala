@@ -157,16 +157,16 @@ object InfoMenu:
       )
 
   private def createCardStyle(): String =
-    s"""-fx-background-color: rgba($INFO_CARD_BG_R,$INFO_CARD_BG_G,$INFO_CARD_BG_B,$INFO_CARD_BG_OPACITY);
+    s"""-fx-background-color: rgba(0,0,0,$INFO_CARD_BG_OPACITY);
        -fx-background-radius: $INFO_CARD_BORDER_RADIUS;
        -fx-padding: $INFO_CARD_PADDING;
-       -fx-effect: dropshadow(gaussian, rgba($INFO_CARD_SHADOW_R,$INFO_CARD_SHADOW_G,$INFO_CARD_SHADOW_B,$INFO_CARD_SHADOW_OPACITY), $INFO_CARD_SHADOW_RADIUS,0,0,$INFO_CARD_SHADOW_OFFSET);"""
+       -fx-effect: dropshadow(gaussian, rgba(0,0,0,$INFO_CARD_SHADOW_OPACITY), $INFO_CARD_SHADOW_RADIUS,0,0,$INFO_CARD_SHADOW_OFFSET);"""
 
   private def createRulesBoxStyle(): String =
-    s"""-fx-background-color: rgba($INFO_RULES_BG_R,$INFO_RULES_BG_G,$INFO_RULES_BG_B,$INFO_RULES_BG_OPACITY);
+    s"""-fx-background-color: rgba(0,0,0,$INFO_RULES_BG_OPACITY);
        -fx-background-radius: $INFO_RULES_BORDER_RADIUS;
        -fx-padding: $INFO_RULES_PADDING;
-       -fx-effect: dropshadow(gaussian, rgba($INFO_RULES_SHADOW_R,$INFO_RULES_SHADOW_G,$INFO_RULES_SHADOW_B,$INFO_RULES_SHADOW_OPACITY), $INFO_RULES_SHADOW_RADIUS,0,0,$INFO_RULES_SHADOW_OFFSET);"""
+       -fx-effect: dropshadow(gaussian, rgba(0,0,0,$INFO_RULES_SHADOW_OPACITY), $INFO_RULES_SHADOW_RADIUS,0,0,$INFO_RULES_SHADOW_OFFSET);"""
 
   private def createRulesView(): VBox =
     val rulesContent = new VBox:
