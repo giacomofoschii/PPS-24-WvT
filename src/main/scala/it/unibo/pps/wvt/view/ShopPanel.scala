@@ -81,7 +81,7 @@ object ShopPanel:
       grid.add(createWizardCard(wizardType), col, row)
     grid
 
-  def createElixirDisplay(): Text =
+  private def createElixirDisplay(): Text =
     val currentElixir = ViewController.getController.map(_.getCurrentElixir).getOrElse(INITIAL_ELIXIR)
     new Text(s"Elixir: $currentElixir"):
       font = Font.font("Arial", FontWeight.Bold, 13)

@@ -37,8 +37,7 @@ case class HealthSystem(elixirSystem: ElixirSystem, private val entitiesToRemove
         world.removeComponent[HealthComponent](entityId)
         world.addComponent(entityId, newHealthComp)
         if !newHealthComp.isAlive then
-          giveElixirReward(world, entityId)
-          markForRemoval(entityId)
+          giveElixirReward(world, entityId).markForRemoval(entityId) 
         else this
       case _ => this
 
@@ -53,10 +52,12 @@ case class HealthSystem(elixirSystem: ElixirSystem, private val entitiesToRemove
   /* Give elixir reward to player based on entity type
    * Only applies to trolls
    */
-  private def giveElixirReward(world: World, deadEntityId: EntityId): Unit =
+  private def giveElixirReward(world: World, deadEntityId: EntityId): HealthSystem =
     val rewardAmount = calculateElixirReward(world, deadEntityId)
     if rewardAmount > 0 then
-      elixirSystem.addElixir(rewardAmount)
+      copy(elixirSystem = elixirSystem.addElixir(rewardAmount))
+    else
+      this
 
   /* Calculate elixir reward based on troll type
    * Returns 0 for non-troll entities
@@ -69,12 +70,12 @@ case class HealthSystem(elixirSystem: ElixirSystem, private val entitiesToRemove
         case TrollType.Assassin => ASSASSIN_TROLL_REWARD
         case TrollType.Thrower => THROWER_TROLL_REWARD
       case None => 0
-  
+
   private def getNewlyDeadEntities(world: World): List[EntityId] =
     world.getEntitiesWithComponent[HealthComponent].filter: entityId =>
       world.getComponent[HealthComponent](entityId).exists(!_.isAlive)
     .toList.filterNot(entitiesToRemove.contains)
-  
+
   private def markForRemoval(entityId: EntityId): HealthSystem =
     if entitiesToRemove.contains(entityId) then this
     else copy(entitiesToRemove = entitiesToRemove + entityId)
