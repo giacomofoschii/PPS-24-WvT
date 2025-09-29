@@ -64,9 +64,12 @@ object ShopPanel:
 
   private def updatePanelBackground(panel: VBox): Unit =
     if isShopOpen then
-      panel.style = """-fx-background-color: rgba(0,0,0,0.85);
-                       -fx-background-radius: 10;
-                       -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.7), 8,0,2,2);"""
+      panel.style = """-fx-background-image: url('/shop_background.jpg');
+                     -fx-background-size: cover;
+                     -fx-background-repeat: no-repeat;
+                     -fx-background-position: center;
+                     -fx-background-radius: 10;
+                     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.7), 8,0,2,2);"""
     else panel.style = ""
 
   private def createWizardGrid(): GridPane =
