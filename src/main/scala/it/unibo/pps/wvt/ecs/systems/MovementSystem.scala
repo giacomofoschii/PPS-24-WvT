@@ -98,10 +98,10 @@ case class MovementSystem(
     if entitiesAtPos.isEmpty then return true
     if entitiesAtPos.forall(_ == entity) then return true
 
-    val canOverlap = canEntitesOverlap(entity, entitiesAtPos.get, world)
+    val canOverlap = canEntitiesOverlap(entity, entitiesAtPos.get, world)
     canOverlap
 
-  private def canEntitesOverlap(entity: EntityId, others: EntityId, world: World): Boolean =
+  private def canEntitiesOverlap(entity: EntityId, others: EntityId, world: World): Boolean =
     val entityType = world.getEntityType(entity)
     val otherType = world.getEntityType(others)
 
