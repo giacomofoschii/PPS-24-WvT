@@ -94,21 +94,16 @@ class GameController(world: World):
   private var isInitialized: Boolean = false
 
   def initialize(): Unit =
-    // Clear world
     world.clear()
-    // Reset state
     state = GameSystemsState.initial()
 
-    // Only initialize engine if not already done
     if !isInitialized then
       gameEngine.initialize(this)
       setupEventHandlers()
       isInitialized = true
     else
-      // If already initialized, just reset the event handler phase
       eventHandler.clearQueue()
 
-    // Force render system to clear its cache
     state.render.clearCache()
 
   def update(): Unit =

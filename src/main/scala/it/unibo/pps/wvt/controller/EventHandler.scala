@@ -2,7 +2,9 @@ package it.unibo.pps.wvt.controller
 
 import it.unibo.pps.wvt.engine.*
 import it.unibo.pps.wvt.view.{ViewController, ViewState}
-import scala.util.{Try, Success, Failure}
+import scalafx.application.Platform
+
+import scala.util.{Failure, Success, Try}
 
 class EventHandler(engine: GameEngine):
   private val eventQueue: EventQueue = new EventQueue()
@@ -38,6 +40,10 @@ class EventHandler(engine: GameEngine):
 
         case GameEvent.ExitGame =>
           engine.stop()
+          Platform.runLater:
+            ViewController.cleanupBeforeExit()
+          Thread.sleep(100)
+          Platform.exit()
           sys.exit(0)
 
         case GameEvent.Pause if currentPhase == GamePhase.Playing =>
