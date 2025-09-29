@@ -158,7 +158,7 @@ object ShopPanel:
       card.onMouseExited = null
 
   private def getDisplayName(wizardType: WizardType): String = wizardType match
-    case WizardType.Generator => "Gen"
+    case WizardType.Generator => "Generator"
     case other => other.toString
 
   private def createWizardCard(wizardType: WizardType): VBox =
