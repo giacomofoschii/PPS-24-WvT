@@ -17,6 +17,7 @@ import scala.collection.mutable
 object ShopPanel:
   private var currentElixirText: Option[Text] = None
   private val wizardCards: mutable.Map[WizardType, VBox] = mutable.Map.empty
+  private val costTexts: mutable.Map[WizardType, Text] = mutable.Map.empty
   private var lastElixirAmount: Int = -1
   private val buttonStates: mutable.Map[WizardType, Boolean] = mutable.Map.empty
   private var isShopOpen: Boolean = true
@@ -25,6 +26,7 @@ object ShopPanel:
 
   def createShopPanel(): VBox =
     wizardCards.clear()
+    costTexts.clear()
     buttonStates.clear()
     lastElixirAmount = -1
     val elixirDisplay = createElixirDisplay()
@@ -45,6 +47,12 @@ object ShopPanel:
       children = Seq(contentContainer)
     currentElixirText = Some(elixirDisplay)
     shopPanel = Some(panel)
+    val clipRect = new scalafx.scene.shape.Rectangle:
+      width <== panel.width
+      height <== panel.height
+      arcWidth = SHOP_PANEL_BORDER_RADIUS * 2
+      arcHeight = SHOP_PANEL_BORDER_RADIUS * 2
+    panel.clip = clipRect
     updatePanelBackground(panel)
     panel
 
@@ -61,12 +69,15 @@ object ShopPanel:
 
   private def updatePanelBackground(panel: VBox): Unit =
     if isShopOpen then
-      panel.style = """-fx-background-image: url('/shop_background.jpg');
-                     -fx-background-size: cover;
-                     -fx-background-repeat: no-repeat;
-                     -fx-background-position: center;
-                     -fx-background-radius: 10;
-                     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.7), 8,0,2,2);"""
+      panel.style = s"""-fx-background-image: url('/shop_background.jpg');
+                       -fx-background-size: cover;
+                       -fx-background-repeat: no-repeat;
+                       -fx-background-position: center;
+                       -fx-background-radius: $SHOP_PANEL_BORDER_RADIUS;
+                       -fx-border-radius: $SHOP_PANEL_BORDER_RADIUS;
+                       -fx-border-color: transparent;
+                       -fx-border-width: 1;
+                       -fx-effect: dropshadow(gaussian, rgba(0,0,0,$SHOP_SHADOW_OPACITY), $SHOP_SHADOW_RADIUS,0,$SHOP_SHADOW_OFFSET_X,$SHOP_SHADOW_OFFSET_Y);"""
     else panel.style = ""
 
   private def createWizardGrid(): GridPane =
@@ -85,7 +96,7 @@ object ShopPanel:
     val currentElixir = ViewController.getController.map(_.getCurrentElixir).getOrElse(INITIAL_ELIXIR)
     new Text(s"Elixir: $currentElixir"):
       font = Font.font("Arial", FontWeight.Bold, ELIXIR_FONT_SIZE)
-      fill = Color.LightBlue
+      fill = Color.web(SHOP_PRIMARY_COLOR)
 
   def updateElixir(): Unit = Platform.runLater:
     val currentElixir = ViewController.getController.map(_.getCurrentElixir).getOrElse(INITIAL_ELIXIR)
@@ -104,42 +115,43 @@ object ShopPanel:
         updateCardStyle(card, canAfford, wizardType)
 
   private def updateCardStyle(card: VBox, canAfford: Boolean, wizardType: WizardType): Unit =
+    costTexts.get(wizardType).foreach(_.fill = Color.web(SHOP_PRIMARY_COLOR))
     if canAfford then
-      card.style = """-fx-background-color: rgba(40,40,40,0.9);
-                      -fx-background-radius: 6;
-                      -fx-padding: 12;
-                      -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 3,0,1,1);
-                      -fx-border-color: #4a90e2;
-                      -fx-border-width: 2;
-                      -fx-border-radius: 6;"""
+      card.style = s"""-fx-background-color: rgba($SHOP_CARD_BG_R,$SHOP_CARD_BG_G,$SHOP_CARD_BG_B,$SHOP_CARD_BG_OPACITY);
+                      -fx-background-radius: $SHOP_CARD_BORDER_RADIUS;
+                      -fx-padding: $SHOP_CARD_PADDING;
+                      -fx-effect: dropshadow(gaussian, rgba(0,0,0,$SHOP_CARD_SHADOW_OPACITY), $SHOP_CARD_SHADOW_RADIUS,0,$SHOP_CARD_SHADOW_OFFSET_X,$SHOP_CARD_SHADOW_OFFSET_Y);
+                      -fx-border-color: $SHOP_PRIMARY_COLOR;
+                      -fx-border-width: $SHOP_CARD_BORDER_WIDTH_ACTIVE;
+                      -fx-border-radius: $SHOP_CARD_BORDER_RADIUS;"""
       card.cursor = Cursor.Hand
       card.onMouseClicked = event =>
         event.consume()
         Platform.runLater(() => handleWizardPurchase(wizardType))
       card.onMouseEntered = _ =>
-        card.style = """-fx-background-color: rgba(60,60,60,0.95);
-                        -fx-background-radius: 6;
-                        -fx-padding: 12;
-                        -fx-effect: dropshadow(gaussian, rgba(74,144,226,0.6), 5,0,1,1);
-                        -fx-border-color: #5ba0f2;
-                        -fx-border-width: 2;
-                        -fx-border-radius: 6;"""
+        card.style = s"""-fx-background-color: rgba($SHOP_CARD_HOVER_BG_R,$SHOP_CARD_HOVER_BG_G,$SHOP_CARD_HOVER_BG_B,$SHOP_CARD_HOVER_BG_OPACITY);
+                        -fx-background-radius: $SHOP_CARD_BORDER_RADIUS;
+                        -fx-padding: $SHOP_CARD_PADDING;
+                        -fx-effect: dropshadow(gaussian, rgba($SHOP_CARD_HOVER_SHADOW_R,$SHOP_CARD_HOVER_SHADOW_G,$SHOP_CARD_HOVER_SHADOW_B,$SHOP_CARD_HOVER_SHADOW_OPACITY), $SHOP_CARD_HOVER_SHADOW_RADIUS,0,$SHOP_CARD_SHADOW_OFFSET_X,$SHOP_CARD_SHADOW_OFFSET_Y);
+                        -fx-border-color: $SHOP_HOVER_COLOR;
+                        -fx-border-width: $SHOP_CARD_BORDER_WIDTH_ACTIVE;
+                        -fx-border-radius: $SHOP_CARD_BORDER_RADIUS;"""
       card.onMouseExited = _ =>
-        card.style = """-fx-background-color: rgba(40,40,40,0.9);
-                        -fx-background-radius: 6;
-                        -fx-padding: 12;
-                        -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 3,0,1,1);
-                        -fx-border-color: #4a90e2;
-                        -fx-border-width: 2;
-                        -fx-border-radius: 6;"""
+        card.style = s"""-fx-background-color: rgba($SHOP_CARD_BG_R,$SHOP_CARD_BG_G,$SHOP_CARD_BG_B,$SHOP_CARD_BG_OPACITY);
+                        -fx-background-radius: $SHOP_CARD_BORDER_RADIUS;
+                        -fx-padding: $SHOP_CARD_PADDING;
+                        -fx-effect: dropshadow(gaussian, rgba(0,0,0,$SHOP_CARD_SHADOW_OPACITY), $SHOP_CARD_SHADOW_RADIUS,0,$SHOP_CARD_SHADOW_OFFSET_X,$SHOP_CARD_SHADOW_OFFSET_Y);
+                        -fx-border-color: $SHOP_PRIMARY_COLOR;
+                        -fx-border-width: $SHOP_CARD_BORDER_WIDTH_ACTIVE;
+                        -fx-border-radius: $SHOP_CARD_BORDER_RADIUS;"""
     else
-      card.style = """-fx-background-color: rgba(40,40,40,0.6);
-                      -fx-background-radius: 6;
-                      -fx-padding: 12;
-                      -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 3,0,1,1);
-                      -fx-border-color: #666666;
-                      -fx-border-width: 1;
-                      -fx-border-radius: 6;"""
+      card.style = s"""-fx-background-color: rgba($SHOP_CARD_BG_R,$SHOP_CARD_BG_G,$SHOP_CARD_BG_B,$SHOP_CARD_DISABLED_OPACITY);
+                      -fx-background-radius: $SHOP_CARD_BORDER_RADIUS;
+                      -fx-padding: $SHOP_CARD_PADDING;
+                      -fx-effect: dropshadow(gaussian, rgba(0,0,0,$SHOP_CARD_SHADOW_OPACITY), $SHOP_CARD_SHADOW_RADIUS,0,$SHOP_CARD_SHADOW_OFFSET_X,$SHOP_CARD_SHADOW_OFFSET_Y);
+                      -fx-border-color: $SHOP_DISABLED_COLOR;
+                      -fx-border-width: $SHOP_CARD_BORDER_WIDTH_DISABLED;
+                      -fx-border-radius: $SHOP_CARD_BORDER_RADIUS;"""
       card.cursor = Cursor.Default
       card.onMouseClicked = null
       card.onMouseEntered = null
@@ -162,12 +174,13 @@ object ShopPanel:
       case Left(_) => new ImageView()
     val nameText = new Text(getDisplayName(wizardType)):
       font = Font.font("Arial", FontWeight.Bold, WIZARD_NAME_FONT_SIZE)
-      fill = Color.White
+      fill = Color.web(SHOP_PRIMARY_COLOR)
       wrappingWidth = WIZARD_NAME_WIDTH
       textAlignment = scalafx.scene.text.TextAlignment.Center
     val costText = new Text(s"$cost ♦"):
       font = Font.font("Arial", FontWeight.Bold, WIZARD_COST_FONT_SIZE)
-      fill = if canAfford then Color.LightBlue else Color.Gray
+      fill = Color.web(SHOP_PRIMARY_COLOR)
+    costTexts.update(wizardType, costText)
     val card = new VBox:
       spacing = SHOP_CARD_SPACING
       alignment = Pos.Center
