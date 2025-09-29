@@ -2,7 +2,6 @@ package it.unibo.pps.wvt.ecs.systems
 
 import it.unibo.pps.wvt.ecs.components.TrollType.*
 import it.unibo.pps.wvt.ecs.components.*
-import it.unibo.pps.wvt.ecs.components.ProjectileType.{Fire, Troll}
 import it.unibo.pps.wvt.ecs.factories.EntityFactory
 import it.unibo.pps.wvt.ecs.core.*
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*

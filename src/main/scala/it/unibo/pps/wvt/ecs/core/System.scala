@@ -1,5 +1,4 @@
 package it.unibo.pps.wvt.ecs.core
 
-trait System {
+trait System:
   def update(world: World): System
-}

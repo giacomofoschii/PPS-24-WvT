@@ -7,7 +7,7 @@ import scala.collection.mutable
 import scala.collection.mutable.Buffer
 import scala.reflect.ClassTag
 
-class World {
+class World:
   private val entities = mutable.Buffer[EntityId]()
   private val components = mutable.Map[Class[_], mutable.Map[EntityId, Component]]()
   private val entitiesByType = mutable.Map[String, mutable.Buffer[EntityId]]()
@@ -35,7 +35,6 @@ class World {
       case _ : ProjectileTypeComponent =>
         entitiesByType.getOrElseUpdate("projectile", mutable.Buffer()).append(entity)
       case _ : Component =>
-  // Do nothing for other component types
 
   def removeComponent[T <: Component: ClassTag](entityId: EntityId): Unit =
     components.get(implicitly[ClassTag[T]].runtimeClass).foreach(_.remove(entityId))
@@ -73,4 +72,3 @@ class World {
     entities.clear()
     components.clear()
     entitiesByType.clear()
-}
