@@ -74,29 +74,52 @@ object GamePlayConstants:
   val PROJECTILE_SPEED: Double = 0.02
 
 object ViewConstants:
-  //Grid dimensions
   val GRID_ROWS: Int = 5
   val GRID_COLS: Int = 9
-
+  
   val GRID_OFFSET_X: Double = 562
   val GRID_OFFSET_Y: Double = 163
+  
   val CELL_WIDTH: Int = 66
   val CELL_HEIGHT: Int = 77
   val CELL_OPACITY: Double = 0.3
-
-  // Window's and menu's objects dimensions
+  
   val MENU_SCALE_FACTOR = 0.7
   val PAUSE_MENU_SCALE_FACTOR = 0.5
   val GAME_MAP_SCALE_FACTOR = 0.4
   val TITLE_SCALE_FACTOR = 0.4
   val PAUSE_TITLE_SCALE_FACTOR = 0.5
-
+  
   val PAUSE_BUTTON_WIDTH = 175
   val PAUSE_BUTTON_HEIGHT = 100
   val PAUSE_BUTTON_FONT_SIZE = 18
   val PAUSE_BUTTON_SPICING = 20
-
+  
   val PADDING_MENU = 15
-
+  
   val HEALTH_BAR_WIDTH: Double = 40.0
   val HEALTH_BAR_OFFSET_Y: Int = -5
+  
+  val SHOP_PANEL_WIDTH: Int = 250
+  val SHOP_PANEL_TOP_PADDING: Int = 120
+  val SHOP_PANEL_SIDE_PADDING: Int = 20
+  val SHOP_PANEL_BOTTOM_PADDING: Int = 20
+  val SHOP_PANEL_SPACING: Int = 16
+  val SHOP_CONTENT_TOP_PADDING: Int = 10
+  val SHOP_BUTTON_WIDTH: Int = 200
+  val SHOP_BUTTON_HEIGHT: Int = 100
+  val SHOP_BUTTON_FONT_SIZE: Int = 20
+  val SHOP_BUTTON_TOP_OFFSET: Int = 30
+  val SHOP_CARD_WIDTH: Int = 100
+  val SHOP_CARD_HEIGHT: Int = 110
+  val SHOP_CARD_SPACING: Int = 4
+  val SHOP_CARD_IMAGE_SIZE: Int = 50
+  val SHOP_GRID_GAP: Int = 10
+  val SHOP_CARD_COLUMNS: Int = 2
+  val ELIXIR_FONT_SIZE: Int = 13
+  val WIZARD_NAME_FONT_SIZE: Int = 12
+  val WIZARD_NAME_WIDTH: Int = 100
+  val WIZARD_COST_FONT_SIZE: Int = 11
+  val SHOP_PANEL_X_POSITION: Int = 10
+  val SHOP_PANEL_Y_POSITION: Int = 10
+  val PAUSE_BUTTON_X_POSITION: Int = 1050

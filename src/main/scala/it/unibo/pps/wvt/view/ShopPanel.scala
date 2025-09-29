@@ -1,9 +1,9 @@
 package it.unibo.pps.wvt.view
 import it.unibo.pps.wvt.ecs.components.WizardType
-import it.unibo.pps.wvt.ecs.systems.RenderSystem
 import it.unibo.pps.wvt.view.ButtonFactory.*
 import it.unibo.pps.wvt.view.ImageFactory.*
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
+import it.unibo.pps.wvt.utilities.ViewConstants.*
 import scalafx.geometry.{Insets, Pos}
 import scalafx.scene.control.Button
 import scalafx.scene.image.ImageView
@@ -16,35 +16,32 @@ import scala.collection.mutable
 
 object ShopPanel:
   private var currentElixirText: Option[Text] = None
-  private val wizardButtons: mutable.Map[WizardType, Button] = mutable.Map.empty
   private val wizardCards: mutable.Map[WizardType, VBox] = mutable.Map.empty
   private var lastElixirAmount: Int = -1
   private val buttonStates: mutable.Map[WizardType, Boolean] = mutable.Map.empty
-  private lazy val renderSystem = RenderSystem()
   private var isShopOpen: Boolean = true
-  private var shopContent: Option[scalafx.scene.layout.VBox] = None
+  private var shopContent: Option[VBox] = None
   private var shopPanel: Option[VBox] = None
 
   def createShopPanel(): VBox =
-    wizardButtons.clear()
     wizardCards.clear()
     buttonStates.clear()
     lastElixirAmount = -1
     val elixirDisplay = createElixirDisplay()
     val wizardGrid = createWizardGrid()
-    val contentContainer = new scalafx.scene.layout.VBox:
-      spacing = 16
-      padding = Insets(10, 20, 20, 20)
+    val contentContainer = new VBox:
+      spacing = SHOP_PANEL_SPACING
+      padding = Insets(SHOP_CONTENT_TOP_PADDING, SHOP_PANEL_SIDE_PADDING, SHOP_PANEL_BOTTOM_PADDING, SHOP_PANEL_SIDE_PADDING)
       alignment = Pos.TopCenter
       children = Seq(elixirDisplay, wizardGrid)
     shopContent = Some(contentContainer)
     val panel = new VBox:
-      spacing = 16
-      padding = Insets(120, 20, 20, 20)
+      spacing = SHOP_PANEL_SPACING
+      padding = Insets(SHOP_PANEL_TOP_PADDING, SHOP_PANEL_SIDE_PADDING, SHOP_PANEL_BOTTOM_PADDING, SHOP_PANEL_SIDE_PADDING)
       alignment = Pos.TopCenter
-      prefWidth = 250
-      maxWidth = 250
-      minWidth = 250
+      prefWidth = SHOP_PANEL_WIDTH
+      maxWidth = SHOP_PANEL_WIDTH
+      minWidth = SHOP_PANEL_WIDTH
       children = Seq(contentContainer)
     currentElixirText = Some(elixirDisplay)
     shopPanel = Some(panel)
@@ -52,7 +49,7 @@ object ShopPanel:
     panel
 
   def createShopButton(): Button =
-    val shopButtonConfig = ButtonConfig("Shop", 200, 100, 20, "Times New Roman")
+    val shopButtonConfig = ButtonConfig("Shop", SHOP_BUTTON_WIDTH, SHOP_BUTTON_HEIGHT, SHOP_BUTTON_FONT_SIZE, "Times New Roman")
     createStyledButton(shopButtonConfig)(toggleShop())
 
   private def toggleShop(): Unit =
@@ -75,19 +72,19 @@ object ShopPanel:
   private def createWizardGrid(): GridPane =
     val wizardTypes = WizardType.values.toSeq
     val grid = new GridPane:
-      hgap = 10
-      vgap = 10
+      hgap = SHOP_GRID_GAP
+      vgap = SHOP_GRID_GAP
       alignment = Pos.Center
     wizardTypes.zipWithIndex.foreach: (wizardType, index) =>
-      val row = index / 2
-      val col = index % 2
+      val row = index / SHOP_CARD_COLUMNS
+      val col = index % SHOP_CARD_COLUMNS
       grid.add(createWizardCard(wizardType), col, row)
     grid
 
   private def createElixirDisplay(): Text =
     val currentElixir = ViewController.getController.map(_.getCurrentElixir).getOrElse(INITIAL_ELIXIR)
     new Text(s"Elixir: $currentElixir"):
-      font = Font.font("Arial", FontWeight.Bold, 13)
+      font = Font.font("Arial", FontWeight.Bold, ELIXIR_FONT_SIZE)
       fill = Color.LightBlue
 
   def updateElixir(): Unit = Platform.runLater:
@@ -156,30 +153,30 @@ object ShopPanel:
     val cost = getWizardCost(wizardType)
     val imagePath = getWizardImagePath(wizardType)
     val canAfford = ViewController.getController.exists(_.getCurrentElixir >= cost)
-    val imageView = createImageView(imagePath, 50) match
+    val imageView = createImageView(imagePath, SHOP_CARD_IMAGE_SIZE) match
       case Right(img) =>
-        img.fitWidth = 50
-        img.fitHeight = 50
+        img.fitWidth = SHOP_CARD_IMAGE_SIZE
+        img.fitHeight = SHOP_CARD_IMAGE_SIZE
         img.preserveRatio = false
         img
       case Left(_) => new ImageView()
     val nameText = new Text(getDisplayName(wizardType)):
-      font = Font.font("Arial", FontWeight.Bold, 12)
+      font = Font.font("Arial", FontWeight.Bold, WIZARD_NAME_FONT_SIZE)
       fill = Color.White
-      wrappingWidth = 100
+      wrappingWidth = WIZARD_NAME_WIDTH
       textAlignment = scalafx.scene.text.TextAlignment.Center
     val costText = new Text(s"$cost ♦"):
-      font = Font.font("Arial", FontWeight.Bold, 11)
+      font = Font.font("Arial", FontWeight.Bold, WIZARD_COST_FONT_SIZE)
       fill = if canAfford then Color.LightBlue else Color.Gray
     val card = new VBox:
-      spacing = 4
+      spacing = SHOP_CARD_SPACING
       alignment = Pos.Center
-      prefWidth = 100
-      prefHeight = 110
-      minWidth = 100
-      minHeight = 110
-      maxWidth = 100
-      maxHeight = 110
+      prefWidth = SHOP_CARD_WIDTH
+      prefHeight = SHOP_CARD_HEIGHT
+      minWidth = SHOP_CARD_WIDTH
+      minHeight = SHOP_CARD_HEIGHT
+      maxWidth = SHOP_CARD_WIDTH
+      maxHeight = SHOP_CARD_HEIGHT
       children = Seq(nameText, imageView, costText)
     wizardCards.update(wizardType, card)
     updateCardStyle(card, canAfford, wizardType)
