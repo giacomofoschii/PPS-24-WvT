@@ -1,5 +1,6 @@
 package it.unibo.pps.wvt.view
 
+import it.unibo.pps.wvt.controller.GameEvent.ExitGame
 import it.unibo.pps.wvt.controller.{GameController, GameEvent}
 import it.unibo.pps.wvt.ecs.core.World
 import scalafx.Includes.jfxScene2sfx
@@ -26,6 +27,12 @@ object ViewController extends JFXApp3:
     gameController = Some(GameController(world))
     gameController.foreach(_.initialize())
     updateView(ViewState.MainMenu)
+
+  override def stopApp(): Unit =
+    cleanupGame()
+    gameController.foreach: controller =>
+      controller.stop()
+    super.stopApp()
 
   def updateView(viewState: ViewState): Unit =
     val previousState = currentViewState
@@ -108,7 +115,14 @@ object ViewController extends JFXApp3:
 
       resizable = false
       centerOnScreen()
+
+      onCloseRequest = event =>
+        event.consume()
+        handleWindowClose()
     }
+
+  private def handleWindowClose(): Unit =
+    gameController.foreach(_.postEvent(ExitGame))
 
   private def initializeWorld(): Unit =
     world.clear()
@@ -116,6 +130,9 @@ object ViewController extends JFXApp3:
       controller.stop()
       controller.initialize()
   //possibilità utente di aggiungere le prime entità? Si parte già con un generator?
+
+  def cleanupBeforeExit(): Unit =
+    cleanupGame()
 
   private def cleanupGame(): Unit =
     gameController.foreach(_.stop())
