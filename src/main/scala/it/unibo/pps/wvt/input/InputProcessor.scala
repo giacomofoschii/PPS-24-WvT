@@ -17,7 +17,7 @@ case class InputProcessor():
         ClickResult(
           position = Position(-1, -1, allowInvalid=true),
           isValid = false,
-          error = Some(s"Posizione invalida")
+          error = Some(s"Invalid Position")
         )
 
   def positionToScreen(position: Position): Option[(Double, Double)] =
@@ -31,7 +31,7 @@ case class InputProcessor():
     position.isValid
 
   def isInGridArea(x: Int, y: Int): Boolean =
-    val gridEndx = GRID_OFFSET_X + (GRID_COLS * CELL_WIDTH)
+    val gridEndX = GRID_OFFSET_X + (GRID_COLS * CELL_WIDTH)
     val gridEndY = GRID_OFFSET_Y + (GRID_ROWS * CELL_HEIGHT)
 
-    x >= GRID_OFFSET_X && x < gridEndx && y >= GRID_OFFSET_Y && y < gridEndY
+    x >= GRID_OFFSET_X && x < gridEndX && y >= GRID_OFFSET_Y && y < gridEndY
