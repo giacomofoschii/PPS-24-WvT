@@ -109,7 +109,7 @@ class GameController(world: World):
   def update(): Unit =
     if eventHandler.getCurrentPhase == GamePhase.Playing && !gameEngine.isPaused then
       state = state.updateAll(world)
-      ShopPanel.updateElixir()
+      ViewController.render()
 
   def getCurrentElixir: Int = state.getCurrentElixir
   def getRenderSystem: RenderSystem = state.render

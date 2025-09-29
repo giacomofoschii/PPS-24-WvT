@@ -101,9 +101,17 @@ object ViewController extends JFXApp3:
   def requestPlaceWizard(wizardType: WizardType): Unit =
     ViewController.getController.foreach(_.selectWizard(wizardType))
 
+  private def updateShopElixir(): Unit =
+    gameController.foreach: controller =>
+      ShopPanel.updateElixir()
+
   def drawPlacementGrid(green: Seq[PhysicalCoords], red: Seq[PhysicalCoords]): Unit = GameView.drawGrid(green, red)
   def hidePlacementGrid(): Unit = GameView.clearGrid()
-  def render(): Unit = gameController.foreach(_.getRenderSystem.update(world))
+
+  def render(): Unit =
+    gameController.foreach(_.getRenderSystem.update(world))
+    updateShopElixir()
+
   def getWorld: World = world
   def getController: Option[GameController] = gameController
   def showError(message: String): Unit = GameView.showError(message)
