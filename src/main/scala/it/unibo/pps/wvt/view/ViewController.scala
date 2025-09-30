@@ -103,14 +103,17 @@ object ViewController extends JFXApp3:
 
   private def updateShopElixir(): Unit =
     gameController.foreach: controller =>
-      ShopPanel.updateElixir()
+      val currentElixir = controller.getCurrentElixir
+      Platform.runLater:
+        ShopPanel.updateElixir()
 
   def drawPlacementGrid(green: Seq[PhysicalCoords], red: Seq[PhysicalCoords]): Unit = GameView.drawGrid(green, red)
   def hidePlacementGrid(): Unit = GameView.clearGrid()
 
   def render(): Unit =
-    gameController.foreach(_.getRenderSystem.update(world))
     updateShopElixir()
+    gameController.foreach(_.getRenderSystem.update(world))
+
 
   def getWorld: World = world
   def getController: Option[GameController] = gameController

@@ -151,29 +151,41 @@ class GameController(world: World):
   def placeWizard(wizardType: WizardType, position: Position): Unit =
     val cost = ShopPanel.getWizardCost(wizardType)
     val isFirstWizard = !state.elixir.firstWizardPlaced
+    val elixirBefore = state.getCurrentElixir
+  
+    println(s"[DEBUG] Placing wizard - Type: $wizardType, Cost: $cost, Elixir before: $elixirBefore, First wizard: $isFirstWizard")
+  
     val result = for
       _ <- Either.cond(world.getEntityAt(position).isEmpty, (), s"Cell at $position is occupied")
       _ <- Either.cond(state.canAfford(cost), (), s"Insufficient elixir (need $cost, have ${state.getCurrentElixir})")
     yield
-      val entity = createWizardEntity(wizardType, position)
       state.spendElixir(cost) match
-        case Some(newState) =>
+        case Some(stateAfterSpending) =>
+          println(s"[DEBUG] Elixir after spending: ${stateAfterSpending.getCurrentElixir}")
+  
+          val entity = createWizardEntity(wizardType, position)
+  
           val finalState = if isFirstWizard then
-            val activatedElixir = newState.elixir.activateGeneration()
-            newState.copy(
+            val activatedElixir = stateAfterSpending.elixir.activateGeneration()
+            println(s"[DEBUG] First wizard placed, generation activated")
+            stateAfterSpending.copy(
               elixir = activatedElixir,
-              health = newState.health.copy(elixirSystem = activatedElixir)
+              health = stateAfterSpending.health.copy(elixirSystem = activatedElixir)
             )
           else
-            newState
+            stateAfterSpending
   
           state = finalState.clearWizardSelection
+          println(s"[DEBUG] Final elixir: ${state.getCurrentElixir}")
+  
           ViewController.render()
   
         case None =>
-          world.destroyEntity(entity)
+          println(s"[ERROR] Failed to spend elixir despite canAfford returning true!")
+  
     result.left.foreach: error =>
       ViewController.showError(s"Cannot place ${wizardType.toString}: $error")
+  
     ViewController.hidePlacementGrid()
       
   def placeTroll(trollType: TrollType, position: Position): Unit =
