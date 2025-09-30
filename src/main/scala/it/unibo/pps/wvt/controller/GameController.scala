@@ -150,26 +150,31 @@ class GameController(world: World):
 
   def placeWizard(wizardType: WizardType, position: Position): Unit =
     val cost = ShopPanel.getWizardCost(wizardType)
+    val isFirstWizard = !state.elixir.firstWizardPlaced
     val result = for
       _ <- Either.cond(world.getEntityAt(position).isEmpty, (), s"Cell at $position is occupied")
       _ <- Either.cond(state.canAfford(cost), (), s"Insufficient elixir (need $cost, have ${state.getCurrentElixir})")
     yield
       val entity = createWizardEntity(wizardType, position)
-      state.spendElixir(cost).foreach: newState =>
-        // Attiva la generazione di elisir se è il primo mago piazzato
-        val updatedState = if !newState.elixir.firstWizardPlaced then
-          newState.copy(
-            elixir = newState.elixir.activateGeneration(),
-            health = newState.health.copy(elixirSystem = newState.elixir.activateGeneration())
-          )
-        else
-          newState
+      state.spendElixir(cost) match
+        case Some(newState) =>
+          val finalState = if isFirstWizard then
+            val activatedElixir = newState.elixir.activateGeneration()
+            newState.copy(
+              elixir = activatedElixir,
+              health = newState.health.copy(elixirSystem = activatedElixir)
+            )
+          else
+            newState
   
-        state = updatedState.clearWizardSelection
-      ViewController.render()
+          state = finalState.clearWizardSelection
+          ViewController.render()
   
+        case None =>
+          world.destroyEntity(entity)
     result.left.foreach: error =>
       ViewController.showError(s"Cannot place ${wizardType.toString}: $error")
+    ViewController.hidePlacementGrid()
       
   def placeTroll(trollType: TrollType, position: Position): Unit =
     if world.getEntityAt(position).isEmpty then
