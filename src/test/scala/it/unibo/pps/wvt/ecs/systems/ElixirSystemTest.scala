@@ -3,6 +3,7 @@ package it.unibo.pps.wvt.ecs.systems
 import it.unibo.pps.wvt.ecs.core.World
 import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
+import it.unibo.pps.wvt.utilities.TestConstants.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -12,147 +13,151 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
     val system = ElixirSystem()
     system.getCurrentElixir shouldBe INITIAL_ELIXIR
 
-  it should "spend elixir when enough is available" in:
-    val system = ElixirSystem(totalElixir = 100)
-    val (newSystem, success) = system.spendElixir(50)
+  it should "start with generation disabled" in:
+    val system = ElixirSystem()
+    system.firstWizardPlaced shouldBe false
 
+  it should "spend elixir when enough is available" in:
+    val system = ElixirSystem(totalElixir = TEST_ELIXIR_AMOUNT)
+    val (newSystem, success) = system.spendElixir(TEST_ELIXIR_SPEND)
     success shouldBe true
-    newSystem.getCurrentElixir shouldBe 50
+    newSystem.getCurrentElixir shouldBe TEST_ELIXIR_REMAINING
 
   it should "not spend elixir when insufficient" in:
-    val system = ElixirSystem(totalElixir = 30)
-    val (newSystem, success) = system.spendElixir(50)
-
+    val system = ElixirSystem(totalElixir = TEST_ELIXIR_INSUFFICIENT)
+    val (newSystem, success) = system.spendElixir(TEST_ELIXIR_SPEND)
     success shouldBe false
-    newSystem.getCurrentElixir shouldBe 30
+    newSystem.getCurrentElixir shouldBe TEST_ELIXIR_INSUFFICIENT
 
   it should "add elixir correctly" in:
-    val system = ElixirSystem(totalElixir = 100)
-    val newSystem = system.addElixir(50)
-
-    newSystem.getCurrentElixir shouldBe 150
+    val system = ElixirSystem(totalElixir = TEST_ELIXIR_AMOUNT)
+    val newSystem = system.addElixir(TEST_ELIXIR_SPEND)
+    newSystem.getCurrentElixir shouldBe TEST_ELIXIR_AFTER_ADD
 
   it should "check affordability correctly" in:
-    val system = ElixirSystem(totalElixir = 100)
+    val system = ElixirSystem(totalElixir = TEST_ELIXIR_AMOUNT)
+    system.canAfford(TEST_ELIXIR_SPEND) shouldBe true
+    system.canAfford(TEST_ELIXIR_AMOUNT) shouldBe true
+    system.canAfford(TEST_ELIXIR_TOO_MUCH) shouldBe false
 
-    system.canAfford(50) shouldBe true
-    system.canAfford(100) shouldBe true
-    system.canAfford(101) shouldBe false
+  it should "activate generation when activateGeneration is called" in:
+    val system = ElixirSystem()
+    val activatedSystem = system.activateGeneration()
+    activatedSystem.firstWizardPlaced shouldBe true
+    activatedSystem.lastPeriodicGeneration shouldBe TEST_TIMER_ZERO
 
   it should "reset to initial state" in:
-    val system = ElixirSystem(totalElixir = 500, lastPeriodicGeneration = 123456L)
+    val system = ElixirSystem(totalElixir = TEST_ELIXIR_HIGH, lastPeriodicGeneration = TEST_OLD_TIMESTAMP, firstWizardPlaced = true)
     val resetSystem = system.reset()
-
     resetSystem.getCurrentElixir shouldBe INITIAL_ELIXIR
-    resetSystem.lastPeriodicGeneration should not be 123456L
+    resetSystem.firstWizardPlaced shouldBe false
+    resetSystem.lastPeriodicGeneration shouldBe TEST_TIMER_ZERO
 
-  it should "generate periodic elixir when interval has passed" in:
+  it should "not generate periodic elixir before first wizard is placed" in:
     val world = World()
-    val oldTime = System.currentTimeMillis() - ELIXIR_GENERATION_INTERVAL - 1000
-    val system = ElixirSystem(totalElixir = 100, lastPeriodicGeneration = oldTime)
-
+    val oldTime = System.currentTimeMillis() - ELIXIR_GENERATION_INTERVAL - TEST_TIME_BUFFER
+    val system = ElixirSystem(totalElixir = TEST_ELIXIR_AMOUNT, lastPeriodicGeneration = oldTime, firstWizardPlaced = false)
     val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
+    updatedSystem.getCurrentElixir shouldBe TEST_ELIXIR_AMOUNT
 
-    updatedSystem.getCurrentElixir shouldBe (100 + PERIODIC_ELIXIR)
+  it should "initialize timer on first update after activation without generating elixir" in:
+    val world = World()
+    val system = ElixirSystem(totalElixir = TEST_ELIXIR_AMOUNT, lastPeriodicGeneration = TEST_TIMER_ZERO, firstWizardPlaced = true)
+    val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
+    updatedSystem.getCurrentElixir shouldBe TEST_ELIXIR_AMOUNT
+    updatedSystem.lastPeriodicGeneration should be > TEST_TIMER_ZERO
+
+  it should "generate periodic elixir after first wizard and interval has passed" in:
+    val world = World()
+    val oldTime = System.currentTimeMillis() - ELIXIR_GENERATION_INTERVAL - TEST_TIME_BUFFER
+    val system = ElixirSystem(totalElixir = TEST_ELIXIR_AMOUNT, lastPeriodicGeneration = oldTime, firstWizardPlaced = true)
+    val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
+    updatedSystem.getCurrentElixir shouldBe (TEST_ELIXIR_AMOUNT + PERIODIC_ELIXIR)
 
   it should "not generate periodic elixir when interval has not passed" in:
     val world = World()
-    val recentTime = System.currentTimeMillis() - 1000 // 1 second ago
-    val system = ElixirSystem(totalElixir = 100, lastPeriodicGeneration = recentTime)
-
+    val recentTime = System.currentTimeMillis() - TEST_TIME_SHORT
+    val system = ElixirSystem(totalElixir = TEST_ELIXIR_AMOUNT, lastPeriodicGeneration = recentTime, firstWizardPlaced = true)
     val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
+    updatedSystem.getCurrentElixir shouldBe TEST_ELIXIR_AMOUNT
 
-    updatedSystem.getCurrentElixir shouldBe 100
-
-  it should "generate elixir from generator wizards" in:
+  it should "not generate elixir from generator wizards before first wizard is placed" in:
     val world = World()
-    val system = ElixirSystem(totalElixir = 100, lastPeriodicGeneration = System.currentTimeMillis())
-
-    // Create a generator wizard
+    val system = ElixirSystem(totalElixir = TEST_ELIXIR_AMOUNT, lastPeriodicGeneration = TEST_TIMER_ZERO, firstWizardPlaced = false)
     val wizard = world.createEntity()
     world.addComponent(wizard, WizardTypeComponent(WizardType.Generator))
-    world.addComponent(wizard, ElixirGeneratorComponent(elixirPerSecond = 10, cooldown = 5))
-    world.addComponent(wizard, CooldownComponent(0L)) // No cooldown, can generate immediately
+    world.addComponent(wizard, ElixirGeneratorComponent(elixirPerSecond = TEST_GENERATOR_ELIXIR_LOW, cooldown = TEST_GENERATOR_COOLDOWN_LONG))
+    world.addComponent(wizard, CooldownComponent(TEST_TIMER_ZERO))
 
     val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
 
-    updatedSystem.getCurrentElixir shouldBe 110
+    updatedSystem.getCurrentElixir shouldBe TEST_ELIXIR_AMOUNT
 
-  it should "not generate elixir from generator wizards on cooldown" in:
+  it should "initialize generator cooldown without generating elixir on first cycle" in:
     val world = World()
-    val system = ElixirSystem(totalElixir = 100, lastPeriodicGeneration = System.currentTimeMillis())
-    val futureTime = System.currentTimeMillis() + 10000 // 10 seconds in future
-
-    // Create a generator wizard on cooldown
+    val system = ElixirSystem(totalElixir = TEST_ELIXIR_AMOUNT, lastPeriodicGeneration = System.currentTimeMillis(), firstWizardPlaced = true)
     val wizard = world.createEntity()
     world.addComponent(wizard, WizardTypeComponent(WizardType.Generator))
-    world.addComponent(wizard, ElixirGeneratorComponent(elixirPerSecond = 10, cooldown = 5))
-    world.addComponent(wizard, CooldownComponent(futureTime))
-
+    world.addComponent(wizard, ElixirGeneratorComponent(elixirPerSecond = TEST_GENERATOR_ELIXIR_LOW, cooldown = TEST_GENERATOR_COOLDOWN_LONG))
+    world.addComponent(wizard, CooldownComponent(TEST_TIMER_ZERO))
     val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
-
-    updatedSystem.getCurrentElixir shouldBe 100
-
-  it should "ignore non-generator wizards" in:
-    val world = World()
-    val system = ElixirSystem(totalElixir = 100, lastPeriodicGeneration = System.currentTimeMillis())
-
-    // Create a fire wizard (not generator)
-    val wizard = world.createEntity()
-    world.addComponent(wizard, WizardTypeComponent(WizardType.Fire))
-    world.addComponent(wizard, ElixirGeneratorComponent(elixirPerSecond = 10, cooldown = 5))
-    world.addComponent(wizard, CooldownComponent(0L))
-
-    val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
-
-    updatedSystem.getCurrentElixir shouldBe 100
-
-  it should "update cooldown after generation" in:
-    val world = World()
-    val system = ElixirSystem(totalElixir = 100, lastPeriodicGeneration = System.currentTimeMillis())
-
-    val wizard = world.createEntity()
-    world.addComponent(wizard, WizardTypeComponent(WizardType.Generator))
-    world.addComponent(wizard, ElixirGeneratorComponent(elixirPerSecond = 10, cooldown = 5))
-    world.addComponent(wizard, CooldownComponent(0L))
-
-    system.update(world)
-
+    updatedSystem.getCurrentElixir shouldBe TEST_ELIXIR_AMOUNT
     val cooldown = world.getComponent[CooldownComponent](wizard)
     cooldown should be(defined)
     cooldown.get.remainingTime should be > System.currentTimeMillis()
 
-  it should "handle multiple generator wizards" in:
+  it should "generate elixir from generator wizards after cooldown expires" in:
     val world = World()
-    val system = ElixirSystem(totalElixir = 100, lastPeriodicGeneration = System.currentTimeMillis())
-
-    // Create two generator wizards
-    val wizard1 = world.createEntity()
-    world.addComponent(wizard1, WizardTypeComponent(WizardType.Generator))
-    world.addComponent(wizard1, ElixirGeneratorComponent(elixirPerSecond = 10, cooldown = 5))
-    world.addComponent(wizard1, CooldownComponent(0L))
-
-    val wizard2 = world.createEntity()
-    world.addComponent(wizard2, WizardTypeComponent(WizardType.Generator))
-    world.addComponent(wizard2, ElixirGeneratorComponent(elixirPerSecond = 15, cooldown = 3))
-    world.addComponent(wizard2, CooldownComponent(0L))
-
-    val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
-
-    updatedSystem.getCurrentElixir shouldBe 125 // 100 + 10 + 15
-
-  it should "update correctly through full update cycle" in:
-    val world = World()
-    val oldTime = System.currentTimeMillis() - ELIXIR_GENERATION_INTERVAL - 1000
-    val system = ElixirSystem(totalElixir = 100, lastPeriodicGeneration = oldTime)
-
-    // Create a generator wizard
+    val system = ElixirSystem(totalElixir = TEST_ELIXIR_AMOUNT, lastPeriodicGeneration = System.currentTimeMillis(), firstWizardPlaced = true)
     val wizard = world.createEntity()
     world.addComponent(wizard, WizardTypeComponent(WizardType.Generator))
-    world.addComponent(wizard, ElixirGeneratorComponent(elixirPerSecond = 5, cooldown = 10))
-    world.addComponent(wizard, CooldownComponent(0L))
-
+    world.addComponent(wizard, ElixirGeneratorComponent(elixirPerSecond = TEST_GENERATOR_ELIXIR_LOW, cooldown = TEST_GENERATOR_COOLDOWN_LONG))
+    world.addComponent(wizard, CooldownComponent(System.currentTimeMillis() - TEST_TIME_SHORT))
     val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
+    updatedSystem.getCurrentElixir shouldBe TEST_ELIXIR_AMOUNT + TEST_GENERATOR_ELIXIR_LOW
 
-    // Should have periodic + generator elixir
-    updatedSystem.getCurrentElixir shouldBe (100 + PERIODIC_ELIXIR + 5)
+  it should "not generate elixir from generator wizards on cooldown" in:
+    val world = World()
+    val system = ElixirSystem(totalElixir = TEST_ELIXIR_AMOUNT, lastPeriodicGeneration = System.currentTimeMillis(), firstWizardPlaced = true)
+    val futureTime = System.currentTimeMillis() + TEST_TIME_LONG
+    val wizard = world.createEntity()
+    world.addComponent(wizard, WizardTypeComponent(WizardType.Generator))
+    world.addComponent(wizard, ElixirGeneratorComponent(elixirPerSecond = TEST_GENERATOR_ELIXIR_LOW, cooldown = TEST_GENERATOR_COOLDOWN_LONG))
+    world.addComponent(wizard, CooldownComponent(futureTime))
+    val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
+    updatedSystem.getCurrentElixir shouldBe TEST_ELIXIR_AMOUNT
+
+  it should "ignore non-generator wizards" in:
+    val world = World()
+    val system = ElixirSystem(totalElixir = TEST_ELIXIR_AMOUNT, lastPeriodicGeneration = System.currentTimeMillis(), firstWizardPlaced = true)
+    val wizard = world.createEntity()
+    world.addComponent(wizard, WizardTypeComponent(WizardType.Fire))
+    world.addComponent(wizard, ElixirGeneratorComponent(elixirPerSecond = TEST_GENERATOR_ELIXIR_LOW, cooldown = TEST_GENERATOR_COOLDOWN_LONG))
+    world.addComponent(wizard, CooldownComponent(TEST_TIMER_ZERO))
+    val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
+    updatedSystem.getCurrentElixir shouldBe TEST_ELIXIR_AMOUNT
+
+  it should "handle multiple generator wizards" in:
+    val world = World()
+    val system = ElixirSystem(totalElixir = TEST_ELIXIR_AMOUNT, lastPeriodicGeneration = System.currentTimeMillis(), firstWizardPlaced = true)
+    val wizard1 = world.createEntity()
+    world.addComponent(wizard1, WizardTypeComponent(WizardType.Generator))
+    world.addComponent(wizard1, ElixirGeneratorComponent(elixirPerSecond = TEST_GENERATOR_ELIXIR_LOW, cooldown = TEST_GENERATOR_COOLDOWN_LONG))
+    world.addComponent(wizard1, CooldownComponent(System.currentTimeMillis() - TEST_TIME_SHORT))
+    val wizard2 = world.createEntity()
+    world.addComponent(wizard2, WizardTypeComponent(WizardType.Generator))
+    world.addComponent(wizard2, ElixirGeneratorComponent(elixirPerSecond = TEST_GENERATOR_ELIXIR_HIGH, cooldown = TEST_GENERATOR_COOLDOWN_SHORT))
+    world.addComponent(wizard2, CooldownComponent(System.currentTimeMillis() - TEST_TIME_SHORT))
+    val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
+    updatedSystem.getCurrentElixir shouldBe TEST_ELIXIR_MULTIPLE_GENERATORS
+
+  it should "update correctly through full update cycle after activation" in:
+    val world = World()
+    val oldTime = System.currentTimeMillis() - ELIXIR_GENERATION_INTERVAL - TEST_TIME_BUFFER
+    val system = ElixirSystem(totalElixir = TEST_ELIXIR_AMOUNT, lastPeriodicGeneration = oldTime, firstWizardPlaced = true)
+    val wizard = world.createEntity()
+    world.addComponent(wizard, WizardTypeComponent(WizardType.Generator))
+    world.addComponent(wizard, ElixirGeneratorComponent(elixirPerSecond = TEST_GENERATOR_ELIXIR_TINY, cooldown = TEST_GENERATOR_COOLDOWN_VERY_LONG))
+    world.addComponent(wizard, CooldownComponent(System.currentTimeMillis() - TEST_TIME_SHORT))
+    val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
+    updatedSystem.getCurrentElixir shouldBe TEST_ELIXIR_FULL_CYCLE

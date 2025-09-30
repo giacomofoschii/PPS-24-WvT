@@ -1,5 +1,7 @@
 package it.unibo.pps.wvt.utilities
 
+import it.unibo.pps.wvt.utilities.GamePlayConstants.*
+
 object TestConstants:
   // Time constants (in milliseconds)
   val SHORT_DELAY: Long = 50L
@@ -65,3 +67,31 @@ object TestConstants:
   val RANDOM_SEED: Int = 42
   val FACTORY_SEED: Long = 12345L
   val MULTI_BATCH_COUNT: Int = 10
+
+  // Elixir test constants
+  val TEST_ELIXIR_AMOUNT: Int = 100
+  val TEST_ELIXIR_SPEND: Int = 50
+  val TEST_ELIXIR_REMAINING: Int = TEST_ELIXIR_AMOUNT - TEST_ELIXIR_SPEND // 50
+  val TEST_ELIXIR_INSUFFICIENT: Int = 30
+  val TEST_ELIXIR_AFTER_ADD: Int = TEST_ELIXIR_AMOUNT + TEST_ELIXIR_SPEND // 150
+  val TEST_ELIXIR_TOO_MUCH: Int = TEST_ELIXIR_AMOUNT + 1 // 101
+  val TEST_ELIXIR_HIGH: Int = 500
+
+  // Timer test constants
+  val TEST_TIMER_ZERO: Long = 0L
+  val TEST_OLD_TIMESTAMP: Long = 123456L
+  val TEST_TIME_BUFFER: Long = 1000L
+  val TEST_TIME_SHORT: Long = 1000L
+  val TEST_TIME_LONG: Long = 10000L
+
+  // Generator test constants
+  val TEST_GENERATOR_ELIXIR_TINY: Int = 5
+  val TEST_GENERATOR_ELIXIR_LOW: Int = 10
+  val TEST_GENERATOR_ELIXIR_HIGH: Int = 15
+  val TEST_GENERATOR_COOLDOWN_SHORT: Long = 3000L
+  val TEST_GENERATOR_COOLDOWN_LONG: Long = 5000L
+  val TEST_GENERATOR_COOLDOWN_VERY_LONG: Long = 10000L
+
+  // Calculated test constants
+  val TEST_ELIXIR_MULTIPLE_GENERATORS: Int = TEST_ELIXIR_AMOUNT + TEST_GENERATOR_ELIXIR_LOW + TEST_GENERATOR_ELIXIR_HIGH
+  val TEST_ELIXIR_FULL_CYCLE: Int = TEST_ELIXIR_AMOUNT + PERIODIC_ELIXIR + TEST_GENERATOR_ELIXIR_TINY
