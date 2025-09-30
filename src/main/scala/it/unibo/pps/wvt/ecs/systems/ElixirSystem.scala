@@ -35,7 +35,7 @@ case class ElixirSystem(
         if wizardType.wizardType == WizardType.Generator then
           if cooldownComponent.remainingTime <= currentTime then
             updatedSystem = updatedSystem.copy(totalElixir = updatedSystem.totalElixir + elixirGenerator.elixirPerSecond)
-            val newCooldown = CooldownComponent(currentTime + elixirGenerator.cooldown * 1000)
+            val newCooldown = CooldownComponent(currentTime + elixirGenerator.cooldown)
             if world.hasComponent[CooldownComponent](entityId) then
               world.removeComponent[CooldownComponent](entityId)
             world.addComponent(entityId, newCooldown)
