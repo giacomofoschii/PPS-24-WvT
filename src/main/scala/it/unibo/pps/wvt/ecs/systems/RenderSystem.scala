@@ -18,7 +18,6 @@ case class RenderSystem(
     val currentState = generateStateHash(entities, healthBars)
 
     if shouldRender(currentState) then
-      GameView.clearBeforeRender()
       GameView.renderEntities(entities)
       GameView.renderHealthBars(healthBars)
       lastRenderedState = Some(currentState)

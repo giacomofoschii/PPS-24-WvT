@@ -74,18 +74,14 @@ object GameView:
     Platform.runLater:
       gridPane.foreach(_.children.clear())
 
-  def clearBeforeRender(): Unit =
-    Platform.runLater:
-      entityPane.foreach(_.children.clear())
-      projectilePane.foreach(_.children.clear())
-      healthBarPane.foreach(_.children.clear())
-
   def renderEntities(entities: Seq[(PhysicalCoords, String)]): Unit =
     Platform.runLater:
       val (projectiles, others) = entities.partition { case (_, path) => path.contains("/projectile/") }
       entityPane.foreach: pane =>
+        pane.children.clear()
         pane.children.addAll(createEntitiesPane(others).children)
       projectilePane.foreach: pane =>
+        pane.children.clear()
         pane.children.addAll(createEntitiesPane(projectiles).children)
 
 
