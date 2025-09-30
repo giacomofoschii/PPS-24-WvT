@@ -156,9 +156,18 @@ class GameController(world: World):
     yield
       val entity = createWizardEntity(wizardType, position)
       state.spendElixir(cost).foreach: newState =>
-        state = newState.clearWizardSelection
+        // Attiva la generazione di elisir se è il primo mago piazzato
+        val updatedState = if !newState.elixir.firstWizardPlaced then
+          newState.copy(
+            elixir = newState.elixir.activateGeneration(),
+            health = newState.health.copy(elixirSystem = newState.elixir.activateGeneration())
+          )
+        else
+          newState
+  
+        state = updatedState.clearWizardSelection
       ViewController.render()
-
+  
     result.left.foreach: error =>
       ViewController.showError(s"Cannot place ${wizardType.toString}: $error")
       
