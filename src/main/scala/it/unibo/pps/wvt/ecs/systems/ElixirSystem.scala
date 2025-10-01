@@ -8,7 +8,8 @@ import it.unibo.pps.wvt.ecs.core.EntityId
 case class ElixirSystem(
                          totalElixir: Int = INITIAL_ELIXIR,
                          lastPeriodicGeneration: Long = 0L,
-                         firstWizardPlaced: Boolean = false
+                         firstWizardPlaced: Boolean = false,
+                         activationTime: Long = 0L  
                        ) extends System:
 
   override def update(world: World): System =
@@ -20,13 +21,19 @@ case class ElixirSystem(
 
   private def updatePeriodicElixirGeneration(): ElixirSystem =
     val currentTime = System.currentTimeMillis()
-    if lastPeriodicGeneration > 0 && currentTime - lastPeriodicGeneration >= ELIXIR_GENERATION_INTERVAL then
+    if lastPeriodicGeneration == 0L then
+      return copy(
+        lastPeriodicGeneration = currentTime,
+        activationTime = if activationTime == 0L then currentTime else activationTime
+      )
+    val timeSinceActivation = currentTime - activationTime
+    val timeSinceLastGeneration = currentTime - lastPeriodicGeneration
+    if timeSinceActivation >= ELIXIR_GENERATION_INTERVAL &&
+      timeSinceLastGeneration >= ELIXIR_GENERATION_INTERVAL then
       copy(
         totalElixir = totalElixir + PERIODIC_ELIXIR,
         lastPeriodicGeneration = currentTime
       )
-    else if lastPeriodicGeneration == 0L then
-      copy(lastPeriodicGeneration = currentTime)
     else
       this
 
@@ -39,16 +46,18 @@ case class ElixirSystem(
       for
         wizardType <- world.getComponent[WizardTypeComponent](entityId)
         elixirGenerator <- world.getComponent[ElixirGeneratorComponent](entityId)
-        cooldownComponent <- world.getComponent[CooldownComponent](entityId).orElse(Some(CooldownComponent(0L)))
       yield
         if wizardType.wizardType == WizardType.Generator then
-          val isJustPlaced = cooldownComponent.remainingTime == 0L
-          val cooldownExpired = cooldownComponent.remainingTime <= currentTime
+          world.getComponent[CooldownComponent](entityId) match
+            case Some(cooldownComponent) =>
+              if cooldownComponent.remainingTime == 0L then
+                updateCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
+              else if cooldownComponent.remainingTime <= currentTime then
+                updatedSystem = updatedSystem.copy(totalElixir = updatedSystem.totalElixir + elixirGenerator.elixirPerSecond)
+                updateCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
+            case None =>
+              updateCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
 
-          if cooldownExpired then
-            if !isJustPlaced then
-              updatedSystem = updatedSystem.copy(totalElixir = updatedSystem.totalElixir + elixirGenerator.elixirPerSecond)
-            updateCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
     updatedSystem
 
   private def updateCooldown(world: World, entityId: EntityId, newTime: Long): Unit =
@@ -69,7 +78,17 @@ case class ElixirSystem(
   def canAfford(amount: Int): Boolean = totalElixir >= amount
 
   def activateGeneration(): ElixirSystem =
-    copy(firstWizardPlaced = true, lastPeriodicGeneration = 0L)
+    val currentTime = System.currentTimeMillis()
+    copy(
+      firstWizardPlaced = true,
+      lastPeriodicGeneration = currentTime,  
+      activationTime = currentTime  
+    )
 
   def reset(): ElixirSystem =
-    copy(totalElixir = INITIAL_ELIXIR, lastPeriodicGeneration = 0L, firstWizardPlaced = false)
+    copy(
+      totalElixir = INITIAL_ELIXIR,
+      lastPeriodicGeneration = 0L,
+      firstWizardPlaced = false,
+      activationTime = 0L
+    )

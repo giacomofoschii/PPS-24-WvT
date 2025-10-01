@@ -44,7 +44,9 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
     val system = ElixirSystem()
     val activatedSystem = system.activateGeneration()
     activatedSystem.firstWizardPlaced shouldBe true
-    activatedSystem.lastPeriodicGeneration shouldBe TEST_TIMER_ZERO
+    activatedSystem.lastPeriodicGeneration should be > 0L
+    activatedSystem.activationTime should be > 0L
+    activatedSystem.activationTime shouldBe activatedSystem.lastPeriodicGeneration
 
   it should "reset to initial state" in:
     val system = ElixirSystem(totalElixir = TEST_ELIXIR_HIGH, lastPeriodicGeneration = TEST_OLD_TIMESTAMP, firstWizardPlaced = true)

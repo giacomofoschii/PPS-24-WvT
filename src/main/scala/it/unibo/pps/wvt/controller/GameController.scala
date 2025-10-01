@@ -152,41 +152,36 @@ class GameController(world: World):
     val cost = ShopPanel.getWizardCost(wizardType)
     val isFirstWizard = !state.elixir.firstWizardPlaced
     val elixirBefore = state.getCurrentElixir
-  
     println(s"[DEBUG] Placing wizard - Type: $wizardType, Cost: $cost, Elixir before: $elixirBefore, First wizard: $isFirstWizard")
-  
     val result = for
       _ <- Either.cond(world.getEntityAt(position).isEmpty, (), s"Cell at $position is occupied")
       _ <- Either.cond(state.canAfford(cost), (), s"Insufficient elixir (need $cost, have ${state.getCurrentElixir})")
-    yield
-      state.spendElixir(cost) match
-        case Some(stateAfterSpending) =>
-          println(s"[DEBUG] Elixir after spending: ${stateAfterSpending.getCurrentElixir}")
-  
-          val entity = createWizardEntity(wizardType, position)
-  
-          val finalState = if isFirstWizard then
-            val activatedElixir = stateAfterSpending.elixir.activateGeneration()
-            println(s"[DEBUG] First wizard placed, generation activated")
-            stateAfterSpending.copy(
-              elixir = activatedElixir,
-              health = stateAfterSpending.health.copy(elixirSystem = activatedElixir)
-            )
-          else
-            stateAfterSpending
-  
-          state = finalState.clearWizardSelection
-          println(s"[DEBUG] Final elixir: ${state.getCurrentElixir}")
-  
-          ViewController.render()
-  
-        case None =>
-          println(s"[ERROR] Failed to spend elixir despite canAfford returning true!")
-  
-    result.left.foreach: error =>
-      ViewController.showError(s"Cannot place ${wizardType.toString}: $error")
-  
-    ViewController.hidePlacementGrid()
+    yield ()
+    result match
+      case Right(_) =>
+        state.spendElixir(cost) match
+          case Some(stateAfterSpending) =>
+            println(s"[DEBUG] Elixir after spending: ${stateAfterSpending.getCurrentElixir}")
+            val entity = createWizardEntity(wizardType, position)
+            state = if isFirstWizard then
+              val activatedElixir = stateAfterSpending.elixir.activateGeneration()
+              println(s"[DEBUG] First wizard placed, generation activated at ${System.currentTimeMillis()}")
+              stateAfterSpending.copy(
+                elixir = activatedElixir,
+                health = stateAfterSpending.health.copy(elixirSystem = activatedElixir)
+              ).clearWizardSelection
+            else
+              stateAfterSpending.clearWizardSelection
+            println(s"[DEBUG] Final elixir: ${state.getCurrentElixir}")
+            ViewController.hidePlacementGrid()
+            ViewController.render()
+          case None =>
+            println(s"[ERROR] Failed to spend elixir despite canAfford returning true!")
+            ViewController.showError(s"Cannot place ${wizardType.toString}: Failed to spend elixir")
+            ViewController.hidePlacementGrid()
+      case Left(error) =>
+        ViewController.showError(s"Cannot place ${wizardType.toString}: $error")
+        ViewController.hidePlacementGrid()
       
   def placeTroll(trollType: TrollType, position: Position): Unit =
     if world.getEntityAt(position).isEmpty then
