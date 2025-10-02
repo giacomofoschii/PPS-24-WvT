@@ -10,9 +10,9 @@ import it.unibo.pps.wvt.view.ImageFactory._
 
 object PauseMenu:
   def apply(): Parent =
-    lazy val backgroundImage = createBackgroundView("/pause_menu.jpg", PAUSE_MENU_SCALE_FACTOR).getOrElse(new ImageView())
+    lazy val backgroundImage = createBackgroundView("/in_game_menu.jpg", IN_GAME_MENU_SCALE_FACTOR).getOrElse(new ImageView())
     lazy val titleImage =
-      createImageView("/paused.png", (backgroundImage.fitWidth*PAUSE_TITLE_SCALE_FACTOR).toInt) match
+      createImageView("/paused.png", (backgroundImage.fitWidth * IN_GAME_TITLE_SCALE_FACTOR).toInt) match
         case Right(imageView) => imageView
         case Left(error) =>
           println(error)
