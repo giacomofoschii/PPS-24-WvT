@@ -10,7 +10,6 @@ import it.unibo.pps.wvt.utilities.ViewConstants.*
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
 
 import scala.util.Random
-import scala.util.Random
 
 case class SpawnEvent(
                        trollType: TrollType,
@@ -19,66 +18,35 @@ case class SpawnEvent(
                      )
 
 case class SpawnSystem(
-                        private[systems] val spawnInterval: Long = 2000L,
                         private[systems] val lastSpawnTime: Long = System.currentTimeMillis(),
                         private[systems] val pendingSpawns: List[SpawnEvent] = List.empty,
                         private[systems] val rng: Random = Random(),
                         isActive: Boolean = false,
                         private[systems] val firstWizardRow: Option[Int] = None,
                         hasSpawnedAtLeastOnce: Boolean = false,
-                        private[systems] val currentWave: Int = 1,
                         private[systems] val trollsSpawnedThisWave: Int = 0,
+                        private[systems] val currentWave: Int = 1  // Gestito dal GameController
                       ) extends System:
 
-  type SpawnPredicate = (Position, World) => Boolean
-  private type TrollSelector = Random => TrollType
+  private type TrollSelector = (Random, Int) => TrollType
   private type PositionGenerator = (Random, Option[Int]) => Position
 
   override def update(world: World): System =
     val currentTime = System.currentTimeMillis()
     val updatedSystem = if !isActive && hasWizardBeenPlaced(world) then
       val wizardRow = getFirstWizardRow(world)
+      println(s"[SPAWN] Primo mago rilevato alla riga $wizardRow - Attivazione spawn")
       copy(isActive = true, firstWizardRow = wizardRow, lastSpawnTime = currentTime)
     else
       this
 
     if updatedSystem.isActive then
-      if updatedSystem.isWaveComplete(world) then
-        updatedSystem.transitionToNextWave(currentTime)
-      else
-        updatedSystem
-          .processScheduledSpawns(world, currentTime)
-          .andThen(generateNewSpawnsIfNeeded(world, currentTime))
-          .apply(updatedSystem)
+      updatedSystem
+        .processScheduledSpawns(world, currentTime)
+        .andThen(generateNewSpawnsIfNeeded(world, currentTime))
+        .apply(updatedSystem)
     else
       updatedSystem
-
-  private def isWaveComplete(world: World): Boolean =
-    val allSpawned = trollsSpawnedThisWave >= getMaxTrolls
-    val noPending = pendingSpawns.isEmpty
-    val trollsAlive = world.getEntitiesWithComponent[TrollTypeComponent].size
-    val noTrollsAlive = trollsAlive == 0
-    if allSpawned then
-      println(s"[WAVE CHECK] All spawned: $trollsSpawnedThisWave/$getMaxTrolls")
-      println(s"[WAVE CHECK] Pending spawns: ${pendingSpawns.size}")
-      println(s"[WAVE CHECK] Trolls alive: $trollsAlive")
-      val trollPositions = world
-        .getEntitiesWithComponent[TrollTypeComponent]
-        .flatMap(e => world.getComponent[PositionComponent](e).map(_.position))
-      println(s"[WAVE CHECK] Troll positions: ${trollPositions.mkString(", ")}")
-      println(s"[WAVE CHECK] Wave complete: ${allSpawned && noPending && noTrollsAlive}")
-    allSpawned && noPending && noTrollsAlive
-
-
-  private def transitionToNextWave(currentTime: Long): SpawnSystem =
-    val nextWave = currentWave + 1
-    println(s"[WAVE COMPLETE] Wave $currentWave finished - All trolls defeated!")
-    println(s"[WAVE START] Transitioning to Wave $nextWave")
-    copy(
-      currentWave = nextWave,
-      trollsSpawnedThisWave = 0,
-      isActive = false
-    )
 
   private def hasWizardBeenPlaced(world: World): Boolean =
     world.getEntitiesByType("wizard").nonEmpty
@@ -93,18 +61,25 @@ case class SpawnSystem(
     system =>
       val (toSpawn, remaining) = system.pendingSpawns.partition(_.scheduledTime <= currentTime)
 
-      toSpawn.foldLeft(world): (_, event) =>
+      if toSpawn.nonEmpty then
+        println(s"[SPAWN] Spawning ${toSpawn.size} troll(s) programmati")
+
+      toSpawn.foreach: event =>
         spawnTroll(event, world)
-        world
 
       system.copy(pendingSpawns = remaining)
 
   private def generateNewSpawnsIfNeeded(world: World, currentTime: Long): SpawnSystem => SpawnSystem =
     system =>
-      if shouldGenerateNewSpawn(system, currentTime) && system.trollsSpawnedThisWave < getMaxTrolls then
-        val remainingTrolls = getMaxTrolls - system.trollsSpawnedThisWave
+      val maxTrolls = WaveLevel.maxTrollsPerWave(currentWave)
+
+      if shouldGenerateNewSpawn(system, currentTime) && system.trollsSpawnedThisWave < maxTrolls then
+        val remainingTrolls = maxTrolls - system.trollsSpawnedThisWave
         val numOfSpawns = Math.min(rng.nextInt(3) + 1, remainingTrolls)
         val newSpawns = generateSpawnBatch(currentTime, system.firstWizardRow, numOfSpawns)
+
+        println(s"[SPAWN] Generazione di $numOfSpawns nuovi spawn (${system.trollsSpawnedThisWave + numOfSpawns}/$maxTrolls)")
+
         system.copy(
           pendingSpawns = system.pendingSpawns ++ newSpawns,
           lastSpawnTime = currentTime,
@@ -127,12 +102,12 @@ case class SpawnSystem(
 
   private def generateSingleSpawn(baseTime: Long, useFirstRow: Boolean, firstRow: Option[Int]): SpawnEvent =
     SpawnEvent(
-      trollType = selectTrollType(rng),
+      trollType = selectTrollType(rng, currentWave),
       position = generateSpawnPosition(rng, if useFirstRow then firstRow else None),
       scheduledTime = baseTime + rng.nextInt(500)
     )
 
-  private val selectTrollType: TrollSelector = rng =>
+  private val selectTrollType: TrollSelector = (rng, currentWave) =>
     WaveLevel.selectRandomTrollType(WaveLevel.calculateTrollDistribution(currentWave))
 
   private val generateSpawnPosition: PositionGenerator = (rng, fixedRow) =>
@@ -155,6 +130,11 @@ case class SpawnSystem(
   private def applyWaveScaling(entity: EntityId, trollType: TrollType, world: World): Unit =
     val (baseHealth, baseSpeed, baseDamage) = getBaseStats(trollType)
     val (scaledHealth, scaledSpeed, scaledDamage) = WaveLevel.applyMultipliers(baseHealth, baseSpeed, baseDamage, currentWave)
+
+    if currentWave > 1 then
+      println(s"[SPAWN] Scaling troll ${trollType} per ondata $currentWave: " +
+        s"Health $baseHealth -> $scaledHealth, Speed $baseSpeed -> $scaledSpeed, Damage $baseDamage -> $scaledDamage")
+
     updateHealth(entity, scaledHealth, world)
     updateMovement(entity, scaledSpeed, world)
     updateAttack(entity, scaledDamage, world)
@@ -167,8 +147,8 @@ case class SpawnSystem(
       case Thrower => (THROWER_TROLL_HEALTH, THROWER_TROLL_SPEED, THROWER_TROLL_DAMAGE)
 
   private def updateHealth(entity: EntityId, health: Int, world: World): Unit =
-    world.getComponent[HealthComponent](entity).foreach: old =>
-      world.updateComponent[HealthComponent](entity, _ => HealthComponent(health, old.maxHealth))
+    world.getComponent[HealthComponent](entity).foreach: _ =>
+      world.updateComponent[HealthComponent](entity, _ => HealthComponent(health, health))
 
   private def updateMovement(entity: EntityId, speed: Double, world: World): Unit =
     world.getComponent[MovementComponent](entity).foreach: _ =>
@@ -178,30 +158,18 @@ case class SpawnSystem(
     world.getComponent[AttackComponent](entity).foreach: old =>
       world.updateComponent[AttackComponent](entity, _ => AttackComponent(damage, old.range, old.cooldown))
 
-
-  def getPendingSpawnsCount: Int =
-    pendingSpawns.size
+  // Getter methods
+  def getPendingSpawnsCount: Int = pendingSpawns.size
 
   def getNextSpawnTime: Option[Long] =
     pendingSpawns.minByOption(_.scheduledTime).map(_.scheduledTime)
 
-
-
-  def getCurrentWave: Int = currentWave
   def getTrollsSpawned: Int = trollsSpawnedThisWave
+
   def getMaxTrolls: Int = WaveLevel.maxTrollsPerWave(currentWave)
 
 
-  def disaWave(): SpawnSystem =
-    SpawnSystem(
-      rng = rng,
-      firstWizardRow = None,
-      currentWave = 1,
-      trollsSpawnedThisWave = 0
-    )
-
 object SpawnSystem:
-
-  def withConfig(interval: Long = INITIAL_SPAWN_INTERVAL, seed: Option[Long] = None): SpawnSystem =
+  def withConfig(seed: Option[Long] = None): SpawnSystem =
     val rng = seed.map(Random(_)).getOrElse(Random())
     SpawnSystem(rng = rng)
