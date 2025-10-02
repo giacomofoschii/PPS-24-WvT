@@ -42,6 +42,18 @@ class World:
   def getComponent[T <: Component: ClassTag](entity: EntityId): Option[T] =
     components.get(implicitly[ClassTag[T]].runtimeClass).flatMap(_.get(entity).map(_.asInstanceOf[T]))
 
+  def updateComponent[T <: Component: ClassTag](entity: EntityId, updateFn: T => T): Unit =
+    val compClass = implicitly[ClassTag[T]].runtimeClass
+    components.get(compClass).flatMap(_.get(entity)) match
+      case Some(component) =>
+        val updatedComponent = updateFn(component.asInstanceOf[T])
+        removeComponent[T](entity)  
+        addComponent(entity, updatedComponent)  
+      case None =>
+        throw new NoSuchElementException(
+          s"Entity $entity does not have component of type ${compClass.getSimpleName}"
+        )
+
   def hasComponent[T <: Component: ClassTag](entity: EntityId): Boolean =
     getComponent[T](entity).isDefined
 
