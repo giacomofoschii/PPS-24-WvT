@@ -1,5 +1,6 @@
 package it.unibo.pps.wvt.controller
 
+import it.unibo.pps.wvt.controller.GameEvent.{GameLost, GameWon}
 import it.unibo.pps.wvt.engine.*
 import it.unibo.pps.wvt.input.InputSystem
 import it.unibo.pps.wvt.view.{ShopPanel, ViewController}
@@ -22,6 +23,10 @@ class GameController(world: World):
                                selectedWizardType: Option[WizardType] = None,
                                currentWave: Int = 1
                              ):
+    def checkGameConditions(world: World): Option[GameEvent] =
+      checkLoseCondition(world)
+        .orElse(checkWinCondition(world))
+
     def updateAll(world: World): GameSystemsState =
       val updatedElixir = elixir.update(world).asInstanceOf[ElixirSystem]
       val updatedMovement = movement.update(world).asInstanceOf[MovementSystem]
@@ -33,7 +38,7 @@ class GameController(world: World):
       val updatedSpawn = spawn.update(world).asInstanceOf[SpawnSystem]
       val updatedRender = render.update(world).asInstanceOf[RenderSystem]
 
-      copy(
+      val updatedState = copy(
         movement = updatedMovement,
         combat = updatedCombat,
         elixir = updatedElixir,
@@ -41,6 +46,11 @@ class GameController(world: World):
         spawn = updatedSpawn,
         render = updatedRender
       )
+
+      updatedState.checkGameConditions(world).foreach: event =>
+        ViewController.getController.foreach(_.postEvent(event))
+
+      updatedState
 
     def spendElixir(amount: Int): Option[GameSystemsState] =
       val (newElixirSystem, success) = elixir.spendElixir(amount)
@@ -66,7 +76,31 @@ class GameController(world: World):
 
     def canAfford(cost: Int): Boolean = elixir.canAfford(cost)
 
+    def handleVictory(): GameSystemsState =
+      copy(
+        currentWave = currentWave + 1,
+        spawn = spawn.reset().withInterval(GameSystemsState.getSpawnIntervalForWave)
+      )
+
+    def handleDefeat(): GameSystemsState =
+      GameSystemsState.initial()
+
     def reset(): GameSystemsState = GameSystemsState.initial()
+
+    private def checkLoseCondition(world: World): Option[GameEvent] =
+      val trollReachedEnd = world.getEntitiesByType("troll")
+        .exists: entity =>
+          world.getComponent[PositionComponent](entity)
+            .exists(_.position.col == 0)
+      Option.when(trollReachedEnd)(GameLost)
+
+    private def checkWinCondition(world: World): Option[GameEvent] =
+      val gameStarted = currentWave > 1 || spawn.hasSpawnedAtLeastOnce
+      val allTrollsSpawned = !spawn.isActive
+      val noActiveTrolls = world.getEntitiesByType("troll").isEmpty
+      val noPendingSpawns = spawn.getPendingSpawnsCount == 0
+
+      Option.when(gameStarted && allTrollsSpawned && noActiveTrolls && noPendingSpawns )(GameWon)
 
   object GameSystemsState:
 
@@ -147,6 +181,13 @@ class GameController(world: World):
     if clickResult.isValid then
       handleGridClick(clickResult.position)
       ViewController.render()
+
+  def handleContinueBattle(): Unit =
+    state = state.handleVictory()
+
+  def handleNewGame(): Unit =
+    world.clear()
+    state = state.handleDefeat()
 
   def placeWizard(wizardType: WizardType, position: Position): Unit =
     val cost = ShopPanel.getWizardCost(wizardType)

@@ -17,6 +17,8 @@ object ViewState:
   case object GameView extends ViewState
   case object InfoMenu extends ViewState
   case object PauseMenu extends ViewState
+  case object Victory extends ViewState
+  case object Defeat extends ViewState
 
 
 object ViewController extends JFXApp3:
@@ -64,6 +66,10 @@ object ViewController extends JFXApp3:
           view
       case ViewState.InfoMenu => InfoMenu()
       case ViewState.PauseMenu => PauseMenu()
+      case ViewState.Victory =>
+        GameResultPanel(GameResultPanel.Victory)
+      case ViewState.Defeat =>
+        GameResultPanel(GameResultPanel.Defeat)
 
     Platform.runLater:
       if stage != null then
@@ -97,6 +103,12 @@ object ViewController extends JFXApp3:
 
   def requestResumeGame(): Unit =
     gameController.foreach(_.postEvent(GameEvent.Resume))
+
+  def requestContinueBattle(): Unit =
+    gameController.foreach(_.postEvent(GameEvent.ContinueBattle))
+
+  def requestNewGame(): Unit =
+    gameController.foreach(_.postEvent(GameEvent.NewGame))
     
   def requestPlaceWizard(wizardType: WizardType): Unit =
     ViewController.getController.foreach(_.selectWizard(wizardType))

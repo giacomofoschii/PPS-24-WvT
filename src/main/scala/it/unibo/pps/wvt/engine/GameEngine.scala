@@ -13,6 +13,7 @@ trait GameEngine:
   def isPaused: Boolean
   def currentState: GameState
   def updatePhase(phase: GamePhase): Unit
+  def getController: Option[GameController]
 
 class GameEngineImpl extends GameEngine:
   private var state: EngineState = EngineState()
@@ -31,9 +32,9 @@ class GameEngineImpl extends GameEngine:
     def withController(ctrl: GameController): EngineState = copy(controller = Some(ctrl))
     def withGameLoop(loop: GameLoop): EngineState = copy(gameLoop = Some(loop))
 
-  override def initialize(controller: GameController): Unit =
+  override def initialize(ctrl: GameController): Unit =
     state = state
-      .withController(controller)
+      .withController(ctrl)
       .withGameLoop(GameLoop.create(this))
     println("Game Engine initialized")
 
@@ -76,6 +77,7 @@ class GameEngineImpl extends GameEngine:
   override def isRunning: Boolean = state.isRunning
   override def isPaused: Boolean = state.isPaused
   override def currentState: GameState = state.gameState
+  override def getController: Option[GameController] = state.controller
 
 object GameEngine:
   private var instance: Option[GameEngine] = None

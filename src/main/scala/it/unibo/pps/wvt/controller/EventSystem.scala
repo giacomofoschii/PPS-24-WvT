@@ -17,6 +17,11 @@ enum GameEvent:
   case ShowInfoMenu
   case ExitGame
 
+  case GameWon
+  case GameLost
+  case ContinueBattle
+  case NewGame
+
   // Input events
   case GridClicked(pos: Position, screenX: Int, screenY: Int)
   case KeyPressed(keyCode: String)
@@ -27,7 +32,11 @@ enum GameEvent:
   def priority: Int = this match
     case Stop | ExitGame => 0
     case Pause | Resume => 1
-    case ShowMainMenu | ShowGameView | ShowInfoMenu => 2
+    case ShowMainMenu | 
+         ShowGameView | 
+         ShowInfoMenu | 
+         ContinueBattle | 
+         NewGame => 2
     case _ => 3
 
 class EventQueue(private val maxQueueSize: Int = 1000):

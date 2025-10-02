@@ -8,11 +8,14 @@ import scalafx.scene.effect.DropShadow
 import scalafx.scene.paint.Color
 import scalafx.scene.text.{Font, FontWeight}
 
-object ButtonFactory {
+object ButtonFactory:
   case class ButtonConfig(text: String, width: Int, height: Int, fontSize: Int, fontFamily: String)
 
+  case object ContinueBattle extends ButtonAction
+  case object NewGame extends ButtonAction
+
   def createStyledButton(config: ButtonConfig)(action: => Unit): Button =
-    new Button(config.text) {
+    new Button(config.text):
       cursor = Cursor.Hand
       font = Font.font(config.fontFamily, FontWeight.Bold, config.fontSize)
       prefWidth = config.width
@@ -27,12 +30,10 @@ object ButtonFactory {
         "-fx-text-fill: #DAA520;"
       onAction = _ => action
       onMouseEntered = _ =>
-        effect = new DropShadow {
+        effect = new DropShadow:
           color = Color.Gray
           radius = 10
-        }
       onMouseExited = _ => effect = null
-    }
 
   sealed trait ButtonAction
   case object StartGame extends ButtonAction
@@ -51,4 +52,5 @@ object ButtonFactory {
     case PauseGame => ViewController.requestPauseGame()
     case ResumeGame => ViewController.requestResumeGame()
     case ExitGame => ViewController.requestExitGame()
-}
+    case ContinueBattle => ViewController.requestContinueBattle()
+    case NewGame => ViewController.requestNewGame()

@@ -21,8 +21,9 @@ case class SpawnSystem(
                          private[systems] val lastSpawnTime: Long = System.currentTimeMillis(),
                          private[systems] val pendingSpawns: List[SpawnEvent] = List.empty,
                          private[systems] val rng: Random = Random(),
-                         private[systems] val isActive: Boolean = false,
-                         private[systems] val firstWizardRow: Option[Int] = None
+                         isActive: Boolean = false,
+                         private[systems] val firstWizardRow: Option[Int] = None,
+                         hasSpawnedAtLeastOnce: Boolean = false
                       ) extends System:
 
   type SpawnPredicate = (Position, World) => Boolean
@@ -71,7 +72,8 @@ case class SpawnSystem(
         val newSpawns = generateSpawnBatch(currentTime, system.firstWizardRow)
         system.copy(
           pendingSpawns = system.pendingSpawns ++ newSpawns,
-          lastSpawnTime = currentTime
+          lastSpawnTime = currentTime,
+          hasSpawnedAtLeastOnce = true
         )
       else
         system

@@ -52,6 +52,25 @@ class EventHandler(engine: GameEngine):
           handleMenuTransition(GamePhase.Playing, ViewState.GameView)
           ViewController.render()
 
+        case GameEvent.GameWon =>
+          engine.pause()
+          handleMenuTransition(GamePhase.Paused, ViewState.Victory)
+
+        case GameEvent.GameLost =>
+          engine.pause()
+          handleMenuTransition(GamePhase.Paused, ViewState.Defeat)
+
+        case GameEvent.ContinueBattle =>
+          engine.getController.foreach(_.handleContinueBattle())
+          engine.resume()
+          handleMenuTransition(GamePhase.Playing, ViewState.GameView)
+
+        case GameEvent.NewGame =>
+          engine.stop()
+          engine.getController.foreach(_.handleNewGame())
+          handleMenuTransition(GamePhase.Playing, ViewState.GameView)
+          if !engine.isRunning then engine.start()
+
         case _ =>
           eventHandlers.get(event.getClass).foreach(_(event))
 
