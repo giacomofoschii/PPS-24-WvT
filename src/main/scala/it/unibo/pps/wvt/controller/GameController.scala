@@ -21,9 +21,10 @@ class GameController(world: World):
                                health: HealthSystem,
                                spawn: SpawnSystem,
                                render: RenderSystem,
-                               selectedWizardType: Option[WizardType] = None
+                               selectedWizardType: Option[WizardType] = None,
+                               currentWave: Int = 1
                              ):
-    def checkGameConditions(world: World): Option[GameEvent] =
+    private def checkGameConditions(world: World): Option[GameEvent] =
       checkLoseCondition(world)
         .orElse(checkWinCondition(world))
 
@@ -77,7 +78,7 @@ class GameController(world: World):
     def handleVictory(): GameSystemsState =
       copy(
         currentWave = currentWave + 1,
-        spawn = spawn.reset().withInterval(GameSystemsState.getSpawnIntervalForWave)
+        spawn = spawn.startNextWave(currentWave + 1)
       )
 
     def handleDefeat(): GameSystemsState =
