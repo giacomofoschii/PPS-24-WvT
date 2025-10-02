@@ -8,6 +8,7 @@ import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.components.WizardType.*
 import it.unibo.pps.wvt.ecs.factories.EntityFactory
 import it.unibo.pps.wvt.ecs.systems.*
+import it.unibo.pps.wvt.ecs.config.WaveLevel
 import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 
 class GameController(world: World):
@@ -19,8 +20,7 @@ class GameController(world: World):
                                health: HealthSystem,
                                spawn: SpawnSystem,
                                render: RenderSystem,
-                               selectedWizardType: Option[WizardType] = None,
-                               currentWave: Int = 1
+                               selectedWizardType: Option[WizardType] = None
                              ):
     def updateAll(world: World): GameSystemsState =
       val updatedElixir = elixir.update(world).asInstanceOf[ElixirSystem]
@@ -58,38 +58,33 @@ class GameController(world: World):
     def clearWizardSelection: GameSystemsState =
       copy(selectedWizardType = None)
 
-    def getCurrentWave: Int = currentWave
-
-    def incrementWave(): GameSystemsState = copy(currentWave = currentWave + 1)
-
+    def getCurrentWave: Int = spawn.getCurrentWave
+    def getTrollsSpawned: Int = spawn.getTrollsSpawned
+    def getMaxTrolls: Int = spawn.getMaxTrolls
     def getCurrentElixir: Int = elixir.getCurrentElixir
-
     def canAfford(cost: Int): Boolean = elixir.canAfford(cost)
 
     def reset(): GameSystemsState = GameSystemsState.initial()
 
   object GameSystemsState:
 
-    def getSpawnIntervalForWave: Long =
-      2000L // TODO SPRINT 3, rendere dinamico questo intervallo per le wave a difficoltà crescenti
-
     def initial(): GameSystemsState =
       val elixir = ElixirSystem()
+      
+
       GameSystemsState(
         movement = MovementSystem(),
         combat = CombatSystem(),
         elixir = elixir,
         health = HealthSystem(elixir, Set.empty),
-        spawn = SpawnSystem(getSpawnIntervalForWave),
+        spawn = SpawnSystem(),
         render = RenderSystem()
       )
 
-  // Core systems
   private val gameEngine: GameEngine = new GameEngineImpl()
   private val eventHandler: EventHandler = EventHandler.create(gameEngine)
   private val inputSystem: InputSystem = InputSystem()
 
-  // Mutable state
   private var state: GameSystemsState = GameSystemsState.initial()
   private var isInitialized: Boolean = false
 
@@ -108,11 +103,24 @@ class GameController(world: World):
 
   def update(): Unit =
     if eventHandler.getCurrentPhase == GamePhase.Playing && !gameEngine.isPaused then
+      val oldWave = state.getCurrentWave
       state = state.updateAll(world)
+      val newWave = state.getCurrentWave
+
+      if newWave != oldWave then
+        println(s"[CONTROLLER] Wave transition detected: $oldWave -> $newWave")
+
       ViewController.render()
 
   def getCurrentElixir: Int = state.getCurrentElixir
   def getRenderSystem: RenderSystem = state.render
+
+  def getCurrentWaveInfo: (Int, Int, Int) =
+    val wave = state.getCurrentWave
+    val spawned = state.getTrollsSpawned
+    val max = state.getMaxTrolls
+    (wave, spawned, max)
+  
 
   def postEvent(event: GameEvent): Unit =
     eventHandler.postEvent(event)
@@ -152,11 +160,14 @@ class GameController(world: World):
     val cost = ShopPanel.getWizardCost(wizardType)
     val isFirstWizard = !state.elixir.firstWizardPlaced
     val elixirBefore = state.getCurrentElixir
+
     println(s"[DEBUG] Placing wizard - Type: $wizardType, Cost: $cost, Elixir before: $elixirBefore, First wizard: $isFirstWizard")
+
     val result = for
       _ <- Either.cond(world.getEntityAt(position).isEmpty, (), s"Cell at $position is occupied")
       _ <- Either.cond(state.canAfford(cost), (), s"Insufficient elixir (need $cost, have ${state.getCurrentElixir})")
     yield ()
+
     result match
       case Right(_) =>
         state.spendElixir(cost) match
@@ -182,7 +193,7 @@ class GameController(world: World):
       case Left(error) =>
         ViewController.showError(s"Cannot place ${wizardType.toString}: $error")
         ViewController.hidePlacementGrid()
-      
+
   def placeTroll(trollType: TrollType, position: Position): Unit =
     if world.getEntityAt(position).isEmpty then
       val entity = trollType match
@@ -202,8 +213,8 @@ class GameController(world: World):
         placeWizard(wizardType, position)
       case None =>
         ViewController.showError("No wizard selected. Please select a wizard to place.")
-        
-      ViewController.hidePlacementGrid()
+
+    ViewController.hidePlacementGrid()
 
   private def createWizardEntity(wizardType: WizardType, position: Position): EntityId =
     wizardType match
