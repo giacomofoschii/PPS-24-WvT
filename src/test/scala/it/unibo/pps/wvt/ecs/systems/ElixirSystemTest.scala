@@ -5,6 +5,7 @@ import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.factories.EntityFactory
 import it.unibo.pps.wvt.utilities.Position
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
+import it.unibo.pps.wvt.utilities.TestConstants.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -22,7 +23,7 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
     val world = World()
     val system = ElixirSystem()
 
-    Thread.sleep(ELIXIR_GENERATION_INTERVAL + 500)
+    Thread.sleep(ELIXIR_GENERATION_INTERVAL + ELIXIR_WAIT_MARGIN)
     val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
 
     updatedSystem.getCurrentElixir shouldBe INITIAL_ELIXIR
@@ -40,7 +41,7 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
     val system = ElixirSystem().activateGeneration()
     val initialElixir = system.getCurrentElixir
 
-    Thread.sleep(ELIXIR_GENERATION_INTERVAL + 500)
+    Thread.sleep(ELIXIR_GENERATION_INTERVAL + ELIXIR_WAIT_MARGIN)
     val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
 
     updatedSystem.getCurrentElixir should be >= initialElixir + PERIODIC_ELIXIR
@@ -53,7 +54,7 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
     val initialElixir = system.getCurrentElixir
 
     // Wait enough for both periodic and generator
-    Thread.sleep(GENERATOR_WIZARD_COOLDOWN + 500)
+    Thread.sleep(GENERATOR_WIZARD_COOLDOWN + ELIXIR_WAIT_MARGIN)
     val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
 
     // Should have at least periodic elixir (and possibly generator)
@@ -61,29 +62,26 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
 
   it should "successfully spend elixir when enough available" in:
     val system = ElixirSystem()
-    val costAmount = 50
 
-    val (updatedSystem, success) = system.spendElixir(costAmount)
+    val (updatedSystem, success) = system.spendElixir(ELIXIR_SPEND_SMALL)
 
     success shouldBe true
-    updatedSystem.getCurrentElixir shouldBe INITIAL_ELIXIR - costAmount
+    updatedSystem.getCurrentElixir shouldBe INITIAL_ELIXIR - ELIXIR_SPEND_SMALL
 
   it should "fail to spend elixir when not enough available" in:
     val system = ElixirSystem()
-    val costAmount = INITIAL_ELIXIR + 100
 
-    val (updatedSystem, success) = system.spendElixir(costAmount)
+    val (updatedSystem, success) = system.spendElixir(ELIXIR_SPEND_EXCESSIVE)
 
     success shouldBe false
     updatedSystem.getCurrentElixir shouldBe INITIAL_ELIXIR
 
   it should "correctly add elixir" in:
     val system = ElixirSystem()
-    val addAmount = 75
 
-    val updatedSystem = system.addElixir(addAmount)
+    val updatedSystem = system.addElixir(ELIXIR_ADD_AMOUNT)
 
-    updatedSystem.getCurrentElixir shouldBe INITIAL_ELIXIR + addAmount
+    updatedSystem.getCurrentElixir shouldBe INITIAL_ELIXIR + ELIXIR_ADD_AMOUNT
 
   it should "correctly check if can afford" in:
     val system = ElixirSystem()
@@ -96,7 +94,7 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
     val world = World()
     val system = ElixirSystem()
       .activateGeneration()
-      .addElixir(100)
+      .addElixir(ELIXIR_ADD_LARGE)
 
     val modifiedElixir = system.getCurrentElixir
     modifiedElixir should be > INITIAL_ELIXIR
@@ -117,7 +115,7 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
     val generator3 = EntityFactory.createGeneratorWizard(world, Position(3, 3))
     val initialElixir = system.getCurrentElixir
 
-    Thread.sleep(GENERATOR_WIZARD_COOLDOWN + 500)
+    Thread.sleep(GENERATOR_WIZARD_COOLDOWN + ELIXIR_WAIT_MARGIN)
     val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
 
     // Should have at least periodic elixir
@@ -133,7 +131,7 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
     val barrier = EntityFactory.createBarrierWizard(world, Position(4, 4))
     val initialElixir = system.getCurrentElixir
 
-    Thread.sleep(ELIXIR_GENERATION_INTERVAL + 500)
+    Thread.sleep(ELIXIR_GENERATION_INTERVAL + ELIXIR_WAIT_MARGIN)
     val updatedSystem = system.update(world).asInstanceOf[ElixirSystem]
 
     // Only periodic elixir is generated (no generators present)
@@ -157,17 +155,17 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
   it should "maintain elixir count after multiple spend operations" in:
     val system = ElixirSystem()
 
-    val (system1, success1) = system.spendElixir(50)
+    val (system1, success1) = system.spendElixir(ELIXIR_SPEND_SMALL)
     success1 shouldBe true
-    system1.getCurrentElixir shouldBe INITIAL_ELIXIR - 50
+    system1.getCurrentElixir shouldBe INITIAL_ELIXIR - ELIXIR_SPEND_SMALL
 
-    val (system2, success2) = system1.spendElixir(30)
+    val (system2, success2) = system1.spendElixir(ELIXIR_SPEND_MEDIUM)
     success2 shouldBe true
-    system2.getCurrentElixir shouldBe INITIAL_ELIXIR - 80
+    system2.getCurrentElixir shouldBe INITIAL_ELIXIR - ELIXIR_SPEND_SMALL - ELIXIR_SPEND_MEDIUM
 
     val (system3, success3) = system2.spendElixir(INITIAL_ELIXIR)
     success3 shouldBe false
-    system3.getCurrentElixir shouldBe INITIAL_ELIXIR - 80
+    system3.getCurrentElixir shouldBe INITIAL_ELIXIR - ELIXIR_SPEND_SMALL - ELIXIR_SPEND_MEDIUM
 
   it should "handle edge case of spending exact amount available" in:
     val system = ElixirSystem()
@@ -184,16 +182,16 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
     system.getCurrentElixir shouldBe 0
     system.canAfford(1) shouldBe false
 
-    val (spentSystem, success) = system.spendElixir(10)
+    val (spentSystem, success) = system.spendElixir(ELIXIR_SPEND_SMALL)
     success shouldBe false
     spentSystem.getCurrentElixir shouldBe 0
 
   it should "add and spend elixir correctly in combination" in:
     val system = ElixirSystem()
 
-    val systemWithMore = system.addElixir(100)
-    systemWithMore.getCurrentElixir shouldBe INITIAL_ELIXIR + 100
+    val systemWithMore = system.addElixir(ELIXIR_ADD_LARGE)
+    systemWithMore.getCurrentElixir shouldBe INITIAL_ELIXIR + ELIXIR_ADD_LARGE
 
-    val (finalSystem, success) = systemWithMore.spendElixir(250)
+    val (finalSystem, success) = systemWithMore.spendElixir(ELIXIR_SPEND_COMBINED)
     success shouldBe true
-    finalSystem.getCurrentElixir shouldBe INITIAL_ELIXIR + 100 - 250
+    finalSystem.getCurrentElixir shouldBe INITIAL_ELIXIR + ELIXIR_ADD_LARGE - ELIXIR_SPEND_COMBINED
