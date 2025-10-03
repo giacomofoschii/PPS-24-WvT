@@ -118,6 +118,7 @@ object ViewController extends JFXApp3:
       val currentElixir = controller.getCurrentElixir
       Platform.runLater:
         ShopPanel.updateElixir()
+        WavePanel.updateWave()
 
   def drawPlacementGrid(green: Seq[PhysicalCoords], red: Seq[PhysicalCoords]): Unit = GameView.drawGrid(green, red)
   def hidePlacementGrid(): Unit = GameView.clearGrid()
@@ -170,3 +171,4 @@ object ViewController extends JFXApp3:
     gameViewRoot = None
     ImageFactory.clearCache()
     ShopPanel.updateElixir()
+    WavePanel.updateWave()

@@ -143,8 +143,9 @@ object GameView:
     val pauseButton = createStyledButton(buttonConfigs("pause"))(handleAction(PauseGame))
     val shopPanel = ShopPanel.createShopPanel()
     val shopButton = ShopPanel.createShopButton()
+    val wavePanel = WavePanel.createWavePanel()
     val overlayPane = new Pane {
-      children = Seq(shopPanel, pauseButton, shopButton)
+      children = Seq(shopPanel, pauseButton, shopButton, wavePanel)
     }
     shopPanel.layoutX = 10
     shopPanel.layoutY = 10
@@ -154,6 +155,10 @@ object GameView:
     shopPanel.mouseTransparent = false
     shopButton.layoutX = shopPanel.layoutX.value + (250 - 200) / 2
     shopButton.layoutY = 30
+    wavePanel.layoutX = 820
+    wavePanel.layoutY = 50
+    wavePanel.onMouseClicked = event => event.consume()
+    wavePanel.mouseTransparent = true
     pauseButton.layoutX = 1050
     pauseButton.layoutY = 30
     overlayPane
@@ -185,3 +190,4 @@ object GameView:
     gameStackPane = None
     healthBarPane = None
     wizardButtons = Map.empty
+    WavePanel.updateWave()
