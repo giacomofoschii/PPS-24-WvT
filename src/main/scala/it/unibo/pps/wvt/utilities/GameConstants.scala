@@ -13,9 +13,9 @@ object GamePlayConstants:
   val ELIXIR_GENERATION_INTERVAL: Long = 10000
 
   // Troll spawn parameters
-  val INITIAL_SPAWN_INTERVAL: Long = 4000L
+  val INITIAL_SPAWN_INTERVAL: Long = 6000L
   val MAX_TROLLS_PER_WAVE_1: Int = 10
-  val MIN_SPAWN_INTERVAL = 800L 
+  val MIN_SPAWN_INTERVAL = 1500L
   val INTERVAL_DECREASE_PER_WAVE = 150L 
 
   val BASE_BATCH_SIZE = 1 // It starts with 1 troll per batch
