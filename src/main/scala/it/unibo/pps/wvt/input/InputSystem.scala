@@ -29,4 +29,7 @@ case class InputSystem():
   def isValidPosition(position: Position): Boolean =
     processor.isValidPosition(position)
 
+  def isInGridArea(x: Int, y: Int): Boolean =
+    processor.isInGridArea(x, y)
+
   

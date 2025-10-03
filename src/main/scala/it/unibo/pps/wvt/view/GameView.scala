@@ -47,9 +47,12 @@ object GameView:
 
     val stackPane = new StackPane:
       children = Seq(backgroundImage, gridOverlay, entityOverlay, projectileOverlay, uiOverlay, healthBarOverlay)
-
       onMouseClicked = event =>
-        handleGridClick(event.getX, event.getY)
+        val clickX = event.getX
+        val clickY = event.getY
+        val isOnShop = clickX >= 10 && clickX <= 260 && clickY >= 10
+        if !isOnShop then
+          handleGridClick(clickX, clickY)
 
     healthBarPane = Some(healthBarOverlay)
     entityPane = Some(entityOverlay)
@@ -103,7 +106,8 @@ object GameView:
     ViewController.getController match
       case Some(controller) =>
         if !controller.getEngine.isPaused then
-          controller.handleMouseClick(x.toInt, y.toInt)
+          if controller.getInputSystem.isInGridArea(x.toInt, y.toInt) then
+            controller.handleMouseClick(x.toInt, y.toInt)
       case None =>
 
   private def createStatusCell(myX: Double, myY: Double, color: Color): Rectangle =
@@ -124,7 +128,6 @@ object GameView:
       createImageView(spritePath, CELL_WIDTH) match
         case Right(imageView) =>
           imageView.preserveRatio = true
-          // Centra l'immagine nella cella
           imageView.x = x + (CELL_WIDTH - 75) / 2
           imageView.y = y + (CELL_HEIGHT - 90) / 2
           pane.children.add(imageView)
@@ -140,20 +143,19 @@ object GameView:
     val pauseButton = createStyledButton(buttonConfigs("pause"))(handleAction(PauseGame))
     val shopPanel = ShopPanel.createShopPanel()
     val shopButton = ShopPanel.createShopButton()
-
     val overlayPane = new Pane {
       children = Seq(shopPanel, pauseButton, shopButton)
     }
-
     shopPanel.layoutX = 10
     shopPanel.layoutY = 10
     shopPanel.prefHeight <== overlayPane.height - 20
     shopPanel.maxHeight <== overlayPane.height - 20
+    shopPanel.onMouseClicked = event => event.consume()
+    shopPanel.mouseTransparent = false
     shopButton.layoutX = shopPanel.layoutX.value + (250 - 200) / 2
     shopButton.layoutY = 30
     pauseButton.layoutX = 1050
     pauseButton.layoutY = 30
-
     overlayPane
 
   private def renderSingleHealthBar(pane: Pane): ((PhysicalCoords, Double, Color, Double, Double, Double)) => Unit =

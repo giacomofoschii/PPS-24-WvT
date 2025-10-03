@@ -116,6 +116,12 @@ object ShopPanel:
 
   private def updateCardStyle(card: VBox, canAfford: Boolean, wizardType: WizardType): Unit =
     costTexts.get(wizardType).foreach(_.fill = Color.web(SHOP_PRIMARY_COLOR))
+
+    // PRIMA rimuovi TUTTI gli handler esistenti
+    card.onMouseClicked = null
+    card.onMouseEntered = null
+    card.onMouseExited = null
+
     if canAfford then
       card.style = s"""-fx-background-color: rgba($SHOP_CARD_BG_R,$SHOP_CARD_BG_G,$SHOP_CARD_BG_B,$SHOP_CARD_BG_OPACITY);
                       -fx-background-radius: $SHOP_CARD_BORDER_RADIUS;
@@ -127,7 +133,9 @@ object ShopPanel:
       card.cursor = Cursor.Hand
       card.onMouseClicked = event =>
         event.consume()
-        Platform.runLater(() => handleWizardPurchase(wizardType))
+        println(s"[SHOP] Card cliccata: $wizardType")  // <-- DEBUG
+        handleWizardPurchase(wizardType)
+
       card.onMouseEntered = _ =>
         card.style = s"""-fx-background-color: rgba($SHOP_CARD_HOVER_BG_R,$SHOP_CARD_HOVER_BG_G,$SHOP_CARD_HOVER_BG_B,$SHOP_CARD_HOVER_BG_OPACITY);
                         -fx-background-radius: $SHOP_CARD_BORDER_RADIUS;
@@ -136,6 +144,7 @@ object ShopPanel:
                         -fx-border-color: $SHOP_HOVER_COLOR;
                         -fx-border-width: $SHOP_CARD_BORDER_WIDTH_ACTIVE;
                         -fx-border-radius: $SHOP_CARD_BORDER_RADIUS;"""
+
       card.onMouseExited = _ =>
         card.style = s"""-fx-background-color: rgba($SHOP_CARD_BG_R,$SHOP_CARD_BG_G,$SHOP_CARD_BG_B,$SHOP_CARD_BG_OPACITY);
                         -fx-background-radius: $SHOP_CARD_BORDER_RADIUS;
@@ -153,9 +162,7 @@ object ShopPanel:
                       -fx-border-width: $SHOP_CARD_BORDER_WIDTH_DISABLED;
                       -fx-border-radius: $SHOP_CARD_BORDER_RADIUS;"""
       card.cursor = Cursor.Default
-      card.onMouseClicked = null
-      card.onMouseEntered = null
-      card.onMouseExited = null
+      card.onMouseClicked = event => event.consume()
 
   private def getDisplayName(wizardType: WizardType): String = wizardType match
     case WizardType.Generator => "Generator"
@@ -191,6 +198,7 @@ object ShopPanel:
       maxWidth = SHOP_CARD_WIDTH
       maxHeight = SHOP_CARD_HEIGHT
       children = Seq(nameText, imageView, costText)
+      mouseTransparent = false
     wizardCards.update(wizardType, card)
     updateCardStyle(card, canAfford, wizardType)
     buttonStates.update(wizardType, canAfford)
