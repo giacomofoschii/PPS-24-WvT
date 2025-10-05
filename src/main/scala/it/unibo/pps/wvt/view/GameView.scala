@@ -5,6 +5,7 @@ import it.unibo.pps.wvt.utilities.GridMapper.PhysicalCoords
 import it.unibo.pps.wvt.view.ButtonFactory.*
 import it.unibo.pps.wvt.view.ImageFactory.*
 import it.unibo.pps.wvt.utilities.ViewConstants.*
+
 import scalafx.scene.Parent
 import scalafx.scene.control.Alert.AlertType
 import scalafx.scene.control.{Alert, Button}
@@ -13,6 +14,8 @@ import scalafx.scene.layout.{Pane, StackPane}
 import scalafx.scene.paint.Color
 import scalafx.scene.shape.Rectangle
 import scalafx.application.Platform
+
+import scala.annotation.tailrec
 
 object GameView:
   private var gridPane: Option[Pane] = None
@@ -67,11 +70,17 @@ object GameView:
       gridPane.foreach: pane =>
         pane.children.clear()
 
-        greenCells.foreach: (x, y) =>
-          pane.children.add(createStatusCell(x, y, Color.Green))
+        @tailrec
+        def drawCells(cells: List[PhysicalCoords], color: Color): Unit =
+          cells match
+            case Nil => ()
+            case (x, y) :: tail =>
+              pane.children.add(createStatusCell(x, y, color))
+              drawCells(tail, color)
 
-        redCells.foreach: (x, y) =>
-          pane.children.add(createStatusCell(x, y, Color.Red))
+        drawCells(greenCells.toList, Color.Green)
+        drawCells(redCells.toList, Color.Red)
+
 
   def clearGrid(): Unit =
     Platform.runLater:
@@ -87,12 +96,20 @@ object GameView:
         pane.children.clear()
         pane.children.addAll(createEntitiesPane(projectiles).children)
 
-
   def renderHealthBars(healthBars: Seq[(PhysicalCoords, Double, Color, Double, Double, Double)]): Unit =
     Platform.runLater:
       healthBarPane.foreach: pane =>
         pane.children.clear()
-        healthBars.foreach(renderSingleHealthBar(pane))
+
+        @tailrec
+        def renderBars(bars: List[(PhysicalCoords, Double, Color, Double, Double, Double)]): Unit =
+          bars match
+            case Nil => ()
+            case head :: tail =>
+              renderSingleHealthBar(pane)(head)
+              renderBars(tail)
+
+        renderBars(healthBars.toList)
 
   def showError(message: String) : Unit =
     Platform.runLater:
@@ -123,17 +140,23 @@ object GameView:
   private def createEntitiesPane(entities: Seq[(PhysicalCoords, String)]): Pane =
     val pane = new Pane()
     pane.children.clear()
-    entities.foreach { case ((x, y), spritePath) =>
-      val isProjectile = spritePath.contains("/projectile/")
-      createImageView(spritePath, CELL_WIDTH) match
-        case Right(imageView) =>
-          imageView.preserveRatio = true
-          imageView.x = x + (CELL_WIDTH - 75) / 2
-          imageView.y = y + (CELL_HEIGHT - 90) / 2
-          pane.children.add(imageView)
-        case Left(error) =>
-          println(s"Error loading image: $error")
-    }
+
+    @tailrec
+    def addEntities(remaining: List[(PhysicalCoords, String)]): Unit =
+      remaining match
+        case Nil => ()
+        case ((centerX, centerY), spritePath) :: tail =>
+          createImageView(spritePath, CELL_WIDTH) match
+            case Right(imageView) =>
+              imageView.preserveRatio = true
+              imageView.x = centerX - 75 / 2.0
+              imageView.y = centerY - 90 / 2.0
+              pane.children.add(imageView)
+            case Left(error) =>
+              println(s"Error loading image: $error")
+          addEntities(tail)
+
+    addEntities(entities.toList)
     pane
 
   private def createUIOverlay: Pane =
@@ -164,10 +187,10 @@ object GameView:
     overlayPane
 
   private def renderSingleHealthBar(pane: Pane): ((PhysicalCoords, Double, Color, Double, Double, Double)) => Unit =
-    case ((myX, myY), percentage, color, barWidth, barHeight, offsetY) =>
+    case ((centerX, centerY), percentage, color, barWidth, barHeight, offsetY) =>
       val backgroundBar = new Rectangle:
-        this.x = myX + (CELL_WIDTH - barWidth) / 2
-        this.y = myY + offsetY
+        this.x = centerX - barWidth / 2
+        this.y = centerY + offsetY
         width = barWidth
         height = barHeight
         fill = Color.DarkGray
@@ -175,8 +198,8 @@ object GameView:
         strokeWidth = 0.5
 
       val healthBar = new Rectangle:
-        this.x = myX + (CELL_WIDTH - barWidth) / 2
-        this.y = myY + offsetY
+        this.x = centerX - barWidth / 2
+        this.y = centerY + offsetY
         width = barWidth * percentage
         height = barHeight
         fill = color

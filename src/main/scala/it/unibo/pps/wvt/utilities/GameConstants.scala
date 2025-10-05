@@ -21,35 +21,35 @@ object GamePlayConstants:
   val BASE_BATCH_SIZE = 1 // It starts with 1 troll per batch
   val MAX_BATCH_SIZE = 4 // Maximum 4 trolls per batch
 
-  // Mutlipliers per wave
+  // Multipliers per wave
   val HEALTH_INCREASE_PER_WAVE = 0.15 // +15% health
   val SPEED_INCREASE_PER_WAVE = 0.08 // +8% speed
   val DAMAGE_INCREASE_PER_WAVE = 0.12 // +12% damage
 
   // Troll parameters
   val BASE_TROLL_HEALTH: Int = 100
-  val BASE_TROLL_SPEED: Double = 0.005
+  val BASE_TROLL_SPEED: Double = 0.10
   val BASE_TROLL_DAMAGE: Int = 20
   val BASE_TROLL_RANGE: Double = 1.0
   val BASE_TROLL_COOLDOWN: Long = 1000L
   val BASE_TROLL_REWARD: Int = 25
 
   val WARRIOR_TROLL_HEALTH: Int = 200
-  val WARRIOR_TROLL_SPEED: Double = 0.008
+  val WARRIOR_TROLL_SPEED: Double = 0.25
   val WARRIOR_TROLL_DAMAGE: Int = 40
   val WARRIOR_TROLL_RANGE: Double = 1.0
   val WARRIOR_TROLL_COOLDOWN: Long = 1500L
   val WARRIOR_TROLL_REWARD: Int = 75
 
   val ASSASSIN_TROLL_HEALTH: Int = 50
-  val ASSASSIN_TROLL_SPEED: Double = 0.01
+  val ASSASSIN_TROLL_SPEED: Double = 0.5
   val ASSASSIN_TROLL_DAMAGE: Int = 60
   val ASSASSIN_TROLL_RANGE: Double = 1.5
   val ASSASSIN_TROLL_COOLDOWN: Long = 800L
   val ASSASSIN_TROLL_REWARD: Int = 100
 
   val THROWER_TROLL_HEALTH: Int = 75
-  val THROWER_TROLL_SPEED: Double = 0.006
+  val THROWER_TROLL_SPEED: Double = 0.10
   val THROWER_TROLL_DAMAGE: Int = 30
   val THROWER_TROLL_RANGE: Double = 5.0
   val THROWER_TROLL_COOLDOWN: Long = 2000L
@@ -82,7 +82,7 @@ object GamePlayConstants:
   val ICE_WIZARD_RANGE: Double = 2.5
   val ICE_WIZARD_COOLDOWN: Long = 5000L
 
-  val PROJECTILE_SPEED: Double = 0.02
+  val PROJECTILE_SPEED: Double = 0.5
 
 object ViewConstants:
   val GRID_ROWS: Int = 5
@@ -165,7 +165,6 @@ object ViewConstants:
   val SHOP_CARD_BORDER_WIDTH_ACTIVE: Int = 2
   val SHOP_CARD_BORDER_WIDTH_DISABLED: Int = 1
   val SHOP_DISABLED_TEXT_COLOR: String = "#999999"
-  
 
   val INFO_CARD_BG_OPACITY: Double = 0.80
   val INFO_CARD_BORDER_RADIUS: Int = 15

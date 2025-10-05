@@ -1,5 +1,6 @@
 package it.unibo.pps.wvt.ecs.components
 
+import it.unibo.pps.wvt.ecs.components.MovementComponent.*
 import it.unibo.pps.wvt.utilities.Position
 import scalafx.scene.paint.Color
 
@@ -10,9 +11,8 @@ case class PositionComponent(position: Position) extends Component
 case class MovementComponent(speed: Double) extends Component
 
 // Health components
-case class HealthComponent(currentHealth: Int, maxHealth: Int) extends Component {
+case class HealthComponent(currentHealth: Int, maxHealth: Int) extends Component:
   def isAlive: Boolean = currentHealth > 0
-}
 
 // Elixir components
 case class CostComponent(cost: Int) extends Component
@@ -50,14 +50,11 @@ case class WizardTypeComponent(wizardType: WizardType) extends EntityTypeCompone
 case class TrollTypeComponent(trollType: TrollType) extends EntityTypeComponent
 case class ProjectileTypeComponent(projectileType: ProjectileType) extends EntityTypeComponent
 
-enum WizardType {
+enum WizardType:
   case Generator, Wind, Barrier, Fire, Ice
-}
 
-enum TrollType {
+enum TrollType:
   case Base, Warrior, Assassin, Thrower
-}
 
-enum ProjectileType {
+enum ProjectileType:
   case Base, Fire, Ice, Troll
-}

@@ -9,6 +9,7 @@ import it.unibo.pps.wvt.utilities.Position
 import it.unibo.pps.wvt.utilities.ViewConstants.*
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
 
+import scala.annotation.tailrec
 import scala.util.Random
 
 case class SpawnEvent(
@@ -25,7 +26,7 @@ case class SpawnSystem(
                         private[systems] val firstWizardRow: Option[Int] = None,
                         hasSpawnedAtLeastOnce: Boolean = false,
                         private[systems] val trollsSpawnedThisWave: Int = 0,
-                        private[systems] val currentWave: Int = 1  // Gestito dal GameController
+                        private[systems] val currentWave: Int = 1
                       ) extends System:
 
   private type TrollSelector = (Random, Int) => TrollType
@@ -35,7 +36,6 @@ case class SpawnSystem(
     val currentTime = System.currentTimeMillis()
     val updatedSystem = if !isActive && hasWizardBeenPlaced(world) then
       val wizardRow = getFirstWizardRow(world)
-      println(s"[SPAWN] Primo mago rilevato alla riga $wizardRow - Attivazione spawn")
       copy(isActive = true, firstWizardRow = wizardRow, lastSpawnTime = currentTime)
     else
       this
@@ -55,18 +55,21 @@ case class SpawnSystem(
     world.getEntitiesByType("wizard")
       .headOption
       .flatMap(entity => world.getComponent[PositionComponent](entity))
-      .map(_.position.row)
+      .map(_.position.toGrid.row)
 
   private def processScheduledSpawns(world: World, currentTime: Long): SpawnSystem => SpawnSystem =
     system =>
       val (toSpawn, remaining) = system.pendingSpawns.partition(_.scheduledTime <= currentTime)
 
-      if toSpawn.nonEmpty then
-        println(s"[SPAWN] Spawning ${toSpawn.size} troll(s) programmati")
+      @tailrec
+      def spawnAll(events: List[SpawnEvent]): Unit =
+        events match
+          case Nil => ()
+          case head :: tail =>
+            spawnTroll(head, world)
+            spawnAll(tail)
 
-      toSpawn.foreach: event =>
-        spawnTroll(event, world)
-
+      spawnAll(toSpawn)
       system.copy(pendingSpawns = remaining)
 
   private def generateNewSpawnsIfNeeded(world: World, currentTime: Long): SpawnSystem => SpawnSystem =
@@ -77,8 +80,6 @@ case class SpawnSystem(
         val remainingTrolls = maxTrolls - system.trollsSpawnedThisWave
         val numOfSpawns = Math.min(rng.nextInt(3) + 1, remainingTrolls)
         val newSpawns = generateSpawnBatch(currentTime, system.firstWizardRow, numOfSpawns)
-
-        println(s"[SPAWN] Generazione di $numOfSpawns nuovi spawn (${system.trollsSpawnedThisWave + numOfSpawns}/$maxTrolls)")
 
         system.copy(
           pendingSpawns = system.pendingSpawns ++ newSpawns,
@@ -95,10 +96,15 @@ case class SpawnSystem(
   private def generateSpawnBatch(currentTime: Long, firstRow: Option[Int], numOfSpawns: Int): List[SpawnEvent] =
     val isFirstBatch = pendingSpawns.isEmpty && firstRow.isDefined
 
-    (0 until numOfSpawns).map: i =>
-      val useFirstRow = isFirstBatch && i == 0
-      generateSingleSpawn(currentTime + i * 200, useFirstRow, firstRow)
-    .toList
+    @tailrec
+    def buildBatch(index: Int, acc: List[SpawnEvent]): List[SpawnEvent] =
+      if index >= numOfSpawns then acc.reverse
+      else
+        val useFirstRow = isFirstBatch && index == 0
+        val event = generateSingleSpawn(currentTime + index * 200, useFirstRow, firstRow)
+        buildBatch(index + 1, event :: acc)
+
+    buildBatch(0, List.empty)
 
   private def generateSingleSpawn(baseTime: Long, useFirstRow: Boolean, firstRow: Option[Int]): SpawnEvent =
     SpawnEvent(
@@ -130,10 +136,6 @@ case class SpawnSystem(
   private def applyWaveScaling(entity: EntityId, trollType: TrollType, world: World): Unit =
     val (baseHealth, baseSpeed, baseDamage) = getBaseStats(trollType)
     val (scaledHealth, scaledSpeed, scaledDamage) = WaveLevel.applyMultipliers(baseHealth, baseSpeed, baseDamage, currentWave)
-
-    if currentWave > 1 then
-      println(s"[SPAWN] Scaling troll ${trollType} per ondata $currentWave: " +
-        s"Health $baseHealth -> $scaledHealth, Speed $baseSpeed -> $scaledSpeed, Damage $baseDamage -> $scaledDamage")
 
     updateHealth(entity, scaledHealth, world)
     updateMovement(entity, scaledSpeed, world)

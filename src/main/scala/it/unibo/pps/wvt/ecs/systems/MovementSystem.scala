@@ -3,45 +3,40 @@ package it.unibo.pps.wvt.ecs.systems
 import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.components.TrollType.*
 import it.unibo.pps.wvt.ecs.core.*
-import it.unibo.pps.wvt.utilities.Position
+import it.unibo.pps.wvt.utilities.PixelPosition
+import it.unibo.pps.wvt.utilities.ViewConstants.*
+import scala.annotation.tailrec
 
 case class MovementSystem(
-                           private val accumulatedMovement: Map[EntityId, Double] = Map.empty
+                           private val deltaTime: Double = 16.0
                          ) extends System:
 
-  private type MovementStrategy = (Position, Double, EntityId, World) => Option[Position]
+  private type MovementStrategy = (PixelPosition, MovementComponent, EntityId, World, Double) => PixelPosition
 
   override def update(world: World): System =
     val movableEntities = world.getEntitiesWithTwoComponents[PositionComponent, MovementComponent]
 
-    val updatedAccumulated = movableEntities.foldLeft(accumulatedMovement) { (acc, entity) =>
-      world.getComponent[MovementComponent](entity) match
-        case Some(movement) =>
-          val accumulated = acc.getOrElse(entity, 0.0) + movement.speed
-          if accumulated >= 1.0 then
-            val steps = accumulated.toInt
-            calculateNewPosition(entity, world, steps).foreach { newPos =>
-              world.addComponent(entity, PositionComponent(newPos))
-            }
-            acc + (entity -> (accumulated - accumulated.toInt))
-          else
-            acc + (entity -> accumulated)
-        case None => acc
-    }
+    @tailrec
+    def processMovements(entities: List[EntityId]): Unit =
+      entities match
+        case Nil => ()
+        case head :: tail =>
+          calculateNewPixelPosition(head, world).foreach: newPixelPos =>
+            world.addComponent(head, PositionComponent(newPixelPos))
+          processMovements(tail)
 
-    val cleanedAccumulated = updatedAccumulated.filter { case (entityId, _) =>
-      world.getAllEntities.contains(entityId)
-    }
+    processMovements(movableEntities.toList)
+    this
 
-    copy(accumulatedMovement = cleanedAccumulated)
-
-  private def calculateNewPosition(entity: EntityId, world: World, steps: Int = 1): Option[Position] =
+  private def calculateNewPixelPosition(entity: EntityId, world: World): Option[PixelPosition] =
     for
-      position <- world.getComponent[PositionComponent](entity)
+      posComp <- world.getComponent[PositionComponent](entity)
+      moveComp <- world.getComponent[MovementComponent](entity)
       strategy = selectMovementStrategy(entity, world)
-      newPos <- strategy(position.position, steps.toDouble, entity, world)
-      if isValidPosition(newPos, entity, world)
-    yield newPos
+      currentPixelPos = posComp.position.toPixel
+      newPixelPos = strategy(currentPixelPos, moveComp, entity, world, deltaTime / 1000.0)
+      validPos = validateAndConstrainPosition(newPixelPos, entity, world)
+    yield validPos
 
   private def selectMovementStrategy(entity: EntityId, world: World): MovementStrategy =
     if world.getEntitiesByType("troll").contains(entity) then
@@ -51,61 +46,86 @@ case class MovementSystem(
     else if world.getEntitiesByType("projectile").contains(entity) then
       world.getComponent[ProjectileTypeComponent](entity)
         .map(proj => if proj.projectileType == ProjectileType.Troll
-        then straightLeftMovement
-        else straightRightMovement)
+        then linearLeftMovement
+        else projectileRightMovement)
         .getOrElse(defaultMovementStrategy)
     else
       defaultMovementStrategy
 
   private val trollMovementStrategy: TrollTypeComponent => MovementStrategy = trollType =>
     trollType.trollType match
-      case Base | Warrior => straightLeftMovement
+      case Base | Warrior => linearLeftMovement
       case Assassin => zigzagMovement
-      case Thrower => conditionalMovement(6)
+      case Thrower => conditionalMovement(GRID_OFFSET_X + CELL_WIDTH * 6)
 
-  private val straightLeftMovement: MovementStrategy = (pos, speed, _, _) =>
-    val steps = speed.toInt
-    Option.when(pos.col > 0 && steps > 0)(
-      Position(pos.row, (pos.col - steps).max(0))
+  private val linearLeftMovement: MovementStrategy = (pos, movement, _, _, dt) =>
+    val pixelsPerSecond = movement.speed * CELL_WIDTH
+    PixelPosition(
+      pos.x - pixelsPerSecond * dt,
+      pos.y
     )
 
-  private val straightRightMovement: MovementStrategy = (pos, speed, _, _) =>
-    val steps = speed.toInt
-    Option.when(pos.col < 8 && steps > 0)(
-      Position(pos.row, (pos.col + steps).min(8))
+  private val projectileRightMovement: MovementStrategy = (pos, movement, _, _, dt) =>
+    val pixelsPerSecond = movement.speed * CELL_WIDTH * 2
+    PixelPosition(
+      pos.x + pixelsPerSecond * dt,
+      pos.y
     )
 
-  private val zigzagMovement: MovementStrategy = (pos, speed, _, _) =>
-    val steps = speed.toInt
-    val zigzag = if pos.col % 2 == 0 then -1 else 1
-    val newRow = (pos.row + zigzag).max(0).min(4)
-    Option.when(pos.col > 0 && steps > 0)(
-      Position(newRow, (pos.col - steps).max(0))
+  private val zigzagMovement: MovementStrategy = (pos, movement, entity, world, dt) =>
+    val pixelsPerSecond = movement.speed * CELL_WIDTH
+    val time = System.currentTimeMillis() / 1000.0
+    val zigzagAmplitude = CELL_HEIGHT * 0.3
+    val zigzagFrequency = 2.0
+
+    PixelPosition(
+      pos.x - pixelsPerSecond * dt,
+      pos.y + math.sin(time * zigzagFrequency) * zigzagAmplitude * dt
     )
 
-  private def conditionalMovement(stopColumn: Int): MovementStrategy = (pos, speed, _, _) =>
-    val steps = speed.toInt
-    Option.when(pos.col > stopColumn && steps > 0)(
-      Position(pos.row, (pos.col - steps).max(stopColumn))
-    )
+  private def conditionalMovement(stopX: Double): MovementStrategy = (pos, movement, _, _, dt) =>
+    if pos.x > stopX then
+      val pixelsPerSecond = movement.speed * CELL_WIDTH
+      PixelPosition(
+        (pos.x - pixelsPerSecond * dt).max(stopX),
+        pos.y
+      )
+    else pos
 
-  private val defaultMovementStrategy: MovementStrategy = (_, _, _, _) => None
+  private val defaultMovementStrategy: MovementStrategy = (pos, _, _, _, _) => pos
 
-  private def isValidPosition(pos: Position, entity: EntityId, world: World): Boolean =
-    if !pos.isValid then return false
+  private def validateAndConstrainPosition(pos: PixelPosition, entity: EntityId, world: World): PixelPosition =
+    val constrained = constrainToGrid(pos)
+    if canMoveToPosition(constrained, entity, world) then
+      constrained
+    else
+      world.getComponent[PositionComponent](entity)
+        .map(_.position.toPixel)
+        .getOrElse(constrained)
 
-    val entitiesAtPos = world.getEntityAt(pos)
-    if entitiesAtPos.isEmpty then return true
-    if entitiesAtPos.forall(_ == entity) then return true
+  private def constrainToGrid(pos: PixelPosition): PixelPosition =
+    val minX = GRID_OFFSET_X
+    val maxX = GRID_OFFSET_X + GRID_COLS * CELL_WIDTH - CELL_WIDTH / 2
+    val minY = GRID_OFFSET_Y
+    val maxY = GRID_OFFSET_Y + GRID_ROWS * CELL_HEIGHT - CELL_HEIGHT / 2
 
-    val canOverlap = canEntitiesOverlap(entity, entitiesAtPos.get, world)
-    canOverlap
+    pos.clamp(minX, maxX, minY, maxY)
 
-  private def canEntitiesOverlap(entity: EntityId, others: EntityId, world: World): Boolean =
-    val entityType = world.getEntityType(entity)
-    val otherType = world.getEntityType(others)
+  private def canMoveToPosition(pos: PixelPosition, entity: EntityId, world: World): Boolean =
+    val gridPos = pos.toGrid
+    if !gridPos.isValid then false
+    else
+      world.getEntityAt(gridPos) match
+        case None => true
+        case Some(other) if other == entity => true
+        case Some(other) =>
+          canEntitiesOverlap(
+            world.getEntityType(entity),
+            world.getEntityType(other)
+          )
 
-    (entityType, otherType) match
+  private def canEntitiesOverlap(type1: Option[EntityTypeComponent], type2: Option[EntityTypeComponent]): Boolean =
+    (type1, type2) match
       case (Some(_: ProjectileTypeComponent), _) => true
       case (_, Some(_: ProjectileTypeComponent)) => true
       case (Some(_: TrollTypeComponent), Some(_: TrollTypeComponent)) => true

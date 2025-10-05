@@ -47,7 +47,6 @@ class EventQueue(private val maxQueueSize: Int = 1000):
       queue = queue.enqueue(event)
       true
     else
-      println(s"Event queue full, dropping event: $event")
       false
 
   def dequeue(): Option[GameEvent] =

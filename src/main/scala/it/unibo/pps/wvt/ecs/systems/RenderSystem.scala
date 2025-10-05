@@ -4,6 +4,7 @@ import it.unibo.pps.wvt.utilities.*
 import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.core.*
 import it.unibo.pps.wvt.view.GameView
+import scala.annotation.tailrec
 
 case class RenderSystem(
                          private val healthBarSystem: HealthBarRenderSystem = HealthBarRenderSystem()
@@ -15,15 +16,14 @@ case class RenderSystem(
     val updatedHealthBars = healthBarSystem.update(world).asInstanceOf[HealthBarRenderSystem]
     val entities = collectEntitiesWithImages(world)
     val healthBars = updatedHealthBars.getHealthBarsToRender
-    val currentState = generateStateHash(entities, healthBars)
 
+    val currentState = generateStateHash(entities, healthBars)
     if shouldRender(currentState) then
       GameView.renderEntities(entities)
       GameView.renderHealthBars(healthBars)
       lastRenderedState = Some(currentState)
-      copy(healthBarSystem = updatedHealthBars)
-    else
-      copy(healthBarSystem = updatedHealthBars)
+
+    copy(healthBarSystem = updatedHealthBars)
 
   private def shouldRender(currentState: String): Boolean =
     !lastRenderedState.contains(currentState)
@@ -37,12 +37,25 @@ case class RenderSystem(
     s"$entitiesHash|$healthHash"
 
   private def collectEntitiesWithImages(world: World): Seq[(GridMapper.PhysicalCoords, String)] =
-    val entitiesImages = world.getEntitiesWithComponent[ImageComponent].flatMap: entity =>
-      for
-        pos <- world.getComponent[PositionComponent](entity)
-        img <- world.getComponent[ImageComponent](entity)
-      yield (GridMapper.logicalToPhysical(pos.position), img.imagePath)
-    entitiesImages.toSeq
+    @tailrec
+    def collectEntities(entities: List[EntityId], acc: List[(GridMapper.PhysicalCoords, String)]): List[(GridMapper.PhysicalCoords, String)] =
+      entities match
+        case Nil => acc.reverse
+        case head :: tail =>
+          val entityData = for
+            pos <- world.getComponent[PositionComponent](head)
+            img <- world.getComponent[ImageComponent](head)
+          yield
+            val centerCoords = pos.position match
+              case pixel: PixelPosition => (pixel.x, pixel.y)
+              case grid: GridPosition =>
+                val pixelPos = GridMapper.gridToPixel(grid)
+                (pixelPos.x, pixelPos.y)
+            (centerCoords, img.imagePath)
+
+          collectEntities(tail, entityData.fold(acc)(acc :+ _))
+
+    collectEntities(world.getEntitiesWithComponent[ImageComponent].toList, List.empty)
 
   def forceRender(): Unit =
     lastRenderedState = None

@@ -1,8 +1,9 @@
 package it.unibo.pps.wvt.ecs.core
 
 import it.unibo.pps.wvt.ecs.components.*
-import it.unibo.pps.wvt.utilities.Position
+import it.unibo.pps.wvt.utilities.*
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.Buffer
 import scala.reflect.ClassTag
@@ -71,9 +72,18 @@ class World:
   def getAllEntities: mutable.Buffer[EntityId] = entities
 
   def getEntityAt(position: Position): Option[EntityId] =
-    getEntitiesWithComponent[PositionComponent].find { entity =>
-      getComponent[PositionComponent](entity).exists(_.position == position)
-    }
+    @tailrec
+    def findEntityRecursive(targetGrid: GridPosition, remaining: List[EntityId]): Option[EntityId] =
+      remaining match
+        case Nil => None
+        case head :: tail =>
+          getComponent[PositionComponent](head) match
+            case Some(posComp) if posComp.position.toGrid == targetGrid => Some(head)
+            case _ => findEntityRecursive(targetGrid, tail)
+
+    val targetGrid = position.toGrid
+    val entitiesWithPos = getEntitiesWithComponent[PositionComponent].toList
+    findEntityRecursive(targetGrid, entitiesWithPos)
     
   def getEntityType(entity: EntityId): Option[EntityTypeComponent] =
     getComponent[WizardTypeComponent](entity)

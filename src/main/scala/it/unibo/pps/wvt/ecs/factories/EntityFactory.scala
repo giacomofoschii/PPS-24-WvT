@@ -3,7 +3,7 @@ package it.unibo.pps.wvt.ecs.factories
 import it.unibo.pps.wvt.ecs.core.{EntityId, World}
 import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
-import it.unibo.pps.wvt.utilities.Position
+import it.unibo.pps.wvt.utilities.{PixelPosition, Position}
 import it.unibo.pps.wvt.utilities.ViewConstants.*
 import scalafx.scene.paint.Color
 
@@ -69,7 +69,7 @@ object EntityFactory:
     entity
   
   def createBaseTroll(world: World, pos: Position): EntityId =
-    val entity = createStandardTroll(world, pos, TrollType.Base,
+    val entity = createStandardTroll(world, pos.toPixel, TrollType.Base,
       BASE_TROLL_HEALTH, BASE_TROLL_SPEED,
       BASE_TROLL_DAMAGE, BASE_TROLL_RANGE,
       BASE_TROLL_COOLDOWN, "/troll/BaseTroll.png"
@@ -77,7 +77,7 @@ object EntityFactory:
     entity
 
   def createWarriorTroll(world: World, pos: Position): EntityId =
-    val entity = createStandardTroll(world, pos, TrollType.Warrior,
+    val entity = createStandardTroll(world, pos.toPixel, TrollType.Warrior,
       WARRIOR_TROLL_HEALTH, WARRIOR_TROLL_SPEED,
       WARRIOR_TROLL_DAMAGE, WARRIOR_TROLL_RANGE,
       WARRIOR_TROLL_COOLDOWN, "/troll/WarriorTroll.png"
@@ -85,7 +85,7 @@ object EntityFactory:
     entity
 
   def createAssassinTroll(world: World, pos: Position): EntityId =
-    val entity = createStandardTroll(world, pos, TrollType.Assassin,
+    val entity = createStandardTroll(world, pos.toPixel, TrollType.Assassin,
       ASSASSIN_TROLL_HEALTH, ASSASSIN_TROLL_SPEED,
       ASSASSIN_TROLL_DAMAGE, ASSASSIN_TROLL_RANGE,
       ASSASSIN_TROLL_COOLDOWN, "/troll/Assassin.png"
@@ -93,14 +93,14 @@ object EntityFactory:
     entity
 
   def createThrowerTroll(world: World, pos: Position): EntityId =
-    val entity = createStandardTroll(world, pos, TrollType.Thrower,
+    val entity = createStandardTroll(world, pos.toPixel, TrollType.Thrower,
       THROWER_TROLL_HEALTH, THROWER_TROLL_SPEED,
       THROWER_TROLL_DAMAGE, THROWER_TROLL_RANGE,
       THROWER_TROLL_COOLDOWN, "/troll/ThrowerTroll.png"
     )
     entity
 
-  private def createStandardTroll(world: World, pos: Position, tType: TrollType,
+  private def createStandardTroll(world: World, pos: PixelPosition, tType: TrollType,
                                   health: Int, speed: Double, damage: Int,
                                   range: Double, cooldown: Long, spritePath: String): EntityId =
     val entity = world.createEntity()
