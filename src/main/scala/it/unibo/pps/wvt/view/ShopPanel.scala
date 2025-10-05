@@ -133,7 +133,6 @@ object ShopPanel:
       card.cursor = Cursor.Hand
       card.onMouseClicked = event =>
         event.consume()
-        println(s"[SHOP] Card cliccata: $wizardType")  // <-- DEBUG
         handleWizardPurchase(wizardType)
 
       card.onMouseEntered = _ =>
