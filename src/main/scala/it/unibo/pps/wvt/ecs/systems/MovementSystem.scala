@@ -26,7 +26,34 @@ case class MovementSystem(
           processMovements(tail)
 
     processMovements(movableEntities.toList)
+    removeOutOfBoundsProjectiles(world)
     this
+
+  private def removeOutOfBoundsProjectiles(world: World): Unit =
+    @tailrec
+    def checkAndRemove(projectiles: List[EntityId]): Unit =
+      projectiles match
+        case Nil => ()
+        case head :: tail =>
+          world.getComponent[PositionComponent](head).foreach: posComp =>
+            val pixelPos = posComp.position.toPixel
+            val isTrollProjectile = world.getComponent[ProjectileTypeComponent](head)
+              .exists(_.projectileType == ProjectileType.Troll)
+
+            val shouldRemove = if isTrollProjectile then
+              val minX = GRID_OFFSET_X
+              pixelPos.x < minX
+            else
+              val maxX = GRID_OFFSET_X + GRID_COLS * CELL_WIDTH
+              pixelPos.x > maxX
+
+            if shouldRemove then
+              world.destroyEntity(head)
+
+          checkAndRemove(tail)
+
+    val projectiles = world.getEntitiesByType("projectile").toList
+    checkAndRemove(projectiles)
 
   private def calculateNewPixelPosition(entity: EntityId, world: World): Option[PixelPosition] =
     for
@@ -95,13 +122,20 @@ case class MovementSystem(
   private val defaultMovementStrategy: MovementStrategy = (pos, _, _, _, _) => pos
 
   private def validateAndConstrainPosition(pos: PixelPosition, entity: EntityId, world: World): PixelPosition =
-    val constrained = constrainToGrid(pos)
-    if canMoveToPosition(constrained, entity, world) then
-      constrained
+    val isProjectile = world.getEntitiesByType("projectile").contains(entity)
+
+    if isProjectile then
+      val minY = GRID_OFFSET_Y
+      val maxY = GRID_OFFSET_Y + GRID_ROWS * CELL_HEIGHT - CELL_HEIGHT / 2
+      PixelPosition(pos.x, pos.y.max(minY).min(maxY))
     else
-      world.getComponent[PositionComponent](entity)
-        .map(_.position.toPixel)
-        .getOrElse(constrained)
+      val constrained = constrainToGrid(pos)
+      if canMoveToPosition(constrained, entity, world) then
+        constrained
+      else
+        world.getComponent[PositionComponent](entity)
+          .map(_.position.toPixel)
+          .getOrElse(constrained)
 
   private def constrainToGrid(pos: PixelPosition): PixelPosition =
     val minX = GRID_OFFSET_X
