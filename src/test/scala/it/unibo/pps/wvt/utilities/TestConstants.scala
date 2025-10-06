@@ -1,6 +1,7 @@
 package it.unibo.pps.wvt.utilities
 
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
+import it.unibo.pps.wvt.utilities.ViewConstants.*
 
 object TestConstants:
   // Time constants (in milliseconds)
@@ -55,18 +56,13 @@ object TestConstants:
   val TEST_HEALTH_PERCENTAGE_ZERO: Double = 0.0
 
   // Spawn system test constants
-  val SPAWN_INTERVAL_SHORT: Long = 100L
-  val SPAWN_INTERVAL_MEDIUM: Long = 500L
-  val SPAWN_INTERVAL_LONG: Long = 1000L
-  val SPAWN_INTERVAL_FACTORY: Long = 3000L
-  val SLEEP_AFTER_SPAWN: Long = 150L
-  val SLEEP_BEFORE_UPDATE: Long = 200L
-  val SLEEP_BETWEEN_BATCHES: Long = 60L
-  val SLEEP_AFTER_INTERVAL: Long = 200L
-  val MAX_ATTEMPTS: Int = 20
-  val RANDOM_SEED: Int = 42
-  val FACTORY_SEED: Long = 12345L
-  val MULTI_BATCH_COUNT: Int = 10
+  val TEST_WIZARD_ROW: Int = GRID_ROWS / 2
+  val TEST_WIZARD_COL = 2
+  val TEST_SPAWN_COLUMN: Int = GRID_COLS - 1
+  val TEST_WAVE_1 = 1
+  val TEST_MULTIPLE_UPDATES = 5
+  val TEST_MANY_UPDATES = 15
+  val TEST_SEED = 42L
 
   // Elixir test constants
   val ELIXIR_WAIT_MARGIN: Long = 500L
@@ -91,3 +87,18 @@ object TestConstants:
   val TEST_GENERATOR_COOLDOWN_SHORT: Long = 3000L
   val TEST_GENERATOR_COOLDOWN_LONG: Long = 5000L
   val TEST_GENERATOR_COOLDOWN_VERY_LONG: Long = 10000L
+
+  // Test constants for movement
+  val TEST_DELTA_TIME: Double = 0.016
+  val TEST_MIDDLE_ROW: Int = GRID_ROWS / 2
+  val TEST_MIDDLE_COL: Int = GRID_COLS / 2
+  val TEST_START_COL: Int = GRID_COLS - 1
+  val TEST_SPEED_SLOW = 0.5
+  val TEST_SPEED_NORMAL = 1.0
+  val TEST_SPEED_FAST = 2.0
+  val TEST_SPEED_ZERO = 0.0
+  val TEST_THROWER_STOP_COL = 6
+  val TEST_LEFT_BOUNDARY = 0
+  val TEST_RIGHT_BOUNDARY: Int = GRID_COLS - 1
+  val TEST_TOP_BOUNDARY = 0
+  val TEST_BOTTOM_BOUNDARY: Int = GRID_ROWS - 1

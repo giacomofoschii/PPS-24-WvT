@@ -1,6 +1,7 @@
 package it.unibo.pps.wvt.engine
 
-import it.unibo.pps.wvt.utilities.TestConstants._
+import it.unibo.pps.wvt.controller.GameController
+import it.unibo.pps.wvt.utilities.TestConstants.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterEach
@@ -164,3 +165,5 @@ class TestGameEngine extends GameEngine:
   override def currentState: GameState = _gameState
   override def updatePhase(phase: GamePhase): Unit =
     _gameState = _gameState.copy(phase = phase)
+
+  override def getController: Option[GameController] = None
