@@ -57,4 +57,4 @@ enum TrollType:
   case Base, Warrior, Assassin, Thrower
 
 enum ProjectileType:
-  case Base, Fire, Ice, Troll
+  case Wind, Fire, Ice, Troll

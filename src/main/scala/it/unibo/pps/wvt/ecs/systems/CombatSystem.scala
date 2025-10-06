@@ -61,7 +61,7 @@ case class CombatSystem() extends System:
           val projType = wizardType match
             case WizardType.Fire => ProjectileType.Fire
             case WizardType.Ice => ProjectileType.Ice
-            case _ => ProjectileType.Base
+            case _ => ProjectileType.Wind
           EntityFactory.createProjectile(world, pos, projType)
           world.addComponent(entity, CooldownComponent(attack.cooldown))
           processWizardList(tail)

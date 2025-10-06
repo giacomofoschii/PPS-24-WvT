@@ -18,7 +18,7 @@ object EntityFactory:
       case ProjectileType.Fire => (FIRE_WIZARD_ATTACK_DAMAGE, "/projectile/fire.png")
       case ProjectileType.Ice => (ICE_WIZARD_ATTACK_DAMAGE, "/projectile/ice.png")
       case ProjectileType.Troll => (THROWER_TROLL_DAMAGE, "/projectile/troll.png")
-      case ProjectileType.Base => (WIND_WIZARD_ATTACK_DAMAGE, "/projectile/base.png")
+      case ProjectileType.Wind => (WIND_WIZARD_ATTACK_DAMAGE, "/projectile/base.png")
       
     world.addComponent(entity, DamageComponent(damage, projectileType))
     world.addComponent(entity, ImageComponent(imagePath))
