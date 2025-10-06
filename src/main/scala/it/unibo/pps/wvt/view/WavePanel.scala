@@ -1,6 +1,5 @@
 package it.unibo.pps.wvt.view
 
-import it.unibo.pps.wvt.utilities.ViewConstants.*
 import scalafx.geometry.{Insets, Pos}
 import scalafx.scene.layout.VBox
 import scalafx.scene.paint.Color
@@ -31,8 +30,11 @@ object WavePanel:
       minHeight = 60
       children = Seq(
         new Text("Wave"):
-          font = Font.font("Times New Roman", FontWeight.Bold, 16)
-          fill = Color.web("#4CAF50")
+          font = Font.font("Times New Roman", FontWeight.Bold, 20)
+          fill = Color.web("#DAA520")
+          style = """
+            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 6, 0.7, 1, 1);
+          """
           margin = Insets(20, 0, 0, 0)
         ,
         waveDisplay
@@ -56,8 +58,11 @@ object WavePanel:
       .getOrElse(1)
 
     new Text(s"$currentWave"):
-      font = Font.font("Arial", FontWeight.Bold, 30)
-      fill = Color.web("#4CAF50")  
+      font = Font.font("Times New Roman", FontWeight.Bold, 36)
+      fill = Color.web("#DAA520")
+      style = """
+        -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 8, 0.7, 1, 1);
+      """
       margin = Insets(0, 0, 20, 0)
 
   def updateWave(): Unit = Platform.runLater:
