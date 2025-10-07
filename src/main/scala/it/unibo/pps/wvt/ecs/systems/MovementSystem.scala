@@ -59,6 +59,7 @@ case class MovementSystem(
     for
       posComp <- world.getComponent[PositionComponent](entity)
       moveComp <- world.getComponent[MovementComponent](entity)
+      if !world.hasComponent[BlockedComponent](entity)
       strategy = selectMovementStrategy(entity, world)
       currentPos = posComp.position
       newPos = strategy(currentPos, moveComp, entity, world, deltaTime / 1000.0)

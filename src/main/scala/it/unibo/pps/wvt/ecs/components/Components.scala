@@ -1,6 +1,7 @@
 package it.unibo.pps.wvt.ecs.components
 
 import it.unibo.pps.wvt.ecs.components.MovementComponent.*
+import it.unibo.pps.wvt.ecs.core.EntityId
 import it.unibo.pps.wvt.utilities.Position
 import scalafx.scene.paint.Color
 
@@ -23,6 +24,7 @@ case class AttackComponent(damage: Int, range: Double, cooldown: Long) extends C
 case class DamageComponent(amount: Int, projectileType: ProjectileType) extends Component
 case class CollisionComponent(amount: Int) extends Component
 case class CooldownComponent(remainingTime: Long) extends Component
+case class BlockedComponent(blockedBy: EntityId) extends Component
 
 // UI components
 case class ImageComponent(imagePath: String) extends Component
