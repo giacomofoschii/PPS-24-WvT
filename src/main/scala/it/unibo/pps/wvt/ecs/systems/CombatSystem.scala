@@ -4,11 +4,9 @@ import it.unibo.pps.wvt.ecs.components.TrollType.*
 import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.factories.EntityFactory
 import it.unibo.pps.wvt.ecs.core.*
-import it.unibo.pps.wvt.utilities.GamePlayConstants.*
-import it.unibo.pps.wvt.utilities.Position
+import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 
 import scala.annotation.tailrec
-import scala.util.Random
 
 case class CombatSystem() extends System:
 
@@ -16,37 +14,9 @@ case class CombatSystem() extends System:
   type DamageModifier = Int => Int
 
   override def update(world: World): System =
-    //processMeleeAttacks(world)
-    //processRangedAttacks(world)
-    //updateCooldowns(world)
+    processRangedAttacks(world)
+    updateCooldowns(world)
     this
-
-  /*private def processMeleeAttacks(world: World): Unit =
-    @tailrec
-    def processMeleeList(attackers: List[(EntityId, Position, AttackComponent)]): Unit =
-      attackers match
-        case Nil => ()
-        case (attacker, pos, attack) :: tail =>
-          val targetGrid = pos
-          if targetGrid.col > 0 then
-            val targetPos = Position(targetGrid.row, targetGrid.col - 1)
-            world.getEntityAt(targetPos).foreach: target =>
-              world.getComponent[WizardTypeComponent](target).foreach: _ =>
-                val damage = calculateMeleeDamage(attacker, target, attack.damage, world)
-                world.addComponent(target, CollisionComponent(damage))
-                world.addComponent(attacker, CooldownComponent(attack.cooldown))
-          processMeleeList(tail)
-
-    val meleeAttackers = for
-      entity <- world.getEntitiesByType("troll")
-      trollType <- world.getComponent[TrollTypeComponent](entity)
-      if trollType.trollType != Thrower
-      pos <- world.getComponent[PositionComponent](entity)
-      attack <- world.getComponent[AttackComponent](entity)
-      if !isOnCooldown(entity, world)
-    yield (entity, pos.position, attack)
-
-    processMeleeList(meleeAttackers.toList)
 
   private def processRangedAttacks(world: World): Unit =
     processWizardProjectiles(world)
@@ -94,9 +64,9 @@ case class CombatSystem() extends System:
     checkTrolls(world.getEntitiesByType("troll").toList)
 
   private def calculateDistance(pos1: Position, pos2: Position): Double =
-    val grid1 = pos1.toGrid
-    val grid2 = pos2.toGrid
-    math.sqrt(math.pow(grid1.col - grid2.col, 2) + math.pow(grid1.row - grid2.row, 2))
+    val grid1 = GridMapper.physicalToLogical(pos1)
+    val grid2 = GridMapper.physicalToLogical(pos2)
+    math.sqrt(math.pow(grid1.get._2 - grid2.get._2, 2) + math.pow(grid1.get._1 - grid2.get._1, 2))
 
   private def processThrowerProjectiles(world: World): Unit =
     @tailrec
@@ -113,23 +83,14 @@ case class CombatSystem() extends System:
       trollType <- world.getComponent[TrollTypeComponent](entity)
       if trollType.trollType == Thrower
       pos <- world.getComponent[PositionComponent](entity)
-      if pos.position.toGrid.col <= 6
+      if GridMapper.physicalToLogical(pos.position).get._2 <= 6
       attack <- world.getComponent[AttackComponent](entity)
       if !isOnCooldown(entity, world)
     yield (entity, pos.position, attack)
 
     processThrowerList(throwers.toList)
 
-  private def calculateMeleeDamage(attacker: EntityId, target: EntityId, baseDamage: Int,
-                                   world: World): Int =
-    val attackerModifiers = world.getComponent[TrollTypeComponent](attacker).map: troll =>
-      troll.trollType match
-        case Assassin if Random.nextDouble() < 0.05 => Seq(ASSASSIN_TROLL_DAMAGE * 2)
-        case _ => Seq.empty
-    .getOrElse(Seq.empty)
-    attackerModifiers.foldLeft(baseDamage)(_ * _)
-
-  private def isOnCooldown(entity: EntityId, world: World): Boolean =
+  def isOnCooldown(entity: EntityId, world: World): Boolean =
     world.getComponent[CooldownComponent](entity).exists(_.remainingTime > 0)
 
   private def updateCooldowns(world: World): Unit =
@@ -146,4 +107,4 @@ case class CombatSystem() extends System:
               world.removeComponent[CooldownComponent](head)
           updateCooldownList(tail)
 
-    updateCooldownList(world.getEntitiesWithComponent[CooldownComponent].toList)*/
+    updateCooldownList(world.getEntitiesWithComponent[CooldownComponent].toList)
