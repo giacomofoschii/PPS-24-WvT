@@ -2,135 +2,102 @@ package it.unibo.pps.wvt.input
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import it.unibo.pps.wvt.utilities.{Position, ViewConstants}
+import it.unibo.pps.wvt.utilities.ViewConstants
 
-class InputSystemTest extends AnyFlatSpec with Matchers {
+class InputSystemTest extends AnyFlatSpec with Matchers:
 
   val inputSystem = InputSystem()
 
-  "handleMouseClick" should "return valid ClickResult for valid screen coordinates" in {
-    val validX = (ViewConstants.GRID_OFFSET_X + 10).toInt
-    val validY = (ViewConstants.GRID_OFFSET_Y + 10).toInt
+  "handleMouseClick" should "return valid ClickResult for valid screen coordinates" in:
+    val validX = ViewConstants.GRID_OFFSET_X + 10
+    val validY = ViewConstants.GRID_OFFSET_Y + 10
 
     val result = inputSystem.handleMouseClick(validX, validY)
 
     result.isValid shouldBe true
     result.error shouldBe None
-    result.position.isInCell shouldBe true
-  }
+    result.pos.isInCell shouldBe true
 
-  it should "return invalid ClickResult for invalid screen coordinates" in {
+  it should "return invalid ClickResult for invalid screen coordinates" in:
     val result = inputSystem.handleMouseClick(0, 0)
 
     result.isValid shouldBe false
-    result.error shouldBe Some("Posizione invalida")
-    result.position.row shouldBe -1
-    result.position.col shouldBe -1
-  }
+    result.error shouldBe Some("Invalid Position")
+    result.pos.x shouldBe -1
+    result.pos.y shouldBe -1
 
-  it should "correctly process multiple valid clicks" in {
+  it should "correctly process multiple valid clicks" in:
     val clicks = Seq(
-      (ViewConstants.GRID_OFFSET_X.toInt, ViewConstants.GRID_OFFSET_Y.toInt),
-      ((ViewConstants.GRID_OFFSET_X + ViewConstants.CELL_WIDTH).toInt, ViewConstants.GRID_OFFSET_Y.toInt),
-      (ViewConstants.GRID_OFFSET_X.toInt, (ViewConstants.GRID_OFFSET_Y + ViewConstants.CELL_HEIGHT).toInt)
+      (ViewConstants.GRID_OFFSET_X, ViewConstants.GRID_OFFSET_Y),
+      (ViewConstants.GRID_OFFSET_X + ViewConstants.CELL_WIDTH, ViewConstants.GRID_OFFSET_Y),
+      (ViewConstants.GRID_OFFSET_X, ViewConstants.GRID_OFFSET_Y + ViewConstants.CELL_HEIGHT)
     )
 
-    clicks.foreach { case (x, y) =>
+    clicks.foreach: (x, y) =>
       val result = inputSystem.handleMouseClick(x, y)
       result.isValid shouldBe true
-    }
-  }
 
-  it should "handle edge case coordinates correctly" in {
-    // Test coordinate al limite della griglia
-    val edgeX = (ViewConstants.GRID_OFFSET_X + ViewConstants.GRID_COLS * ViewConstants.CELL_WIDTH - 1).toInt
-    val edgeY = (ViewConstants.GRID_OFFSET_Y + ViewConstants.GRID_ROWS * ViewConstants.CELL_HEIGHT - 1).toInt
+  it should "handle edge case coordinates correctly" in:
+    val edgeX = ViewConstants.GRID_OFFSET_X + ViewConstants.GRID_COLS * ViewConstants.CELL_WIDTH - 1
+    val edgeY = ViewConstants.GRID_OFFSET_Y + ViewConstants.GRID_ROWS * ViewConstants.CELL_HEIGHT - 1
 
     val result = inputSystem.handleMouseClick(edgeX, edgeY)
 
     result.isValid shouldBe true
-    result.position.row shouldBe ViewConstants.GRID_ROWS - 1
-    result.position.col shouldBe ViewConstants.GRID_COLS - 1
-  }
+    result.pos.isInCell shouldBe true
 
-  "positionToScreen" should "delegate correctly to processor" in {
-    val position = Position(1, 1)
+  it should "return valid but not in cell for coordinates at exact grid boundary" in:
+    val boundaryX = ViewConstants.GRID_OFFSET_X + ViewConstants.GRID_COLS * ViewConstants.CELL_WIDTH
+    val boundaryY = ViewConstants.GRID_OFFSET_Y + ViewConstants.GRID_ROWS * ViewConstants.CELL_HEIGHT
 
-    val systemResult = inputSystem.positionToScreen(position)
-    val processorResult = InputProcessor().positionToScreen(position)
+    val result = inputSystem.handleMouseClick(boundaryX, boundaryY)
 
-    systemResult shouldBe processorResult
-    systemResult shouldBe defined
-  }
+    result.isValid shouldBe true
+    result.pos.isValid shouldBe true
+    result.pos.isInCell shouldBe false
 
-  it should "return None for invalid positions" in {
-    val invalidPosition = Position(-1, -1, allowInvalid = true)
+  it should "return invalid for coordinates beyond grid boundary" in:
+    val beyondX = ViewConstants.GRID_OFFSET_X + ViewConstants.GRID_COLS * ViewConstants.CELL_WIDTH + 1
+    val beyondY = ViewConstants.GRID_OFFSET_Y + ViewConstants.GRID_ROWS * ViewConstants.CELL_HEIGHT + 1
 
-    val result = inputSystem.positionToScreen(invalidPosition)
+    val result = inputSystem.handleMouseClick(beyondX, beyondY)
 
-    result shouldBe None
-  }
+    result.isValid shouldBe false
+    result.error shouldBe Some("Invalid Position")
 
-  "isValidPosition" should "delegate correctly to processor" in {
-    val validPosition = Position(2, 3)
-    val invalidPosition = Position(-1, -1, allowInvalid = true)
+  "isInGridArea" should "return true for coordinates inside grid area" in:
+    val insideX = ViewConstants.GRID_OFFSET_X + 10
+    val insideY = ViewConstants.GRID_OFFSET_Y + 10
 
-    inputSystem.isValidPosition(validPosition) shouldBe true
-    inputSystem.isValidPosition(invalidPosition) shouldBe false
-  }
+    inputSystem.isInGridArea(insideX, insideY) shouldBe true
 
-  it should "handle boundary positions correctly" in {
-    val boundaryPositions = Seq(
-      Position(0, 0),
-      Position(ViewConstants.GRID_ROWS - 1, ViewConstants.GRID_COLS - 1),
-      Position(0, ViewConstants.GRID_COLS - 1),
-      Position(ViewConstants.GRID_ROWS - 1, 0)
+  it should "return false for coordinates outside grid area" in:
+    val outsideCoordinates = Seq(
+      (0.0, 0.0),
+      (ViewConstants.GRID_OFFSET_X - 1, ViewConstants.GRID_OFFSET_Y),
+      (ViewConstants.GRID_OFFSET_X, ViewConstants.GRID_OFFSET_Y - 1)
     )
 
-    boundaryPositions.foreach { pos =>
-      inputSystem.isValidPosition(pos) shouldBe true
-    }
-  }
+    outsideCoordinates.foreach: (x, y) =>
+      inputSystem.isInGridArea(x, y) shouldBe false
 
-  "integration test" should "correctly convert screen coordinates to position and back" in {
-    val screenX = (ViewConstants.GRID_OFFSET_X + ViewConstants.CELL_WIDTH * 2.5).toInt
-    val screenY = (ViewConstants.GRID_OFFSET_Y + ViewConstants.CELL_HEIGHT * 1.5).toInt
+  it should "return true for coordinates at grid start boundaries" in:
+    val boundaryX = ViewConstants.GRID_OFFSET_X
+    val boundaryY = ViewConstants.GRID_OFFSET_Y
 
-    // Da schermo a posizione
-    val clickResult = inputSystem.handleMouseClick(screenX, screenY)
-    clickResult.isValid shouldBe true
+    inputSystem.isInGridArea(boundaryX, boundaryY) shouldBe true
 
-    // Da posizione a schermo
-    val screenCoords = inputSystem.positionToScreen(clickResult.position)
-    screenCoords shouldBe defined
+  it should "return false for coordinates at or beyond far boundaries" in:
+    val farBoundaryX = ViewConstants.GRID_OFFSET_X + ViewConstants.GRID_COLS * ViewConstants.CELL_WIDTH
+    val farBoundaryY = ViewConstants.GRID_OFFSET_Y + ViewConstants.GRID_ROWS * ViewConstants.CELL_HEIGHT
 
-    val (convertedX, convertedY) = screenCoords.get
-    // Le coordinate convertite dovrebbero corrispondere all'angolo della cella
-    convertedX shouldBe ViewConstants.GRID_OFFSET_X + 2 * ViewConstants.CELL_WIDTH
-    convertedY shouldBe ViewConstants.GRID_OFFSET_Y + 1 * ViewConstants.CELL_HEIGHT
-  }
+    inputSystem.isInGridArea(farBoundaryX, farBoundaryY) shouldBe false
 
-  it should "handle the complete workflow for all grid cells" in {
-    for {
+  it should "return true for all valid grid cells" in:
+    for
       row <- 0 until ViewConstants.GRID_ROWS
       col <- 0 until ViewConstants.GRID_COLS
-    } {
-      val position = Position(row, col)
-
-      // Verifica che la posizione sia valida
-      inputSystem.isValidPosition(position) shouldBe true
-
-      // Converti in coordinate schermo
-      val screenCoords = inputSystem.positionToScreen(position)
-      screenCoords shouldBe defined
-
-      val (x, y) = screenCoords.get
-
-      // Converti di nuovo in posizione tramite click
-      val clickResult = inputSystem.handleMouseClick(x.toInt, y.toInt)
-      clickResult.isValid shouldBe true
-      clickResult.position.row shouldBe position.row
-      clickResult.position.col shouldBe position.col
-    }
-  }
-}
+    do
+      val x = ViewConstants.GRID_OFFSET_X + col * ViewConstants.CELL_WIDTH + ViewConstants.CELL_WIDTH / 2
+      val y = ViewConstants.GRID_OFFSET_Y + row * ViewConstants.CELL_HEIGHT + ViewConstants.CELL_HEIGHT / 2
+      inputSystem.isInGridArea(x, y) shouldBe true
