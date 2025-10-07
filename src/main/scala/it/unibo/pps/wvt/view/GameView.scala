@@ -179,7 +179,7 @@ object GameView:
     shopButton.layoutX = shopPanel.layoutX.value + (250 - 200) / 2
     shopButton.layoutY = 30
     wavePanel.layoutX = 820
-    wavePanel.layoutY = 50
+    wavePanel.layoutY = 30
     wavePanel.onMouseClicked = event => event.consume()
     wavePanel.mouseTransparent = true
     pauseButton.layoutX = 1050
