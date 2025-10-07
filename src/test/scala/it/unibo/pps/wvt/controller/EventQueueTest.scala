@@ -2,8 +2,6 @@ package it.unibo.pps.wvt.controller
 
 import it.unibo.pps.wvt.engine.*
 import it.unibo.pps.wvt.controller.*
-import it.unibo.pps.wvt.view.ViewState
-import it.unibo.pps.wvt.utilities.Position
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterEach
