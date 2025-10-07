@@ -90,7 +90,23 @@ class World:
 
         val entitiesWithPos = getEntitiesWithComponent[PositionComponent].toList
         findEntityRecursive(entitiesWithPos)
-    
+        
+  def getEntitiesAt(position: Position): Seq[EntityId] =
+    GridMapper.physicalToLogical(position) match
+      case None => Seq.empty
+      case Some(targetGrid) =>
+        getEntitiesWithComponent[PositionComponent].filter { entity =>
+          getComponent[PositionComponent](entity) match
+            case Some(posComp) =>
+              GridMapper.physicalToLogical(posComp.position) match
+                case Some(entityGrid) => entityGrid == targetGrid
+                case _ => false
+            case _ => false
+        }.toSeq
+
+  def hasWizardAt(position: Position): Boolean =
+    getEntitiesAt(position).exists(entity => hasComponent[WizardTypeComponent](entity))
+
   def getEntityType(entity: EntityId): Option[EntityTypeComponent] =
     getComponent[WizardTypeComponent](entity)
       .orElse(getComponent[TrollTypeComponent](entity))

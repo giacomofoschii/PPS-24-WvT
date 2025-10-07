@@ -246,7 +246,8 @@ class GameController(world: World):
   def placeWizard(wizardType: WizardType, position: Position): Unit =
     val cost = ShopPanel.getWizardCost(wizardType)
 
-    val canPlace = world.getEntityAt(position).isEmpty && state.canAfford(cost)
+    val hasWizardCell = world.hasWizardAt(position)
+    val canPlace = !hasWizardCell && state.canAfford(cost)
 
     if !canPlace then
       if world.getEntityAt(position).isDefined then
