@@ -3,18 +3,13 @@ package it.unibo.pps.wvt.ecs.config
 import it.unibo.pps.wvt.ecs.components.TrollType
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
 
-
-
 object WaveLevel:
-
-
 
   def calculateSpawnInterval(wave: Int): Long =
     Math.max(
       MIN_SPAWN_INTERVAL,
       INITIAL_SPAWN_INTERVAL - (wave - 1) * INTERVAL_DECREASE_PER_WAVE
     )
-  
 
   private def calculateHealthMultiplier(wave: Int): Double =
     1.0 + (wave - 1) * HEALTH_INCREASE_PER_WAVE
@@ -25,13 +20,6 @@ object WaveLevel:
   private def calculateDamageMultiplier(wave: Int): Double =
     1.0 + (wave - 1) * DAMAGE_INCREASE_PER_WAVE
 
-  /** Calculates the distribution of troll types based on the current wave.
-    *
-    * @param wave
-    *   The current wave number.
-    * @return
-    *   A map where keys are TrollType and values are their respective probabilities.
-    */
   def calculateTrollDistribution(wave: Int): Map[TrollType, Double] =
     wave match
       case w if w <= 2 =>
@@ -102,7 +90,5 @@ object WaveLevel:
     val scaledDamage = (baseDamage * calculateDamageMultiplier(currentWave)).toInt
     (scaledHealth, scaledSpeed, scaledDamage)
 
-
   def maxTrollsPerWave(wave: Int): Int =
     MAX_TROLLS_PER_WAVE_1 +(wave - 1) * 5
-
