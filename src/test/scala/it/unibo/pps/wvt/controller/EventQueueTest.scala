@@ -117,7 +117,7 @@ class EventQueueTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
     events.last shouldBe GameEvent.Start         // priority 3 last
 
   it should "handle GridClicked events" in:
-    val gridEvent = GameEvent.GridClicked(Position(2, 3), 100, 200)
+    val gridEvent = GameEvent.GridClicked((2, 3), 100, 200)
 
     queue.enqueue(gridEvent) shouldBe true
     queue.dequeue() shouldBe Some(gridEvent)
