@@ -90,7 +90,7 @@ case class CombatSystem() extends System:
 
     processThrowerList(throwers.toList)
 
-  def isOnCooldown(entity: EntityId, world: World): Boolean =
+  private def isOnCooldown(entity: EntityId, world: World): Boolean =
     world.getComponent[CooldownComponent](entity).exists(_.remainingTime > 0)
 
   private def updateCooldowns(world: World): Unit =

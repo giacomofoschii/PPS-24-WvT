@@ -19,6 +19,7 @@ class GameController(world: World):
 
   case class GameSystemsState(
                                movement: MovementSystem,
+                               collision: CollisionSystem,
                                combat: CombatSystem,
                                elixir: ElixirSystem,
                                health: HealthSystem,
@@ -38,6 +39,7 @@ class GameController(world: World):
       val updatedElixir = elixir.update(world).asInstanceOf[ElixirSystem]
       val updatedMovement = movement.update(world).asInstanceOf[MovementSystem]
       val updatedCombat = combat.update(world).asInstanceOf[CombatSystem]
+      val updatedCollision = collision.update(world).asInstanceOf[CollisionSystem]
 
       val updatedHealth = health
         .copy(elixirSystem = updatedElixir)
@@ -97,6 +99,7 @@ class GameController(world: World):
         health = HealthSystem(freshElixir, Set.empty),
         movement = MovementSystem(),
         combat = CombatSystem(),
+        collision = CollisionSystem(),
         render = render.clearCache().asInstanceOf[RenderSystem]
       ).clearWizardSelection
 
@@ -135,6 +138,7 @@ class GameController(world: World):
       GameSystemsState(
         movement = MovementSystem(),
         combat = CombatSystem(),
+        collision = CollisionSystem(),
         elixir = elixir,
         health = HealthSystem(elixir, Set.empty),
         spawn = SpawnSystem(),
