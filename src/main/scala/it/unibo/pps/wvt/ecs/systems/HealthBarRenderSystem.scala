@@ -9,7 +9,7 @@ import scalafx.scene.paint.Color
 import scala.annotation.tailrec
 
 type HealthBarData = (EntityId, Position, Double, Color, HealthBarComponent)
-type RenderableHealthBar = (GridMapper.PhysicalCoords, Double, Color, Double, Double, Double)
+type RenderableHealthBar = (Position, Double, Color, Double, Double, Double)
 
 case class HealthBarRenderSystem(
                                   private val healthBarCache: Map[EntityId, RenderableHealthBar] = Map.empty
@@ -49,18 +49,15 @@ case class HealthBarRenderSystem(
 
   private def calculateHealthBarRendering(data: List[HealthBarData]): Map[EntityId, RenderableHealthBar] =
     @tailrec
-    def buildMap(remaining: List[HealthBarData], acc: Map[EntityId, RenderableHealthBar]): Map[EntityId, RenderableHealthBar] =
+    def buildMap(remaining: List[HealthBarData], 
+                 acc: Map[EntityId, RenderableHealthBar]): Map[EntityId, RenderableHealthBar] =
       remaining match
         case Nil => acc
         case (entityId, position, percentage, color, barComponent) :: tail =>
-          val (centerX, centerY) = position match
-            case pixel: PixelPosition => (pixel.x, pixel.y)
-            case grid: GridPosition =>
-              val pixelPos = GridMapper.gridToPixel(grid)
-              (pixelPos.x, pixelPos.y)
+          val (centerX, centerY) = (position.x, position.y)
 
           val renderData = (
-            (centerX, centerY),
+            Position(centerX, centerY),
             percentage,
             color,
             barComponent.barWidth,

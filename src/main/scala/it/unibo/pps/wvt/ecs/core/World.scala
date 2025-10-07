@@ -72,18 +72,24 @@ class World:
   def getAllEntities: mutable.Buffer[EntityId] = entities
 
   def getEntityAt(position: Position): Option[EntityId] =
-    @tailrec
-    def findEntityRecursive(targetGrid: GridPosition, remaining: List[EntityId]): Option[EntityId] =
-      remaining match
-        case Nil => None
-        case head :: tail =>
-          getComponent[PositionComponent](head) match
-            case Some(posComp) if posComp.position.toGrid == targetGrid => Some(head)
-            case _ => findEntityRecursive(targetGrid, tail)
+    GridMapper.physicalToLogical(position) match
+      case None => None
+      case Some(targetGrid) =>
+        @tailrec
+        def findEntityRecursive(remaining: List[EntityId]): Option[EntityId] =
+          remaining match
+            case Nil => None
+            case head :: tail =>
+              getComponent[PositionComponent](head) match
+                case Some(posComp) =>
+                  GridMapper.physicalToLogical(posComp.position) match
+                    case Some(entityGrid) if entityGrid == targetGrid =>
+                      Some(head)
+                    case _ => findEntityRecursive(tail)
+                case _ => findEntityRecursive(tail)
 
-    val targetGrid = position.toGrid
-    val entitiesWithPos = getEntitiesWithComponent[PositionComponent].toList
-    findEntityRecursive(targetGrid, entitiesWithPos)
+        val entitiesWithPos = getEntitiesWithComponent[PositionComponent].toList
+        findEntityRecursive(entitiesWithPos)
     
   def getEntityType(entity: EntityId): Option[EntityTypeComponent] =
     getComponent[WizardTypeComponent](entity)

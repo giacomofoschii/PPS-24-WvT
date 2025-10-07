@@ -2,62 +2,45 @@ package it.unibo.pps.wvt.utilities
 
 import it.unibo.pps.wvt.utilities.ViewConstants.*
 
-import scala.annotation.tailrec
-
 object GridMapper:
 
-  type PhysicalCoords = (Double, Double)
-
-  def gridToPixel(pos: GridPosition): PixelPosition =
-    PixelPosition(
-      GRID_OFFSET_X + pos.col * CELL_WIDTH + CELL_WIDTH / 2.0,
-      GRID_OFFSET_Y + pos.row * CELL_HEIGHT + CELL_HEIGHT / 2.0
-    )
-
-  def pixelToGrid(pos: PixelPosition): GridPosition =
-    GridPosition(
-      ((pos.y - GRID_OFFSET_Y) / CELL_HEIGHT).toInt.max(0).min(GRID_ROWS - 1),
-      ((pos.x - GRID_OFFSET_X) / CELL_WIDTH).toInt.max(0).min(GRID_COLS - 1),
-      allowInvalid = true
-    )
+  type LogicalCoords = (Int, Int)
   
-  def allCells: Seq[PhysicalCoords] =
+  def allCells: Seq[Position] =
     for  
       row <- 0 until GRID_ROWS
       col <- 0 until GRID_COLS
     yield
-      val gridPos = GridPosition(row, col)
-      (GRID_OFFSET_X + gridPos.col * CELL_WIDTH, GRID_OFFSET_Y + gridPos.row * CELL_HEIGHT)
+      Position(col * CELL_WIDTH + GRID_OFFSET_X, row * CELL_HEIGHT + GRID_OFFSET_Y)
 
-  @tailrec
-  def isValidPosition(pos: Position): Boolean = pos match
-    case GridPosition(row, col, _) =>
-      row >=0 && row < GRID_ROWS && col >= 0 && col < GRID_COLS
-    case pixel: PixelPosition =>
-      isValidPosition(pixel.toGrid)
+  def isValidPosition(pos: Position): Boolean =
+    pos.x <= GRID_OFFSET_X + GRID_COLS * CELL_WIDTH &&
+      pos.y <= GRID_OFFSET_Y + GRID_ROWS * CELL_HEIGHT &&
+      pos.x >= GRID_OFFSET_X &&
+      pos.y >= GRID_OFFSET_Y
 
-  def logicalToPhysical(pos: Position): PhysicalCoords = pos match
-    case grid: GridPosition =>
-      val pixel = gridToPixel(grid)
-      (pixel.x, pixel.y)
-    case pixel: PixelPosition =>
-      (pixel.x, pixel.y)
+  def isInCell(pos: Position): Boolean =
+    val col = ((pos.x - GRID_OFFSET_X) / CELL_WIDTH).toInt
+    val row = ((pos.y - GRID_OFFSET_Y) / CELL_HEIGHT).toInt
+    col >= 0 && col < GRID_COLS && row >= 0 && row < GRID_ROWS
 
-  def physicalToLogical(x: Double, y: Double): Option[Position] =
-    val col = ((x - GRID_OFFSET_X) / CELL_WIDTH).toInt
-    val row = ((y - GRID_OFFSET_Y) / CELL_HEIGHT).toInt
+  def logicalToPhysical(logicalPos: LogicalCoords): Option[Position] =
+    val (row, col) = logicalPos
+    Some(Position(
+      GRID_OFFSET_X + col * CELL_WIDTH + CELL_WIDTH / 2,
+      GRID_OFFSET_Y + row * CELL_HEIGHT + CELL_HEIGHT / 2
+    ))
 
-    Option.when(row >= 0 && row < GRID_ROWS && col >= 0 && col < GRID_COLS)(
-      GridPosition(row, col)
-    )
+  def physicalToLogical(pos: Position): Option[LogicalCoords] =
+    if isInCell(pos) then
+      val col = ((pos.x - GRID_OFFSET_X) / CELL_WIDTH).toInt
+      val row = ((pos.y - GRID_OFFSET_Y) / CELL_HEIGHT).toInt
+      Some((row, col))
+    else None
 
-  def screenToCell(x: Int, y: Int): Option[Position] =
-    physicalToLogical(x.toDouble, y.toDouble)
-
-  def cellToScreen(pos: Position): PhysicalCoords =
-    logicalToPhysical(pos)
-
-  def getCellBounds(pos: GridPosition): (Double, Double, Double, Double) =
-    val x = GRID_OFFSET_X + pos.col * CELL_WIDTH
-    val y = GRID_OFFSET_Y + pos.row * CELL_HEIGHT
-    (x, y, x + CELL_WIDTH.toDouble, y + CELL_HEIGHT.toDouble)
+  def getCellBounds(row: Int, col: Int): (Double, Double, Double, Double) =
+    val left = GRID_OFFSET_X + col * CELL_WIDTH
+    val top = GRID_OFFSET_Y + row * CELL_HEIGHT
+    val right = left + CELL_WIDTH
+    val bottom = top + CELL_HEIGHT
+    (left, top, right, bottom)

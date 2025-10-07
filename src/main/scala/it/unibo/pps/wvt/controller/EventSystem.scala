@@ -1,6 +1,7 @@
 package it.unibo.pps.wvt.controller
 
-import it.unibo.pps.wvt.utilities.Position
+import it.unibo.pps.wvt.utilities.GridMapper.LogicalCoords
+
 import scala.collection.immutable.Queue
 
 enum GameEvent:
@@ -23,7 +24,7 @@ enum GameEvent:
   case NewGame
 
   // Input events
-  case GridClicked(pos: Position, screenX: Int, screenY: Int)
+  case GridClicked(logicalPos: LogicalCoords, screenX: Int, screenY: Int)
   case KeyPressed(keyCode: String)
 
   def timestamp: Long = System.currentTimeMillis()

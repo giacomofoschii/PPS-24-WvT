@@ -16,18 +16,18 @@ case class CombatSystem() extends System:
   type DamageModifier = Int => Int
 
   override def update(world: World): System =
-    processMeleeAttacks(world)
-    processRangedAttacks(world)
-    updateCooldowns(world)
+    //processMeleeAttacks(world)
+    //processRangedAttacks(world)
+    //updateCooldowns(world)
     this
 
-  private def processMeleeAttacks(world: World): Unit =
+  /*private def processMeleeAttacks(world: World): Unit =
     @tailrec
     def processMeleeList(attackers: List[(EntityId, Position, AttackComponent)]): Unit =
       attackers match
         case Nil => ()
         case (attacker, pos, attack) :: tail =>
-          val targetGrid = pos.toGrid
+          val targetGrid = pos
           if targetGrid.col > 0 then
             val targetPos = Position(targetGrid.row, targetGrid.col - 1)
             world.getEntityAt(targetPos).foreach: target =>
@@ -146,4 +146,4 @@ case class CombatSystem() extends System:
               world.removeComponent[CooldownComponent](head)
           updateCooldownList(tail)
 
-    updateCooldownList(world.getEntitiesWithComponent[CooldownComponent].toList)
+    updateCooldownList(world.getEntitiesWithComponent[CooldownComponent].toList)*/

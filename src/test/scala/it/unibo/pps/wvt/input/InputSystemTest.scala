@@ -16,7 +16,7 @@ class InputSystemTest extends AnyFlatSpec with Matchers {
 
     result.isValid shouldBe true
     result.error shouldBe None
-    result.position.isValid shouldBe true
+    result.position.isInCell shouldBe true
   }
 
   it should "return invalid ClickResult for invalid screen coordinates" in {

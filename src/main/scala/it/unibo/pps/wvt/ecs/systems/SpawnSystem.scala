@@ -5,7 +5,7 @@ import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.components.TrollType.*
 import it.unibo.pps.wvt.ecs.factories.EntityFactory
 import it.unibo.pps.wvt.ecs.config.WaveLevel
-import it.unibo.pps.wvt.utilities.Position
+import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 import it.unibo.pps.wvt.utilities.ViewConstants.*
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
 
@@ -55,7 +55,7 @@ case class SpawnSystem(
     world.getEntitiesByType("wizard")
       .headOption
       .flatMap(entity => world.getComponent[PositionComponent](entity))
-      .map(_.position.toGrid.row)
+      .map(p => GridMapper.physicalToLogical(p.position).get._1)
 
   private def processScheduledSpawns(world: World, currentTime: Long): SpawnSystem => SpawnSystem =
     system =>
@@ -119,7 +119,8 @@ case class SpawnSystem(
   private val generateSpawnPosition: PositionGenerator = (rng, fixedRow) =>
     val row = fixedRow.getOrElse(rng.nextInt(GRID_ROWS))
     val col = GRID_COLS - 1
-    Position(row, col)
+    println(s"Logical: row=$row, col=$col -> Physical: ${GridMapper.logicalToPhysical(row, col)}")
+    GridMapper.logicalToPhysical(row, col).get
 
   private def spawnTroll(event: SpawnEvent, world: World): EntityId =
     val entity = createTrollEntity(event, world)

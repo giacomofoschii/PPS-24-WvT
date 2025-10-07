@@ -112,7 +112,9 @@ class GameController(world: World):
           case Nil => false
           case head :: tail =>
             world.getComponent[PositionComponent](head) match
-              case Some(pos) if pos.position.toGrid.col == 0 => true
+              case Some(pos) =>
+                val isAtEnd = pos.position.x <= GridMapper.getCellBounds(0, 0)._1 + 1e-3
+                if isAtEnd then true else hasTrollReachedEnd(tail)
               case _ => hasTrollReachedEnd(tail)
 
       val trolls = world.getEntitiesByType("troll").toList
@@ -206,29 +208,26 @@ class GameController(world: World):
   def getWorld: World = world
 
   def selectWizard(wizardType: WizardType): Unit =
-    pendingActions.add { currentState =>
+    pendingActions.add: currentState =>
       if currentState.selectedWizardType.contains(wizardType) then
         currentState
       else
         currentState.selectWizard(wizardType)
-    }
 
     val wizards = getWorld.getEntitiesByType("wizard").toList
-    val occupiedGrids = wizards.flatMap { entity =>
-      getWorld.getComponent[PositionComponent](entity).map(_.position.toGrid)
-    }
-    val occupiedCells = occupiedGrids.map { grid =>
-      (GRID_OFFSET_X + grid.col * CELL_WIDTH, GRID_OFFSET_Y + grid.row * CELL_HEIGHT)
-    }
+    val occupiedGrids = wizards.flatMap: entity =>
+      getWorld.getComponent[PositionComponent](entity).map(_.position).flatMap(GridMapper.physicalToLogical)
+    val occupiedCells = occupiedGrids.map: grid =>
+      Position(GRID_OFFSET_X + grid._2 * CELL_WIDTH, GRID_OFFSET_Y + grid._1 * CELL_HEIGHT)
     val allCells = GridMapper.allCells
     val freeCells = allCells.diff(occupiedCells)
 
     ViewController.drawPlacementGrid(freeCells, occupiedCells)
 
-  def handleMouseClick(x: Int, y: Int): Unit =
+  def handleMouseClick(x: Double, y: Double): Unit =
     val clickResult = inputSystem.handleMouseClick(x, y)
     if clickResult.isValid then
-      handleGridClick(clickResult.position)
+      handleGridClick(clickResult.pos)
       ViewController.render()
 
   def handleContinueBattle(): Unit =
@@ -285,7 +284,7 @@ class GameController(world: World):
 
   private def setupEventHandlers(): Unit =
     eventHandler.registerHandler(classOf[GameEvent.GridClicked]): (event: GameEvent.GridClicked) =>
-      handleGridClick(event.pos)
+      handleGridClick(GridMapper.logicalToPhysical(event.logicalPos).get)
 
   private def handleGridClick(position: Position): Unit =
     state.selectedWizardType match

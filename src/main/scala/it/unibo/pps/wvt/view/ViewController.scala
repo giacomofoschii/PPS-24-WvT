@@ -4,7 +4,7 @@ import it.unibo.pps.wvt.controller.GameEvent.ExitGame
 import it.unibo.pps.wvt.controller.{GameController, GameEvent}
 import it.unibo.pps.wvt.ecs.components.WizardType
 import it.unibo.pps.wvt.ecs.core.World
-import it.unibo.pps.wvt.utilities.GridMapper.PhysicalCoords
+import it.unibo.pps.wvt.utilities.Position
 import scalafx.Includes.jfxScene2sfx
 import scalafx.scene.*
 import scalafx.application.{JFXApp3, Platform}
@@ -120,7 +120,7 @@ object ViewController extends JFXApp3:
         ShopPanel.updateElixir()
         WavePanel.updateWave()
 
-  def drawPlacementGrid(green: Seq[PhysicalCoords], red: Seq[PhysicalCoords]): Unit = GameView.drawGrid(green, red)
+  def drawPlacementGrid(green: Seq[Position], red: Seq[Position]): Unit = GameView.drawGrid(green, red)
   def hidePlacementGrid(): Unit = GameView.clearGrid()
 
   def render(): Unit =

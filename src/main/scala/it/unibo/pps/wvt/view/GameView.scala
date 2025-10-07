@@ -1,11 +1,11 @@
 package it.unibo.pps.wvt.view
 
 import it.unibo.pps.wvt.ecs.components.WizardType
-import it.unibo.pps.wvt.utilities.GridMapper.PhysicalCoords
+import it.unibo.pps.wvt.utilities.GridMapper.LogicalCoords
+import it.unibo.pps.wvt.utilities.Position
 import it.unibo.pps.wvt.view.ButtonFactory.*
 import it.unibo.pps.wvt.view.ImageFactory.*
 import it.unibo.pps.wvt.utilities.ViewConstants.*
-
 import scalafx.scene.Parent
 import scalafx.scene.control.Alert.AlertType
 import scalafx.scene.control.{Alert, Button}
@@ -65,19 +65,19 @@ object GameView:
 
     stackPane
 
-  def drawGrid(greenCells: Seq[PhysicalCoords], redCells: Seq[PhysicalCoords]): Unit =
+  def drawGrid(greenCells: Seq[Position], redCells: Seq[Position]): Unit =
     Platform.runLater:
       gridPane.foreach: pane =>
         pane.children.clear()
-
+  
         @tailrec
-        def drawCells(cells: List[PhysicalCoords], color: Color): Unit =
+        def drawCells(cells: List[Position], color: Color): Unit =
           cells match
             case Nil => ()
-            case (x, y) :: tail =>
+            case Position(x, y) :: tail =>
               pane.children.add(createStatusCell(x, y, color))
               drawCells(tail, color)
-
+  
         drawCells(greenCells.toList, Color.Green)
         drawCells(redCells.toList, Color.Red)
 
@@ -86,7 +86,7 @@ object GameView:
     Platform.runLater:
       gridPane.foreach(_.children.clear())
 
-  def renderEntities(entities: Seq[(PhysicalCoords, String)]): Unit =
+  def renderEntities(entities: Seq[(Position, String)]): Unit =
     Platform.runLater:
       val (projectiles, others) = entities.partition { case (_, path) => path.contains("/projectile/") }
       entityPane.foreach: pane =>
@@ -96,13 +96,13 @@ object GameView:
         pane.children.clear()
         pane.children.addAll(createEntitiesPane(projectiles).children)
 
-  def renderHealthBars(healthBars: Seq[(PhysicalCoords, Double, Color, Double, Double, Double)]): Unit =
+  def renderHealthBars(healthBars: Seq[(Position, Double, Color, Double, Double, Double)]): Unit =
     Platform.runLater:
       healthBarPane.foreach: pane =>
         pane.children.clear()
 
         @tailrec
-        def renderBars(bars: List[(PhysicalCoords, Double, Color, Double, Double, Double)]): Unit =
+        def renderBars(bars: List[(Position, Double, Color, Double, Double, Double)]): Unit =
           bars match
             case Nil => ()
             case head :: tail =>
@@ -123,8 +123,8 @@ object GameView:
     ViewController.getController match
       case Some(controller) =>
         if !controller.getEngine.isPaused then
-          if controller.getInputSystem.isInGridArea(x.toInt, y.toInt) then
-            controller.handleMouseClick(x.toInt, y.toInt)
+          if controller.getInputSystem.isInGridArea(x, y) then
+            controller.handleMouseClick(x, y)
       case None =>
 
   private def createStatusCell(myX: Double, myY: Double, color: Color): Rectangle =
@@ -137,15 +137,15 @@ object GameView:
       opacity = CELL_OPACITY
       stroke = Color.White
 
-  private def createEntitiesPane(entities: Seq[(PhysicalCoords, String)]): Pane =
+  private def createEntitiesPane(entities: Seq[(Position, String)]): Pane =
     val pane = new Pane()
     pane.children.clear()
 
     @tailrec
-    def addEntities(remaining: List[(PhysicalCoords, String)]): Unit =
+    def addEntities(remaining: List[(Position, String)]): Unit =
       remaining match
         case Nil => ()
-        case ((centerX, centerY), spritePath) :: tail =>
+        case (Position(centerX, centerY), spritePath) :: tail =>
           createImageView(spritePath, CELL_WIDTH) match
             case Right(imageView) =>
               imageView.preserveRatio = true
@@ -186,8 +186,8 @@ object GameView:
     pauseButton.layoutY = 30
     overlayPane
 
-  private def renderSingleHealthBar(pane: Pane): ((PhysicalCoords, Double, Color, Double, Double, Double)) => Unit =
-    case ((centerX, centerY), percentage, color, barWidth, barHeight, offsetY) =>
+  private def renderSingleHealthBar(pane: Pane): ((Position, Double, Color, Double, Double, Double)) => Unit =
+    case (Position(centerX, centerY), percentage, color, barWidth, barHeight, offsetY) =>
       val backgroundBar = new Rectangle:
         this.x = centerX - barWidth / 2
         this.y = centerY + offsetY

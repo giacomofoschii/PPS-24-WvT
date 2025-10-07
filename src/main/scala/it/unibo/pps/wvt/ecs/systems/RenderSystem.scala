@@ -29,16 +29,16 @@ case class RenderSystem(
     !lastRenderedState.contains(currentState)
 
   private def generateStateHash(
-                                 entities: Seq[(GridMapper.PhysicalCoords, String)],
-                                 healthBars: Seq[(GridMapper.PhysicalCoords, Double, scalafx.scene.paint.Color, Double, Double, Double)]
+                                 entities: Seq[(Position, String)],
+                                 healthBars: Seq[(Position, Double, scalafx.scene.paint.Color, Double, Double, Double)]
                                ): String =
-    val entitiesHash = entities.map { case ((x, y), path) => s"$x,$y,$path" }.mkString(";")
-    val healthHash = healthBars.map { case ((x, y), p, _, _, _, _) => s"$x,$y,$p" }.mkString(";")
+    val entitiesHash = entities.map { case (Position(x, y), path) => s"$x,$y,$path" }.mkString(";")
+    val healthHash = healthBars.map { case (Position(x, y), p, _, _, _, _) => s"$x,$y,$p" }.mkString(";")
     s"$entitiesHash|$healthHash"
 
-  private def collectEntitiesWithImages(world: World): Seq[(GridMapper.PhysicalCoords, String)] =
+  private def collectEntitiesWithImages(world: World): Seq[(Position, String)] =
     @tailrec
-    def collectEntities(entities: List[EntityId], acc: List[(GridMapper.PhysicalCoords, String)]): List[(GridMapper.PhysicalCoords, String)] =
+    def collectEntities(entities: List[EntityId], acc: List[(Position, String)]): List[(Position, String)] =
       entities match
         case Nil => acc.reverse
         case head :: tail =>
@@ -46,12 +46,7 @@ case class RenderSystem(
             pos <- world.getComponent[PositionComponent](head)
             img <- world.getComponent[ImageComponent](head)
           yield
-            val centerCoords = pos.position match
-              case pixel: PixelPosition => (pixel.x, pixel.y)
-              case grid: GridPosition =>
-                val pixelPos = GridMapper.gridToPixel(grid)
-                (pixelPos.x, pixelPos.y)
-            (centerCoords, img.imagePath)
+            (pos.position, img.imagePath)
 
           collectEntities(tail, entityData.fold(acc)(acc :+ _))
 

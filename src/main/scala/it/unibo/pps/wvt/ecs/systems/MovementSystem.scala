@@ -3,7 +3,7 @@ package it.unibo.pps.wvt.ecs.systems
 import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.components.TrollType.*
 import it.unibo.pps.wvt.ecs.core.*
-import it.unibo.pps.wvt.utilities.PixelPosition
+import it.unibo.pps.wvt.utilities.Position
 import it.unibo.pps.wvt.utilities.ViewConstants.*
 import scala.annotation.tailrec
 
@@ -11,7 +11,7 @@ case class MovementSystem(
                            private val deltaTime: Double = 16.0
                          ) extends System:
 
-  private type MovementStrategy = (PixelPosition, MovementComponent, EntityId, World, Double) => PixelPosition
+  private type MovementStrategy = (Position, MovementComponent, EntityId, World, Double) => Position
 
   override def update(world: World): System =
     val movableEntities = world.getEntitiesWithTwoComponents[PositionComponent, MovementComponent]
@@ -21,8 +21,8 @@ case class MovementSystem(
       entities match
         case Nil => ()
         case head :: tail =>
-          calculateNewPixelPosition(head, world).foreach: newPixelPos =>
-            world.addComponent(head, PositionComponent(newPixelPos))
+          calculateNewPosition(head, world).foreach: newPos =>
+            world.addComponent(head, PositionComponent(newPos))
           processMovements(tail)
 
     processMovements(movableEntities.toList)
@@ -36,16 +36,16 @@ case class MovementSystem(
         case Nil => ()
         case head :: tail =>
           world.getComponent[PositionComponent](head).foreach: posComp =>
-            val pixelPos = posComp.position.toPixel
+            val pos = posComp.position
             val isTrollProjectile = world.getComponent[ProjectileTypeComponent](head)
               .exists(_.projectileType == ProjectileType.Troll)
 
             val shouldRemove = if isTrollProjectile then
               val minX = GRID_OFFSET_X
-              pixelPos.x < minX
+              pos.x < minX
             else
               val maxX = GRID_OFFSET_X + GRID_COLS * CELL_WIDTH
-              pixelPos.x > maxX
+              pos.x > maxX
 
             if shouldRemove then
               world.destroyEntity(head)
@@ -55,15 +55,14 @@ case class MovementSystem(
     val projectiles = world.getEntitiesByType("projectile").toList
     checkAndRemove(projectiles)
 
-  private def calculateNewPixelPosition(entity: EntityId, world: World): Option[PixelPosition] =
+  private def calculateNewPosition(entity: EntityId, world: World): Option[Position] =
     for
       posComp <- world.getComponent[PositionComponent](entity)
       moveComp <- world.getComponent[MovementComponent](entity)
       strategy = selectMovementStrategy(entity, world)
-      currentPixelPos = posComp.position.toPixel
-      newPixelPos = strategy(currentPixelPos, moveComp, entity, world, deltaTime / 1000.0)
-      validPos = validateAndConstrainPosition(newPixelPos, entity, world)
-    yield validPos
+      currentPos = posComp.position
+      newPos = strategy(currentPos, moveComp, entity, world, deltaTime / 1000.0)
+    yield newPos
 
   private def selectMovementStrategy(entity: EntityId, world: World): MovementStrategy =
     if world.getEntitiesByType("troll").contains(entity) then
@@ -87,14 +86,14 @@ case class MovementSystem(
 
   private val linearLeftMovement: MovementStrategy = (pos, movement, _, _, dt) =>
     val pixelsPerSecond = movement.speed * CELL_WIDTH
-    PixelPosition(
+    Position(
       pos.x - pixelsPerSecond * dt,
       pos.y
     )
 
   private val projectileRightMovement: MovementStrategy = (pos, movement, _, _, dt) =>
     val pixelsPerSecond = movement.speed * CELL_WIDTH * 2
-    PixelPosition(
+    Position(
       pos.x + pixelsPerSecond * dt,
       pos.y
     )
@@ -105,7 +104,7 @@ case class MovementSystem(
     val zigzagAmplitude = CELL_HEIGHT * 0.3
     val zigzagFrequency = 2.0
 
-    PixelPosition(
+    Position(
       pos.x - pixelsPerSecond * dt,
       pos.y + math.sin(time * zigzagFrequency) * zigzagAmplitude * dt
     )
@@ -113,7 +112,7 @@ case class MovementSystem(
   private def conditionalMovement(stopX: Double): MovementStrategy = (pos, movement, _, _, dt) =>
     if pos.x > stopX then
       val pixelsPerSecond = movement.speed * CELL_WIDTH
-      PixelPosition(
+      Position(
         (pos.x - pixelsPerSecond * dt).max(stopX),
         pos.y
       )
@@ -121,35 +120,10 @@ case class MovementSystem(
 
   private val defaultMovementStrategy: MovementStrategy = (pos, _, _, _, _) => pos
 
-  private def validateAndConstrainPosition(pos: PixelPosition, entity: EntityId, world: World): PixelPosition =
-    val isProjectile = world.getEntitiesByType("projectile").contains(entity)
-
-    if isProjectile then
-      val minY = GRID_OFFSET_Y
-      val maxY = GRID_OFFSET_Y + GRID_ROWS * CELL_HEIGHT - CELL_HEIGHT / 2
-      PixelPosition(pos.x, pos.y.max(minY).min(maxY))
+  private def canMoveToPosition(pos: Position, entity: EntityId, world: World): Boolean =
+    if !pos.isValid then false
     else
-      val constrained = constrainToGrid(pos)
-      if canMoveToPosition(constrained, entity, world) then
-        constrained
-      else
-        world.getComponent[PositionComponent](entity)
-          .map(_.position.toPixel)
-          .getOrElse(constrained)
-
-  private def constrainToGrid(pos: PixelPosition): PixelPosition =
-    val minX = GRID_OFFSET_X
-    val maxX = GRID_OFFSET_X + GRID_COLS * CELL_WIDTH - CELL_WIDTH / 2
-    val minY = GRID_OFFSET_Y
-    val maxY = GRID_OFFSET_Y + GRID_ROWS * CELL_HEIGHT - CELL_HEIGHT / 2
-
-    pos.clamp(minX, maxX, minY, maxY)
-
-  private def canMoveToPosition(pos: PixelPosition, entity: EntityId, world: World): Boolean =
-    val gridPos = pos.toGrid
-    if !gridPos.isValid then false
-    else
-      world.getEntityAt(gridPos) match
+      world.getEntityAt(pos) match
         case None => true
         case Some(other) if other == entity => true
         case Some(other) =>

@@ -6,7 +6,7 @@ import it.unibo.pps.wvt.ecs.components.TrollType.*
 import it.unibo.pps.wvt.utilities.TestConstants.*
 import it.unibo.pps.wvt.utilities.ViewConstants.*
 
-import it.unibo.pps.wvt.utilities.{PixelPosition, Position, TestConstants}
+import it.unibo.pps.wvt.utilities.{Position, Position, TestConstants}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfter
@@ -160,7 +160,7 @@ class MovementSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
     world.withTroll(Thrower, Position(TEST_MIDDLE_ROW, TEST_THROWER_STOP_COL), TEST_SPEED_NORMAL)
     val troll = world.getEntitiesByType("troll").head
-    world.addComponent(troll, PositionComponent(PixelPosition(stopX - 1, Position(TEST_MIDDLE_ROW, TEST_THROWER_STOP_COL).toPixel.y)))
+    world.addComponent(troll, PositionComponent(Position(stopX - 1, Position(TEST_MIDDLE_ROW, TEST_THROWER_STOP_COL).toPixel.y)))
 
     system.update(world)
 
@@ -225,7 +225,7 @@ class MovementSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
     val projectile = world.createEntity()
     world.addComponent(projectile, ProjectileTypeComponent(ProjectileType.Troll))
-    world.addComponent(projectile, PositionComponent(PixelPosition(GRID_OFFSET_X - 10, GRID_OFFSET_Y + CELL_HEIGHT)))
+    world.addComponent(projectile, PositionComponent(Position(GRID_OFFSET_X - 10, GRID_OFFSET_Y + CELL_HEIGHT)))
     world.addComponent(projectile, MovementComponent(TEST_SPEED_NORMAL))
 
     system.update(world)
@@ -238,7 +238,7 @@ class MovementSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
     val projectile = world.createEntity()
     world.addComponent(projectile, ProjectileTypeComponent(ProjectileType.Fire))
-    world.addComponent(projectile, PositionComponent(PixelPosition(GRID_OFFSET_X + GRID_COLS * CELL_WIDTH + 10, GRID_OFFSET_Y + CELL_HEIGHT)))
+    world.addComponent(projectile, PositionComponent(Position(GRID_OFFSET_X + GRID_COLS * CELL_WIDTH + 10, GRID_OFFSET_Y + CELL_HEIGHT)))
     world.addComponent(projectile, MovementComponent(TEST_SPEED_NORMAL))
 
     system.update(world)
@@ -251,7 +251,7 @@ class MovementSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
     world.withProjectile(ProjectileType.Fire, Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL), TEST_SPEED_NORMAL)
     val projectile = world.getEntitiesByType("projectile").head
-    world.addComponent(projectile, PositionComponent(PixelPosition(GRID_OFFSET_X + CELL_WIDTH * 3, GRID_OFFSET_Y - 10)))
+    world.addComponent(projectile, PositionComponent(Position(GRID_OFFSET_X + CELL_WIDTH * 3, GRID_OFFSET_Y - 10)))
 
     system.update(world)
 
