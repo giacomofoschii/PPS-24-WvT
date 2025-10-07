@@ -57,7 +57,6 @@ case class ElixirSystem(
                 updateCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
             case None =>
               updateCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
-
     updatedSystem
 
   private def updateCooldown(world: World, entityId: EntityId, newTime: Long): Unit =

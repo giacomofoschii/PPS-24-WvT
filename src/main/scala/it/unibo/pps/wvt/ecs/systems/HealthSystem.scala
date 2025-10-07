@@ -83,7 +83,7 @@ case class HealthSystem(elixirSystem: ElixirSystem,
       if world.getAllEntities.contains(entityId) then
         world.destroyEntity(entityId)
     copy(entitiesToRemove = Set.empty)
-
+  /*Testing Helpers */
   def isAlive(world: World, entityId: EntityId): Boolean =
     world.getComponent[HealthComponent](entityId).exists(_.isAlive)
 

@@ -14,12 +14,7 @@ object WaveLevel:
       MIN_SPAWN_INTERVAL,
       INITIAL_SPAWN_INTERVAL - (wave - 1) * INTERVAL_DECREASE_PER_WAVE
     )
-
-  private def calculateBatchSize(wave: Int): Int =
-    Math.min(
-      MAX_BATCH_SIZE,
-      BASE_BATCH_SIZE + (wave - 1) / MAX_BATCH_SIZE
-    )
+  
 
   private def calculateHealthMultiplier(wave: Int): Double =
     1.0 + (wave - 1) * HEALTH_INCREASE_PER_WAVE
