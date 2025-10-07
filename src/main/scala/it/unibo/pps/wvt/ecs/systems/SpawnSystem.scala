@@ -119,7 +119,6 @@ case class SpawnSystem(
   private val generateSpawnPosition: PositionGenerator = (rng, fixedRow) =>
     val row = fixedRow.getOrElse(rng.nextInt(GRID_ROWS))
     val col = GRID_COLS - 1
-    println(s"Logical: row=$row, col=$col -> Physical: ${GridMapper.logicalToPhysical(row, col)}")
     GridMapper.logicalToPhysical(row, col).get
 
   private def spawnTroll(event: SpawnEvent, world: World): EntityId =

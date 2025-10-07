@@ -227,8 +227,11 @@ class GameController(world: World):
   def handleMouseClick(x: Double, y: Double): Unit =
     val clickResult = inputSystem.handleMouseClick(x, y)
     if clickResult.isValid then
-      handleGridClick(clickResult.pos)
-      ViewController.render()
+      GridMapper.physicalToLogical(clickResult.pos)
+        .flatMap(GridMapper.logicalToPhysical)
+        .foreach: centeredPos =>
+          handleGridClick(centeredPos)
+          ViewController.render()
 
   def handleContinueBattle(): Unit =
     world.clear()
