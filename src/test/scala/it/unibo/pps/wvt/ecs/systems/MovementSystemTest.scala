@@ -6,7 +6,7 @@ import it.unibo.pps.wvt.ecs.components.TrollType.*
 import it.unibo.pps.wvt.utilities.TestConstants.*
 import it.unibo.pps.wvt.utilities.ViewConstants.*
 
-import it.unibo.pps.wvt.utilities.{Position, Position, TestConstants}
+import it.unibo.pps.wvt.utilities.{Position, TestConstants}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfter
@@ -58,19 +58,19 @@ class MovementSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
     val newPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL))
     newPos shouldBe defined
-    newPos.get.position.toPixel.x should be < Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL).toPixel.x
+    newPos.get.position.x should be < Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL).x
 
   it should "move base trolls with slow speed" in:
     val world = World()
     val system = MovementSystem()
 
     world.withTroll(Base, Position(TEST_MIDDLE_ROW, TEST_START_COL), TEST_SPEED_SLOW)
-    val initialX = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL)).get.position.toPixel.x
+    val initialX = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL)).get.position.x
 
     system.update(world)
 
     val newPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL))
-    newPos.get.position.toPixel.x should be < initialX
+    newPos.get.position.x should be < initialX
 
   it should "move base trolls with fast speed" in:
     val world = World()
@@ -78,12 +78,12 @@ class MovementSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     val system = MovementSystem(deltaTime = testDeltaTime)
 
     world.withTroll(Base, Position(TEST_MIDDLE_ROW, TEST_START_COL), TEST_SPEED_FAST)
-    val initialX = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL)).get.position.toPixel.x
+    val initialX = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL)).get.position.x
 
     system.update(world)
 
     val newPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL))
-    val displacement = initialX - newPos.get.position.toPixel.x
+    val displacement = initialX - newPos.get.position.x
     displacement should be > (TEST_SPEED_NORMAL * CELL_WIDTH * (testDeltaTime / 1000.0) * 0.9)
 
   behavior of "MovementSystem - Warrior Troll Movement"
@@ -93,13 +93,13 @@ class MovementSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     val system = MovementSystem()
 
     world.withTroll(Warrior, Position(TEST_MIDDLE_ROW, TEST_START_COL), TEST_SPEED_FAST)
-    val initialX = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL)).get.position.toPixel.x
+    val initialX = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL)).get.position.x
 
     system.update(world)
 
     val newPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL))
-    newPos.get.position.toPixel.x should be < initialX
-    newPos.get.position.toPixel.y shouldBe Position(TEST_MIDDLE_ROW, TEST_START_COL).toPixel.y
+    newPos.get.position.x should be < initialX
+    newPos.get.position.y shouldBe Position(TEST_MIDDLE_ROW, TEST_START_COL).y
 
   behavior of "MovementSystem - Assassin Troll Movement"
 
@@ -108,11 +108,11 @@ class MovementSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     val system = MovementSystem()
 
     world.withTroll(Assassin, Position(TEST_MIDDLE_ROW, TEST_START_COL), TEST_SPEED_NORMAL)
-    val initialPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL)).get.position.toPixel
+    val initialPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL)).get.position
 
     system.update(world)
 
-    val newPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL)).get.position.toPixel
+    val newPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL)).get.position
     newPos.x should be < initialPos.x
     // Y position should change due to zigzag (sin wave)
     newPos.y should not equal initialPos.y
@@ -126,7 +126,7 @@ class MovementSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     system.update(world)
 
     val newPos = world.getTrollAt(Position(TEST_TOP_BOUNDARY, TEST_MIDDLE_COL))
-    newPos.get.position.toPixel.y should be >= GRID_OFFSET_Y
+    newPos.get.position.y should be >= GRID_OFFSET_Y
 
   it should "handle assassin zigzag at bottom boundary" in:
     val world = World()
@@ -137,21 +137,25 @@ class MovementSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     system.update(world)
 
     val newPos = world.getTrollAt(Position(TEST_BOTTOM_BOUNDARY, TEST_MIDDLE_COL))
-    newPos.get.position.toPixel.y should be <= (GRID_OFFSET_Y + GRID_ROWS * CELL_HEIGHT - CELL_HEIGHT / 2)
+    newPos.get.position.y should be <= (GRID_OFFSET_Y + GRID_ROWS * CELL_HEIGHT - CELL_HEIGHT / 2)
 
   behavior of "MovementSystem - Thrower Troll Movement"
 
   it should "move thrower trolls until stop column" in:
-    val world = World()
-    val system = MovementSystem()
+      val world = World()
+      val system = MovementSystem()
 
-    world.withTroll(Thrower, Position(TEST_MIDDLE_ROW, TEST_START_COL), TEST_SPEED_NORMAL)
-    val initialX = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL)).get.position.toPixel.x
+      val stopX = GRID_OFFSET_X + CELL_WIDTH * TEST_THROWER_STOP_COL
+      val startX = stopX + CELL_WIDTH * 2
+      val y = Position(TEST_MIDDLE_ROW, TEST_THROWER_STOP_COL).y
 
-    system.update(world)
+      world.withTroll(Thrower, Position(startX, y), TEST_SPEED_NORMAL)
+      val initialX = world.getTrollAt(Position(startX, y)).get.position.x
 
-    val newPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL))
-    newPos.get.position.toPixel.x should be < initialX
+      system.update(world)
+
+      val newPos = world.getTrollAt(Position(startX, y))
+      newPos.get.position.x should be < initialX
 
   it should "stop thrower trolls at stop column" in:
     val world = World()
@@ -160,12 +164,12 @@ class MovementSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
     world.withTroll(Thrower, Position(TEST_MIDDLE_ROW, TEST_THROWER_STOP_COL), TEST_SPEED_NORMAL)
     val troll = world.getEntitiesByType("troll").head
-    world.addComponent(troll, PositionComponent(Position(stopX - 1, Position(TEST_MIDDLE_ROW, TEST_THROWER_STOP_COL).toPixel.y)))
+    world.addComponent(troll, PositionComponent(Position(stopX - 1, Position(TEST_MIDDLE_ROW, TEST_THROWER_STOP_COL).y)))
 
     system.update(world)
 
     val newPos = world.getComponent[PositionComponent](troll)
-    newPos.get.position.toPixel.x should be >= stopX - CELL_WIDTH
+    newPos.get.position.x should be >= stopX - CELL_WIDTH
 
   behavior of "MovementSystem - Projectile Movement"
 
@@ -173,49 +177,52 @@ class MovementSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     val world = World()
     val system = MovementSystem()
 
-    world.withProjectile(ProjectileType.Troll, Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL), TEST_SPEED_FAST)
-    val initialX = world.getProjectileAt.get.position.toPixel.x
+    val startX = GRID_OFFSET_X + CELL_WIDTH * 3
+    val y = Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL).y
+    world.withProjectile(ProjectileType.Troll, Position(startX, y), TEST_SPEED_FAST)
+    val initialX = world.getProjectileAt.get.position.x
 
     system.update(world)
 
     val newPos = world.getProjectileAt
-    newPos.get.position.toPixel.x should be < initialX
+    newPos shouldBe defined
+    newPos.get.position.x should be < initialX
 
   it should "move wizard projectiles right" in:
     val world = World()
     val system = MovementSystem()
 
     world.withProjectile(ProjectileType.Fire, Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL), TEST_SPEED_NORMAL)
-    val initialX = world.getProjectileAt.get.position.toPixel.x
+    val initialX = world.getProjectileAt.get.position.x
 
     system.update(world)
 
     val newPos = world.getProjectileAt
-    newPos.get.position.toPixel.x should be > initialX
+    newPos.get.position.x should be > initialX
 
   it should "move ice projectiles right" in:
     val world = World()
     val system = MovementSystem()
 
     world.withProjectile(ProjectileType.Ice, Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL), TEST_SPEED_FAST)
-    val initialX = world.getProjectileAt.get.position.toPixel.x
+    val initialX = world.getProjectileAt.get.position.x
 
     system.update(world)
 
     val newPos = world.getProjectileAt
-    newPos.get.position.toPixel.x should be > initialX
+    newPos.get.position.x should be > initialX
 
   it should "move wind projectiles right" in:
     val world = World()
     val system = MovementSystem()
 
     world.withProjectile(ProjectileType.Wind, Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL), TEST_SPEED_NORMAL)
-    val initialX = world.getProjectileAt.get.position.toPixel.x
+    val initialX = world.getProjectileAt.get.position.x
 
     system.update(world)
 
     val newPos = world.getProjectileAt
-    newPos.get.position.toPixel.x should be > initialX
+    newPos.get.position.x should be > initialX
 
   behavior of "MovementSystem - Boundary Handling"
 
@@ -256,7 +263,7 @@ class MovementSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     system.update(world)
 
     val newPos = world.getComponent[PositionComponent](projectile)
-    newPos.get.position.toPixel.y should be >= GRID_OFFSET_Y
+    newPos.get.position.y should be >= GRID_OFFSET_Y
 
   behavior of "MovementSystem - Special Cases"
 
@@ -265,12 +272,12 @@ class MovementSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     val system = MovementSystem()
 
     world.withTroll(Base, Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL), TEST_SPEED_ZERO)
-    val initialPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL)).get.position.toPixel
+    val initialPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL)).get.position
 
     system.update(world)
 
     val newPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL))
-    newPos.get.position.toPixel shouldBe initialPos
+    newPos.get.position shouldBe initialPos
 
   it should "not move entities without movement component" in:
     val world = World()

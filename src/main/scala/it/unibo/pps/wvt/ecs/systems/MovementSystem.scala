@@ -86,6 +86,8 @@ case class MovementSystem(
 
   private val linearLeftMovement: MovementStrategy = (pos, movement, _, _, dt) =>
     val pixelsPerSecond = movement.speed * CELL_WIDTH
+    val minY = GRID_OFFSET_Y
+    val maxY = GRID_OFFSET_Y + GRID_ROWS * CELL_HEIGHT - CELL_HEIGHT / 2
     Position(
       pos.x - pixelsPerSecond * dt,
       pos.y
@@ -93,9 +95,11 @@ case class MovementSystem(
 
   private val projectileRightMovement: MovementStrategy = (pos, movement, _, _, dt) =>
     val pixelsPerSecond = movement.speed * CELL_WIDTH * 2
+    val minY = GRID_OFFSET_Y
+    val maxY = GRID_OFFSET_Y + GRID_ROWS * CELL_HEIGHT - CELL_HEIGHT / 2
     Position(
       pos.x + pixelsPerSecond * dt,
-      pos.y
+      pos.y.max(minY).min(maxY)
     )
 
   private val zigzagMovement: MovementStrategy = (pos, movement, entity, world, dt) =>
@@ -104,9 +108,13 @@ case class MovementSystem(
     val zigzagAmplitude = CELL_HEIGHT * 0.3
     val zigzagFrequency = 2.0
 
+    val newY = pos.y + math.sin(time * zigzagFrequency) * zigzagAmplitude * dt
+    val minY = GRID_OFFSET_Y
+    val maxY = GRID_OFFSET_Y + GRID_ROWS * CELL_HEIGHT - CELL_HEIGHT / 2
+
     Position(
       pos.x - pixelsPerSecond * dt,
-      pos.y + math.sin(time * zigzagFrequency) * zigzagAmplitude * dt
+      newY.max(minY).min(maxY)
     )
 
   private def conditionalMovement(stopX: Double): MovementStrategy = (pos, movement, _, _, dt) =>
