@@ -66,7 +66,7 @@ case class CombatSystem() extends System:
   private def calculateDistance(pos1: Position, pos2: Position): Double =
     (GridMapper.physicalToLogical(pos1), GridMapper.physicalToLogical(pos2)) match
       case (Some((r1, c1)), Some((r2, c2))) if r1 == r2 =>
-        (c1 - c2).toDouble
+        (c2 - c1).toDouble
       case _ =>
         Double.MaxValue
 

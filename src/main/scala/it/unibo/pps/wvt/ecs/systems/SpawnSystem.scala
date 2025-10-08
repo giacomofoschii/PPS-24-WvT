@@ -121,9 +121,14 @@ case class SpawnSystem(
     WaveLevel.selectRandomTrollType(WaveLevel.calculateTrollDistribution(currentWave))
 
   private val generateSpawnPosition: PositionGenerator = (rng, fixedRow) =>
-    val row = fixedRow.getOrElse(rng.nextInt(GRID_ROWS))
+    val row = fixedRow.getOrElse {
+      val baseRow = rng.nextInt(GRID_ROWS)
+      val offset = rng.nextInt(2) - 1 
+      Math.max(0, Math.min(GRID_ROWS - 1, baseRow + offset))
+    }
     val col = GRID_COLS - 1
     GridMapper.logicalToPhysical(row, col).get
+
 
   private def spawnTroll(event: SpawnEvent, world: World): EntityId =
     val entity = createTrollEntity(event, world)
