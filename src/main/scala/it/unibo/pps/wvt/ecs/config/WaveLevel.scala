@@ -77,7 +77,6 @@ object WaveLevel:
       ._2
       .getOrElse(TrollType.Base)
 
-    TrollType.Base
 
   def applyMultipliers(
                         baseHealth: Int,

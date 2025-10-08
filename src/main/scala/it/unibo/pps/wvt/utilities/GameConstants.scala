@@ -15,16 +15,16 @@ object GamePlayConstants:
   // Troll spawn parameters
   val INITIAL_SPAWN_INTERVAL: Long = 6000L
   val MAX_TROLLS_PER_WAVE_1: Int = 10
-  val MIN_SPAWN_INTERVAL = 1500L
-  val INTERVAL_DECREASE_PER_WAVE = 150L 
+  val MIN_SPAWN_INTERVAL = 3000L
+  val INTERVAL_DECREASE_PER_WAVE = 100L
 
   val BASE_BATCH_SIZE = 1 // It starts with 1 troll per batch
   val MAX_BATCH_SIZE = 4 // Maximum 4 trolls per batch
 
   // Multipliers per wave
-  val HEALTH_INCREASE_PER_WAVE = 0.15 // +15% health
-  val SPEED_INCREASE_PER_WAVE = 0.08 // +8% speed
-  val DAMAGE_INCREASE_PER_WAVE = 0.12 // +12% damage
+  val HEALTH_INCREASE_PER_WAVE = 0.07
+  val SPEED_INCREASE_PER_WAVE = 0.05
+  val DAMAGE_INCREASE_PER_WAVE = 0.06
 
   // Troll parameters
   val BASE_TROLL_HEALTH: Int = 100
@@ -34,10 +34,10 @@ object GamePlayConstants:
   val BASE_TROLL_COOLDOWN: Long = 1000L
   val BASE_TROLL_REWARD: Int = 25
 
-  val WARRIOR_TROLL_HEALTH: Int = 200
-  val WARRIOR_TROLL_SPEED: Double = 0.25
-  val WARRIOR_TROLL_DAMAGE: Int = 40
-  val WARRIOR_TROLL_RANGE: Double = 1.0
+  val WARRIOR_TROLL_HEALTH: Int = 130
+  val WARRIOR_TROLL_SPEED: Double = 0.15
+  val WARRIOR_TROLL_DAMAGE: Int = 20
+  val WARRIOR_TROLL_RANGE: Double = 0.5
   val WARRIOR_TROLL_COOLDOWN: Long = 1500L
   val WARRIOR_TROLL_REWARD: Int = 75
 
