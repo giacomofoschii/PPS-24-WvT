@@ -50,6 +50,8 @@ object ViewController extends JFXApp3:
       case (ViewState.PauseMenu, ViewState.MainMenu) => true
       case (ViewState.GameView, ViewState.MainMenu) => true
       case (ViewState.MainMenu, ViewState.GameView) => true
+      case (ViewState.Victory, ViewState.MainMenu) => true
+      case (ViewState.Defeat, ViewState.MainMenu) => true
       case _ => false
 
   def updateView(viewState: ViewState): Unit =
@@ -90,10 +92,16 @@ object ViewController extends JFXApp3:
     (previousState, gameViewRoot) match
       case (ViewState.PauseMenu, Some(existingView)) =>
         existingView
+
       case (ViewState.Victory, Some(existingView)) =>
+        Platform.runLater {
+          updateShopAndWavePanel()
+        }
         existingView
+
       case (ViewState.Defeat, Some(existingView)) =>
         existingView
+
       case _ =>
         initializeWorld()
         val view = GameView()

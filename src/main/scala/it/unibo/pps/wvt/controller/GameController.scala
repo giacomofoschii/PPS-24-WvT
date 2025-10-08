@@ -261,7 +261,6 @@ class GameController(world: World):
   def handleContinueBattle(): Unit =
     world.clear()
     state = state.handleVictory()
-    notifyWaveChange(state.getCurrentWave)
     ViewController.render()
 
   def handleNewGame(): Unit =

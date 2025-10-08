@@ -4,7 +4,7 @@ import scalafx.geometry.{Insets, Pos}
 import scalafx.scene.layout.VBox
 import scalafx.scene.paint.Color
 import scalafx.scene.text.{Font, FontWeight, Text}
-import scalafx.application.Platform
+
 
 object WavePanel:
   private var waveText: Option[Text] = None
@@ -129,8 +129,4 @@ object WavePanel:
     panel.style = getPanelStyle
 
   def reset(): Unit =
-    Platform.runLater:
-      waveText = None
       lastWaveNumber = -1
-      wavePanel = None
-      updateWave()
