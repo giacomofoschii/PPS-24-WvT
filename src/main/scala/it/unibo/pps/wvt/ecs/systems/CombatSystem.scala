@@ -64,9 +64,13 @@ case class CombatSystem() extends System:
     checkTrolls(world.getEntitiesByType("troll").toList)
 
   private def calculateDistance(pos1: Position, pos2: Position): Double =
-    val grid1 = GridMapper.physicalToLogical(pos1)
-    val grid2 = GridMapper.physicalToLogical(pos2)
-    math.sqrt(math.pow(grid1.get._2 - grid2.get._2, 2) + math.pow(grid1.get._1 - grid2.get._1, 2))
+    (GridMapper.physicalToLogical(pos1), GridMapper.physicalToLogical(pos2)) match
+      case (Some((r1, c1)), Some((r2, c2))) if r1 == r2 =>
+        math.abs(c1 - c2).toDouble
+      case _ =>
+        Double.MaxValue
+
+
 
   private def processThrowerProjectiles(world: World): Unit =
     @tailrec
