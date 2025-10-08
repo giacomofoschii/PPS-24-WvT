@@ -41,10 +41,15 @@ case class SpawnSystem(
       this
 
     if updatedSystem.isActive then
-      updatedSystem
+      val afterSpawn = updatedSystem
         .processScheduledSpawns(world, currentTime)
         .andThen(generateNewSpawnsIfNeeded(world, currentTime))
         .apply(updatedSystem)
+      val maxTrolls = WaveLevel.maxTrollsPerWave(afterSpawn.currentWave)
+      if afterSpawn.trollsSpawnedThisWave >= maxTrolls && afterSpawn.pendingSpawns.isEmpty then
+        afterSpawn.copy(isActive = false)
+      else
+        afterSpawn
     else
       updatedSystem
 
@@ -75,7 +80,6 @@ case class SpawnSystem(
   private def generateNewSpawnsIfNeeded(world: World, currentTime: Long): SpawnSystem => SpawnSystem =
     system =>
       val maxTrolls = WaveLevel.maxTrollsPerWave(currentWave)
-
       if shouldGenerateNewSpawn(system, currentTime) && system.trollsSpawnedThisWave < maxTrolls then
         val remainingTrolls = maxTrolls - system.trollsSpawnedThisWave
         val numOfSpawns = Math.min(rng.nextInt(3) + 1, remainingTrolls)

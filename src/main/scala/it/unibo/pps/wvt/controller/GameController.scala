@@ -3,7 +3,7 @@ package it.unibo.pps.wvt.controller
 import it.unibo.pps.wvt.controller.GameEvent.{GameLost, GameWon}
 import it.unibo.pps.wvt.engine.*
 import it.unibo.pps.wvt.input.InputSystem
-import it.unibo.pps.wvt.view.{ShopPanel, ViewController}
+import it.unibo.pps.wvt.view.{ShopPanel, ViewController, WavePanel}
 import it.unibo.pps.wvt.ecs.core.*
 import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.components.WizardType.*
@@ -30,8 +30,8 @@ class GameController(world: World):
                              ):
 
     private def checkGameConditions(world: World): Option[GameEvent] =
-      checkLoseCondition(world)
-        .orElse(checkWinCondition(world))
+      checkWinCondition(world)
+        .orElse(checkLoseCondition(world))
 
     def getCurrentWave: Int = currentWave
 
@@ -101,7 +101,7 @@ class GameController(world: World):
         combat = CombatSystem(),
         collision = CollisionSystem(),
         render = render.clearCache().asInstanceOf[RenderSystem]
-      ).clearWizardSelection
+      )
 
     def handleDefeat(): GameSystemsState =
       GameSystemsState.initial()
