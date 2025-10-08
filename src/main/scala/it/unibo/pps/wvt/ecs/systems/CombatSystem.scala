@@ -57,7 +57,7 @@ case class CombatSystem() extends System:
           world.getComponent[PositionComponent](head) match
             case Some(trollPos) =>
               val distance = calculateDistance(wizardPos, trollPos.position)
-              if distance <= range then true
+              if distance <= range && distance >= 0 then true
               else checkTrolls(tail)
             case None => checkTrolls(tail)
 
