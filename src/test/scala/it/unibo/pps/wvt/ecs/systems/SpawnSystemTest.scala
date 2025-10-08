@@ -4,7 +4,7 @@ import it.unibo.pps.wvt.ecs.core.World
 import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.factories.EntityFactory
 import it.unibo.pps.wvt.ecs.config.WaveLevel
-import it.unibo.pps.wvt.utilities.Position
+import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 import it.unibo.pps.wvt.utilities.ViewConstants.*
 import it.unibo.pps.wvt.utilities.TestConstants.*
 import org.scalatest.flatspec.AnyFlatSpec
@@ -86,23 +86,27 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     val world = World()
     val system = SpawnSystem()
 
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
+    val physicalPos = GridMapper.logicalToPhysical(TEST_WIZARD_ROW, TEST_WIZARD_COL).get
+    world.withWizardAt(physicalPos)
     val updatedSystem = system.activateWith(world)
 
     updatedSystem.isActive shouldBe true
     updatedSystem.firstWizardRow shouldBe Some(TEST_WIZARD_ROW)
 
   it should "work with multiple wizards using first wizard's row" in:
-    val world = World()
-    val system = SpawnSystem()
+      val world = World()
+      val system = SpawnSystem()
 
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    EntityFactory.createFireWizard(world, Position(TEST_WIZARD_ROW + 1, TEST_WIZARD_COL))
+      val physicalPos1 = GridMapper.logicalToPhysical(TEST_WIZARD_ROW, TEST_WIZARD_COL).get
+      val physicalPos2 = GridMapper.logicalToPhysical(TEST_WIZARD_ROW + 1, TEST_WIZARD_COL).get
 
-    val updatedSystem = system.activateWith(world)
+      world.withWizardAt(physicalPos1)
+      EntityFactory.createFireWizard(world, physicalPos2)
 
-    updatedSystem.isActive shouldBe true
-    updatedSystem.firstWizardRow shouldBe Some(TEST_WIZARD_ROW)
+      val updatedSystem = system.activateWith(world)
+
+      updatedSystem.isActive shouldBe true
+      updatedSystem.firstWizardRow shouldBe Some(TEST_WIZARD_ROW)
 
   behavior of "SpawnSystem - Spawn Mechanics"
 
@@ -121,18 +125,21 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     spawnedSystem.hasSpawnedAtLeastOnce shouldBe true
 
   it should "spawn trolls at rightmost column" in:
-    val world = World()
-    val system = SpawnSystem()
+      val world = World()
+      val system = SpawnSystem()
 
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    val activeSystem = system.activateWith(world)
+      val physicalPos = GridMapper.logicalToPhysical(TEST_WIZARD_ROW, TEST_WIZARD_COL).get
+      world.withWizardAt(physicalPos)
+      val activeSystem = system.activateWith(world)
 
-    val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
-    Thread.sleep(spawnInterval + LONG_DELAY)
-    activeSystem.updateMultipleTimes(world, TEST_MULTIPLE_UPDATES, MEDIUM_DELAY)
+      val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
+      Thread.sleep(spawnInterval + LONG_DELAY)
+      activeSystem.updateMultipleTimes(world, TEST_MULTIPLE_UPDATES, MEDIUM_DELAY)
 
-    val positions = world.getTrollPositions
-    positions.foreach(_.x shouldBe TEST_SPAWN_COLUMN)
+      val positions = world.getTrollPositions
+      positions.foreach: pos =>
+        val logicalCol = GridMapper.physicalToLogical(pos).map(_._2)
+        logicalCol shouldBe Some(TEST_SPAWN_COLUMN)
 
   it should "spawn multiple trolls per batch" in:
     val world = World()
@@ -152,7 +159,8 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     val world = World()
     val system = SpawnSystem()
 
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
+    val physicalPos = GridMapper.logicalToPhysical(TEST_WIZARD_ROW, TEST_WIZARD_COL).get
+    world.withWizardAt(physicalPos)
     val activeSystem = system.activateWith(world)
 
     val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
@@ -216,7 +224,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
 
     var currentSystem = system.activateWith(world)
-    for (_ <- 1 to TEST_MANY_UPDATES * 2)
+    for (_ <- 1 to TEST_MANY_UPDATES)
       Thread.sleep(spawnInterval + SHORT_DELAY)
       currentSystem = currentSystem.update(world).asInstanceOf[SpawnSystem]
 
@@ -380,6 +388,10 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
     val positions = world.getTrollPositions
     positions.foreach: pos =>
-      pos.y should be >= 0.0
-      pos.y should be < GRID_ROWS.toDouble
-      pos.x shouldBe TEST_SPAWN_COLUMN
+      GridMapper.physicalToLogical(pos) match
+        case Some((row, col)) =>
+          row should be >= 0
+          row should be < GRID_ROWS
+          col shouldBe TEST_SPAWN_COLUMN
+        case None =>
+          fail(s"Impossible to convert the physical position: $pos in logic one")

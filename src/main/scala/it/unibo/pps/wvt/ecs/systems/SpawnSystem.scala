@@ -60,7 +60,7 @@ case class SpawnSystem(
     world.getEntitiesByType("wizard")
       .headOption
       .flatMap(entity => world.getComponent[PositionComponent](entity))
-      .map(p => GridMapper.physicalToLogical(p.position).get._1)
+      .flatMap(p => GridMapper.physicalToLogical(p.position).map(_._1))
 
   private def processScheduledSpawns(world: World, currentTime: Long): SpawnSystem => SpawnSystem =
     system =>
