@@ -20,7 +20,6 @@ object ViewState:
   case object Victory extends ViewState
   case object Defeat extends ViewState
 
-
 object ViewController extends JFXApp3:
   private val world: World = new World()
   private var gameController: Option[GameController] = None
@@ -34,58 +33,94 @@ object ViewController extends JFXApp3:
 
   override def stopApp(): Unit =
     cleanupGame()
-    gameController.foreach: controller =>
-      controller.stop()
+    gameController.foreach(_.stop())
     super.stopApp()
+
+  private def shouldInitializeWorld(previousState: ViewState, newState: ViewState): Boolean =
+    (previousState, newState) match
+      case (ViewState.MainMenu, ViewState.GameView) => true
+      case (ViewState.PauseMenu, ViewState.GameView) => false
+      case (ViewState.Victory, ViewState.GameView) => false
+      case (ViewState.Defeat, ViewState.GameView) => false
+      case (_, ViewState.GameView) => true
+      case _ => false
+
+  private def shouldCleanup(previousState: ViewState, newState: ViewState): Boolean =
+    (previousState, newState) match
+      case (ViewState.PauseMenu, ViewState.MainMenu) => true
+      case (ViewState.GameView, ViewState.MainMenu) => true
+      case (ViewState.MainMenu, ViewState.GameView) => true
+      case _ => false
 
   def updateView(viewState: ViewState): Unit =
     val previousState = currentViewState
     currentViewState = viewState
-    val newRoot = viewState match
+
+    if shouldCleanup(previousState, viewState) then
+      cleanupGame()
+
+    val newRoot = createViewForState(viewState, previousState)
+    updateStage(newRoot, viewState)
+
+  private def createViewForState(
+                                  viewState: ViewState,
+                                  previousState: ViewState
+                                ): Parent =
+    viewState match
       case ViewState.MainMenu =>
-        if previousState == ViewState.PauseMenu || previousState == ViewState.GameView then
-          cleanupGame()
         gameViewRoot = None
         MainMenu()
+
       case ViewState.GameView =>
-        if previousState == ViewState.MainMenu then
-          cleanupGame()
-          initializeWorld()
-          val view = GameView()
-          gameViewRoot = Some(view)
-          render()
-          view
-        else if previousState == ViewState.PauseMenu && gameViewRoot.isDefined then
-          gameViewRoot.get
-        else
-          // Fallback: create new game
-          initializeWorld()
-          val view = GameView()
-          gameViewRoot = Some(view)
-          render()
-          view
-      case ViewState.InfoMenu => InfoMenu()
-      case ViewState.PauseMenu => PauseMenu()
+        createGameView(previousState)
+
+      case ViewState.InfoMenu =>
+        InfoMenu()
+
+      case ViewState.PauseMenu =>
+        PauseMenu()
+
       case ViewState.Victory =>
         GameResultPanel(GameResultPanel.Victory)
+
       case ViewState.Defeat =>
         GameResultPanel(GameResultPanel.Defeat)
 
+  private def createGameView(previousState: ViewState): Parent =
+    (previousState, gameViewRoot) match
+      case (ViewState.PauseMenu, Some(existingView)) =>
+        existingView
+      case (ViewState.Victory, Some(existingView)) =>
+        existingView
+      case (ViewState.Defeat, Some(existingView)) =>
+        existingView
+      case _ =>
+        initializeWorld()
+        val view = GameView()
+        gameViewRoot = Some(view)
+        render()
+        view
+
+  private def updateStage(newRoot: Parent, viewState: ViewState): Unit =
     Platform.runLater:
       if stage != null then
         stage.scene().root = newRoot
-        viewState match
-          case ViewState.GameView =>
-            stage.sizeToScene()
-            stage.centerOnScreen()
-          case _ =>
-            stage.width = Double.NaN
-            stage.height = Double.NaN
-            stage.sizeToScene()
-            stage.centerOnScreen()
+        resizeStageForView(viewState)
       else
         stage = createStandardStage(newRoot)
 
+  private def resizeStageForView(viewState: ViewState): Unit =
+    viewState match
+      case ViewState.GameView =>
+        stage.sizeToScene()
+        stage.centerOnScreen()
+      case _ =>
+        stage.width = Double.NaN
+        stage.height = Double.NaN
+        stage.sizeToScene()
+        stage.centerOnScreen()
+
+  // Request functions
   def requestMainMenu(): Unit =
     gameController.foreach(_.postEvent(GameEvent.ShowMainMenu))
 
@@ -109,39 +144,42 @@ object ViewController extends JFXApp3:
 
   def requestNewGame(): Unit =
     gameController.foreach(_.postEvent(GameEvent.NewGame))
-    
+
   def requestPlaceWizard(wizardType: WizardType): Unit =
-    ViewController.getController.foreach(_.selectWizard(wizardType))
+    gameController.foreach(_.selectWizard(wizardType))
 
-  private def updateShopElixir(): Unit =
-    gameController.foreach: controller =>
-      val currentElixir = controller.getCurrentElixir
-      Platform.runLater:
-        ShopPanel.updateElixir()
-        WavePanel.updateWave()
+  private def updateShopAndWavePanel(): Unit =
+    Platform.runLater:
+      ShopPanel.updateElixir()
+      WavePanel.updateWave()
 
-  def drawPlacementGrid(green: Seq[Position], red: Seq[Position]): Unit = GameView.drawGrid(green, red)
-  def hidePlacementGrid(): Unit = GameView.clearGrid()
+  def drawPlacementGrid(green: Seq[Position], red: Seq[Position]): Unit =
+    GameView.drawGrid(green, red)
+
+  def hidePlacementGrid(): Unit =
+    GameView.clearGrid()
 
   def render(): Unit =
-    updateShopElixir()
-    gameController.foreach(_.getRenderSystem.update(world))
-
+    gameController.foreach: controller =>
+      controller.getRenderSystem.update(world)
+      updateShopAndWavePanel()
 
   def getWorld: World = world
   def getController: Option[GameController] = gameController
-  def showError(message: String): Unit = GameView.showError(message)
+
+  def showError(message: String): Unit =
+    GameView.showError(message)
 
   private def createStandardStage(pRoot: Parent): PrimaryStage =
-    new PrimaryStage {
+    new PrimaryStage:
       title = "Wizards vs Trolls"
-      scene = new Scene {
+      scene = new Scene:
         root = pRoot
-      }
 
-      Option(getClass.getResourceAsStream("/window_logo.png"))
-        .map(new Image(_))
-        .foreach(icon => icons += icon)
+      for
+        stream <- Option(getClass.getResourceAsStream("/window_logo.png"))
+        icon = new Image(stream)
+      do icons += icon
 
       resizable = false
       centerOnScreen()
@@ -149,7 +187,6 @@ object ViewController extends JFXApp3:
       onCloseRequest = event =>
         event.consume()
         handleWindowClose()
-    }
 
   private def handleWindowClose(): Unit =
     gameController.foreach(_.postEvent(ExitGame))
@@ -159,7 +196,6 @@ object ViewController extends JFXApp3:
     gameController.foreach: controller =>
       controller.stop()
       controller.initialize()
-  //possibilità utente di aggiungere le prime entità? Si parte già con un generator?
 
   def cleanupBeforeExit(): Unit =
     cleanupGame()
@@ -170,5 +206,7 @@ object ViewController extends JFXApp3:
     GameView.cleanup()
     gameViewRoot = None
     ImageFactory.clearCache()
-    ShopPanel.updateElixir()
-    WavePanel.updateWave()
+
+    Platform.runLater:
+      ShopPanel.updateElixir()
+      WavePanel.reset()

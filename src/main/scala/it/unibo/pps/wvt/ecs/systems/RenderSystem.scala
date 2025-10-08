@@ -4,13 +4,14 @@ import it.unibo.pps.wvt.utilities.*
 import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.core.*
 import it.unibo.pps.wvt.view.GameView
+import scalafx.scene.paint.Color
+
 import scala.annotation.tailrec
 
 case class RenderSystem(
-                         private val healthBarSystem: HealthBarRenderSystem = HealthBarRenderSystem()
+                         private val healthBarSystem: HealthBarRenderSystem = HealthBarRenderSystem(),
+                         private val lastRenderedState: Option[String] = None
                        ) extends System:
-
-  private var lastRenderedState: Option[String] = None
 
   override def update(world: World): System =
     val updatedHealthBars = healthBarSystem.update(world).asInstanceOf[HealthBarRenderSystem]
@@ -21,16 +22,19 @@ case class RenderSystem(
     if shouldRender(currentState) then
       GameView.renderEntities(entities)
       GameView.renderHealthBars(healthBars)
-      lastRenderedState = Some(currentState)
-
-    copy(healthBarSystem = updatedHealthBars)
+      copy(
+        healthBarSystem = updatedHealthBars,
+        lastRenderedState = Some(currentState)
+      )
+    else
+      copy(healthBarSystem = updatedHealthBars)
 
   private def shouldRender(currentState: String): Boolean =
     !lastRenderedState.contains(currentState)
 
   private def generateStateHash(
                                  entities: Seq[(Position, String)],
-                                 healthBars: Seq[(Position, Double, scalafx.scene.paint.Color, Double, Double, Double)]
+                                 healthBars: Seq[(Position, Double, Color, Double, Double, Double)]
                                ): String =
     val entitiesHash = entities.map { case (Position(x, y), path) => s"$x,$y,$path" }.mkString(";")
     val healthHash = healthBars.map { case (Position(x, y), p, _, _, _, _) => s"$x,$y,$p" }.mkString(";")
@@ -52,8 +56,11 @@ case class RenderSystem(
 
     collectEntities(world.getEntitiesWithComponent[ImageComponent].toList, List.empty)
 
-  def forceRender(): Unit =
-    lastRenderedState = None
+  def forceRender(): RenderSystem =
+    copy(lastRenderedState = None)
 
-  def clearCache(): Unit =
-    lastRenderedState = None
+  def clearCache(): RenderSystem =
+    copy(
+      healthBarSystem = HealthBarRenderSystem(),
+      lastRenderedState = None
+    )

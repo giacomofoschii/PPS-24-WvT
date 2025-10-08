@@ -11,6 +11,7 @@ import it.unibo.pps.wvt.ecs.factories.EntityFactory
 import it.unibo.pps.wvt.ecs.systems.*
 import it.unibo.pps.wvt.utilities.ViewConstants.*
 import it.unibo.pps.wvt.utilities.{GridMapper, Position}
+import scalafx.application.Platform
 
 import java.util.concurrent.ConcurrentLinkedQueue
 import scala.annotation.tailrec
@@ -69,13 +70,11 @@ class GameController(world: World):
 
     def spendElixir(amount: Int): Option[GameSystemsState] =
       val (newElixirSystem, success) = elixir.spendElixir(amount)
-      if success then
-        Some(copy(
+      Option.when(success):
+        copy(
           elixir = newElixirSystem,
           health = health.copy(elixirSystem = newElixirSystem)
-        ))
-      else
-        None
+        )
 
     def selectWizard(wizardType: WizardType): GameSystemsState =
       copy(selectedWizardType = Some(wizardType))
@@ -91,7 +90,7 @@ class GameController(world: World):
     def handleVictory(): GameSystemsState =
       val nextWave = currentWave + 1
       val freshElixir = ElixirSystem()
-
+      println("Starting wave " + nextWave)
       copy(
         currentWave = nextWave,
         spawn = SpawnSystem().copy(currentWave = nextWave),
@@ -100,11 +99,11 @@ class GameController(world: World):
         movement = MovementSystem(),
         combat = CombatSystem(),
         collision = CollisionSystem(),
-        render = render.clearCache().asInstanceOf[RenderSystem]
+        render = RenderSystem(),
+        selectedWizardType = None
       )
 
-    def handleDefeat(): GameSystemsState =
-      GameSystemsState.initial()
+    def handleDefeat(): GameSystemsState = GameSystemsState.initial()
 
     def reset(): GameSystemsState = GameSystemsState.initial()
 
@@ -124,12 +123,12 @@ class GameController(world: World):
       Option.when(hasTrollReachedEnd(trolls))(GameLost)
 
     private def checkWinCondition(world: World): Option[GameEvent] =
-      val gameStarted = currentWave > 1 || spawn.hasSpawnedAtLeastOnce
+      val waveHasStarted = spawn.hasSpawnedAtLeastOnce
       val allTrollsSpawned = !spawn.isActive
       val noActiveTrolls = world.getEntitiesByType("troll").isEmpty
       val noPendingSpawns = spawn.getPendingSpawnsCount == 0
 
-      Option.when(gameStarted && allTrollsSpawned && noActiveTrolls && noPendingSpawns)(GameWon)
+      Option.when(waveHasStarted && allTrollsSpawned && noActiveTrolls && noPendingSpawns)(GameWon)
 
   private object GameSystemsState:
     def initial(): GameSystemsState =
@@ -145,7 +144,7 @@ class GameController(world: World):
         render = RenderSystem()
       )
 
-  private type StateAction = GameSystemsState => GameSystemsState
+  private type StateTransformation = GameSystemsState => GameSystemsState
 
   private val gameEngine: GameEngine = new GameEngineImpl()
   private val eventHandler: EventHandler = EventHandler.create(gameEngine)
@@ -154,7 +153,7 @@ class GameController(world: World):
   private var state: GameSystemsState = GameSystemsState.initial()
   private var isInitialized: Boolean = false
 
-  private val pendingActions: ConcurrentLinkedQueue[StateAction] = new ConcurrentLinkedQueue()
+  private val pendingActions: ConcurrentLinkedQueue[StateTransformation] = new ConcurrentLinkedQueue()
 
   def initialize(): Unit =
     world.clear()
@@ -168,18 +167,25 @@ class GameController(world: World):
     else
       eventHandler.clearQueue()
 
-    state.render.clearCache()
+  @tailrec
+  private def processPendingActions(): Unit =
+    if !pendingActions.isEmpty then
+      val action = pendingActions.poll()
+      if action != null then
+        state = action(state)
+      processPendingActions()
 
   def update(): Unit =
     if eventHandler.getCurrentPhase == GamePhase.Playing && !gameEngine.isPaused then
-      while !pendingActions.isEmpty do
-        val action = pendingActions.poll()
-        if action != null then
-          state = action(state)
+      processPendingActions()
 
       val oldWave = state.getCurrentWave
       state = state.updateAll(world)
       val newWave = state.getCurrentWave
+
+      if oldWave != newWave then
+        notifyWaveChange(newWave)
+
       ViewController.render()
 
   def getCurrentElixir: Int = state.getCurrentElixir
@@ -218,15 +224,30 @@ class GameController(world: World):
       else
         currentState.selectWizard(wizardType)
 
-    val wizards = getWorld.getEntitiesByType("wizard").toList
-    val occupiedGrids = wizards.flatMap: entity =>
-      getWorld.getComponent[PositionComponent](entity).map(_.position).flatMap(GridMapper.physicalToLogical)
-    val occupiedCells = occupiedGrids.map: grid =>
-      Position(GRID_OFFSET_X + grid._2 * CELL_WIDTH, GRID_OFFSET_Y + grid._1 * CELL_HEIGHT)
-    val allCells = GridMapper.allCells
-    val freeCells = allCells.diff(occupiedCells)
+    val occupiedCells = calculateOccupiedCells()
+    val freeCells = GridMapper.allCells.diff(occupiedCells)
 
     ViewController.drawPlacementGrid(freeCells, occupiedCells)
+
+  private def calculateOccupiedCells(): Seq[Position] =
+    val wizards = getWorld.getEntitiesByType("wizard").toList
+
+    @tailrec
+    def collectOccupiedPositions(entities: List[EntityId], acc: List[Position]): List[Position] =
+      entities match
+        case Nil => acc
+        case head :: tail =>
+          val maybePos = for
+            posComp <- getWorld.getComponent[PositionComponent](head)
+            logicalCoords <- GridMapper.physicalToLogical(posComp.position)
+          yield Position(
+            GRID_OFFSET_X + logicalCoords._2 * CELL_WIDTH,
+            GRID_OFFSET_Y + logicalCoords._1 * CELL_HEIGHT
+          )
+
+          collectOccupiedPositions(tail, maybePos.fold(acc)(acc :+ _))
+
+    collectOccupiedPositions(wizards, List.empty)
 
   def handleMouseClick(x: Double, y: Double): Unit =
     val clickResult = inputSystem.handleMouseClick(x, y)
@@ -239,32 +260,39 @@ class GameController(world: World):
 
   def handleContinueBattle(): Unit =
     world.clear()
-    pendingActions.add(_.handleVictory())
-    state.render.clearCache()
+    state = state.handleVictory()
+    notifyWaveChange(state.getCurrentWave)
     ViewController.render()
 
   def handleNewGame(): Unit =
     world.clear()
-    pendingActions.add(_.handleDefeat())
+    state = state.reset()
+    notifyWaveChange(state.getCurrentWave)
+    ViewController.render()
+
+  private def notifyWaveChange(newWave: Int): Unit =
+    Platform.runLater:
+      WavePanel.updateWaveNumber(newWave)
 
   def placeWizard(wizardType: WizardType, position: Position): Unit =
     val cost = ShopPanel.getWizardCost(wizardType)
-
     val hasWizardCell = world.hasWizardAt(position)
     val canPlace = !hasWizardCell && state.canAfford(cost)
 
     if !canPlace then
-      if world.getEntityAt(position).isDefined then
-        ViewController.showError(s"Impossible to place ${wizardType.toString}: cell occupied")
+      val errorMessage = if world.getEntityAt(position).isDefined then
+        s"Impossible to place ${wizardType.toString}: cell occupied"
       else
-        ViewController.showError(s"Impossible to place ${wizardType.toString}: non enough elixir")
+        s"Impossible to place ${wizardType.toString}: not enough elixir"
+
+      ViewController.showError(errorMessage)
       ViewController.hidePlacementGrid()
       return
 
     val entity = createWizardEntity(wizardType, position)
     val isFirstWizard = !state.elixir.firstWizardPlaced
 
-    pendingActions.add { currentState =>
+    val transformation: StateTransformation = currentState =>
       currentState.spendElixir(cost) match
         case Some(stateAfterSpending) =>
           if isFirstWizard then
@@ -277,8 +305,8 @@ class GameController(world: World):
             stateAfterSpending.clearWizardSelection
         case None =>
           currentState.clearWizardSelection
-    }
 
+    pendingActions.add(transformation)
     ViewController.hidePlacementGrid()
 
   def placeTroll(trollType: TrollType, position: Position): Unit =
@@ -310,4 +338,5 @@ class GameController(world: World):
       case Fire => EntityFactory.createFireWizard(world, position)
       case Ice => EntityFactory.createIceWizard(world, position)
 
-  private def isMenuPhase(phase: GamePhase): Boolean = phase.isMenu || phase == GamePhase.Paused
+  private def isMenuPhase(phase: GamePhase): Boolean =
+    phase.isMenu || phase == GamePhase.Paused

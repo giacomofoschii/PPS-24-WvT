@@ -1,7 +1,6 @@
 package it.unibo.pps.wvt.view
 
 import it.unibo.pps.wvt.ecs.components.WizardType
-import it.unibo.pps.wvt.utilities.GridMapper.LogicalCoords
 import it.unibo.pps.wvt.utilities.Position
 import it.unibo.pps.wvt.view.ButtonFactory.*
 import it.unibo.pps.wvt.view.ImageFactory.*
