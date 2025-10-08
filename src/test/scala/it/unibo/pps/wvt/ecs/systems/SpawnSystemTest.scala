@@ -132,7 +132,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     activeSystem.updateMultipleTimes(world, TEST_MULTIPLE_UPDATES, MEDIUM_DELAY)
 
     val positions = world.getTrollPositions
-    positions.foreach(_.col shouldBe TEST_SPAWN_COLUMN)
+    positions.foreach(_.x shouldBe TEST_SPAWN_COLUMN)
 
   it should "spawn multiple trolls per batch" in:
     val world = World()
@@ -380,6 +380,6 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
     val positions = world.getTrollPositions
     positions.foreach: pos =>
-      pos.row should be >= 0
-      pos.row should be < GRID_ROWS
-      pos.col shouldBe TEST_SPAWN_COLUMN
+      pos.y should be >= 0.0
+      pos.y should be < GRID_ROWS.toDouble
+      pos.x shouldBe TEST_SPAWN_COLUMN
