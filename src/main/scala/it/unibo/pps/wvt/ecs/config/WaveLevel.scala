@@ -22,7 +22,7 @@ object WaveLevel:
 
   def calculateTrollDistribution(wave: Int): Map[TrollType, Double] =
     wave match
-      case w if w <= 2 =>
+      case w if w <= 1 =>
         Map(
           TrollType.Base -> 1.0,
           TrollType.Warrior -> 0.0,
@@ -30,7 +30,7 @@ object WaveLevel:
           TrollType.Thrower -> 0.0
         )
 
-      case w if w <= 4 =>
+      case w if w <= 2 =>
         Map(
           TrollType.Base -> 0.7,
           TrollType.Warrior -> 0.3,
@@ -38,7 +38,7 @@ object WaveLevel:
           TrollType.Thrower -> 0.0
         )
 
-      case w if w <= 6 =>
+      case w if w <= 3 =>
         Map(
           TrollType.Base -> 0.5,
           TrollType.Warrior -> 0.3,
@@ -46,7 +46,7 @@ object WaveLevel:
           TrollType.Thrower -> 0.0
         )
 
-      case w if w <= 9 =>
+      case w if w <= 4 =>
         Map(
           TrollType.Base -> 0.4,
           TrollType.Warrior -> 0.3,

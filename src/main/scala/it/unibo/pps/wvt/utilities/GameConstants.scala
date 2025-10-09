@@ -13,13 +13,15 @@ object GamePlayConstants:
   val ELIXIR_GENERATION_INTERVAL: Long = 10000
 
   // Troll spawn parameters
-  val INITIAL_SPAWN_INTERVAL: Long = 9000L
+  val INITIAL_SPAWN_INTERVAL: Long = 5000L
   val MAX_TROLLS_PER_WAVE_1: Int = 10
-  val MIN_SPAWN_INTERVAL = 3000L
-  val INTERVAL_DECREASE_PER_WAVE = 100L
+  val MIN_SPAWN_INTERVAL = 2000L
+  val INTERVAL_DECREASE_PER_WAVE = 150L
+  val FIRST_SPAWN_DELAY = 8000L
+  val BATCH_INTERVAL = 1500L
 
   val BASE_BATCH_SIZE = 1 // It starts with 1 troll per batch
-  val MAX_BATCH_SIZE = 4 // Maximum 4 trolls per batch
+  val MAX_BATCH_SIZE = 3 // Maximum 2 trolls per batch
 
   // Multipliers per wave
   val HEALTH_INCREASE_PER_WAVE = 0.07
@@ -42,7 +44,7 @@ object GamePlayConstants:
   val WARRIOR_TROLL_REWARD: Int = 75
 
   val ASSASSIN_TROLL_HEALTH: Int = 50
-  val ASSASSIN_TROLL_SPEED: Double = 0.5
+  val ASSASSIN_TROLL_SPEED: Double = 0.3
   val ASSASSIN_TROLL_DAMAGE: Int = 60
   val ASSASSIN_TROLL_RANGE: Double = 1.5
   val ASSASSIN_TROLL_COOLDOWN: Long = 800L

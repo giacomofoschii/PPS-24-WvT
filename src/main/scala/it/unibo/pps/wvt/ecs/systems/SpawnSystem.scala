@@ -95,7 +95,11 @@ case class SpawnSystem(
         system
 
   private def shouldGenerateNewSpawn(system: SpawnSystem, currentTime: Long): Boolean =
-    currentTime - system.lastSpawnTime >= WaveLevel.calculateSpawnInterval(currentWave)
+    val interval = if !system.hasSpawnedAtLeastOnce then
+      FIRST_SPAWN_DELAY
+    else
+      WaveLevel.calculateSpawnInterval(currentWave)
+    currentTime - system.lastSpawnTime >= interval
 
   private def generateSpawnBatch(currentTime: Long, firstRow: Option[Int], numOfSpawns: Int): List[SpawnEvent] =
     val isFirstBatch = pendingSpawns.isEmpty && firstRow.isDefined
@@ -105,9 +109,8 @@ case class SpawnSystem(
       if index >= numOfSpawns then acc.reverse
       else
         val useFirstRow = isFirstBatch && index == 0
-        val event = generateSingleSpawn(currentTime + index * 200, useFirstRow, firstRow)
+        val event = generateSingleSpawn(currentTime + index * BATCH_INTERVAL, useFirstRow, firstRow)
         buildBatch(index + 1, event :: acc)
-
     buildBatch(0, List.empty)
 
   private def generateSingleSpawn(baseTime: Long, useFirstRow: Boolean, firstRow: Option[Int]): SpawnEvent =
@@ -123,7 +126,7 @@ case class SpawnSystem(
   private val generateSpawnPosition: PositionGenerator = (rng, fixedRow) =>
     val row = fixedRow.getOrElse {
       val baseRow = rng.nextInt(GRID_ROWS)
-      val offset = rng.nextInt(2) - 1 
+      val offset = rng.nextInt(2) - 1
       Math.max(0, Math.min(GRID_ROWS - 1, baseRow + offset))
     }
     val col = GRID_COLS - 1
@@ -169,7 +172,7 @@ case class SpawnSystem(
     world.getComponent[AttackComponent](entity).foreach: old =>
       world.updateComponent[AttackComponent](entity, _ => AttackComponent(damage, old.range, old.cooldown))
 
-  // Getter methods
+  
   def getPendingSpawnsCount: Int = pendingSpawns.size
 
   def getNextSpawnTime: Option[Long] =
