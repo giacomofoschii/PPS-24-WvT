@@ -90,7 +90,7 @@ class GameController(world: World):
     def handleVictory(): GameSystemsState =
       val nextWave = currentWave + 1
       val freshElixir = ElixirSystem()
-      println("Starting wave " + nextWave)
+      
       copy(
         currentWave = nextWave,
         spawn = SpawnSystem().copy(currentWave = nextWave),
@@ -99,9 +99,8 @@ class GameController(world: World):
         movement = MovementSystem(),
         combat = CombatSystem(),
         collision = CollisionSystem(),
-        render = RenderSystem(),
-        selectedWizardType = None
-      )
+        render = RenderSystem()
+      ).clearWizardSelection
 
     def handleDefeat(): GameSystemsState = GameSystemsState.initial()
 
@@ -261,6 +260,7 @@ class GameController(world: World):
   def handleContinueBattle(): Unit =
     world.clear()
     state = state.handleVictory()
+    ViewController.hidePlacementGrid()
     ViewController.render()
 
   def handleNewGame(): Unit =
