@@ -108,10 +108,11 @@ case class MovementSystem(
   private val zigzagMovement: MovementStrategy = (pos, movement, entity, world, dt) =>
     val pixelsPerSecond = movement.speed * CELL_WIDTH
     val time = System.currentTimeMillis() / 1000.0
-    val zigzagAmplitude = CELL_HEIGHT * 0.3
+    val zigzagAmplitude = CELL_HEIGHT * 1.25
     val zigzagFrequency = 2.0
 
-    val newY = pos.y + math.sin(time * zigzagFrequency) * zigzagAmplitude * dt
+    val yOffset = math.sin(time * zigzagFrequency) * zigzagAmplitude
+    val newY = pos.y + yOffset * dt
     val minY = GRID_OFFSET_Y
     val maxY = GRID_OFFSET_Y + GRID_ROWS * CELL_HEIGHT - CELL_HEIGHT / 2
 
