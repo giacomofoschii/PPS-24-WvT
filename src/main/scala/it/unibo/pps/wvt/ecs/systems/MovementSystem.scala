@@ -60,9 +60,11 @@ case class MovementSystem(
       posComp <- world.getComponent[PositionComponent](entity)
       moveComp <- world.getComponent[MovementComponent](entity)
       if !world.hasComponent[BlockedComponent](entity)
+      speedModifier = world.getComponent[FreezedComponent](entity).map(_.speedModifier).getOrElse(1.0)
+      adjustedMoveComp = moveComp.copy(speed = moveComp.speed * speedModifier)
       strategy = selectMovementStrategy(entity, world)
       currentPos = posComp.position
-      newPos = strategy(currentPos, moveComp, entity, world, deltaTime / 1000.0)
+      newPos = strategy(currentPos, adjustedMoveComp, entity, world, deltaTime / 1000.0)
     yield newPos
 
   private def selectMovementStrategy(entity: EntityId, world: World): MovementStrategy =
