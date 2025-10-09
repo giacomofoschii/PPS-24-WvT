@@ -9,65 +9,100 @@ case class ElixirSystem(
                          totalElixir: Int = INITIAL_ELIXIR,
                          lastPeriodicGeneration: Long = 0L,
                          firstWizardPlaced: Boolean = false,
-                         activationTime: Long = 0L  
+                         activationTime: Long = 0L
                        ) extends System:
 
   override def update(world: World): System =
-    if firstWizardPlaced then
+    Option.when(firstWizardPlaced):
       updatePeriodicElixirGeneration()
         .updateGeneratorWizardElixir(world)
-    else
-      this
+    .getOrElse(this)
 
   private def updatePeriodicElixirGeneration(): ElixirSystem =
     val currentTime = System.currentTimeMillis()
-    if lastPeriodicGeneration == 0L then
-      return copy(
+    Option.when(lastPeriodicGeneration == 0L):
+      copy(
         lastPeriodicGeneration = currentTime,
-        activationTime = if activationTime == 0L then currentTime else activationTime
+        activationTime = Option.when(activationTime == 0L)(currentTime).getOrElse(activationTime)
       )
+    .orElse:
+      checkAndGenerateElixir(currentTime)
+    .getOrElse(this)
+
+  private def checkAndGenerateElixir(currentTime: Long): Option[ElixirSystem] =
     val timeSinceActivation = currentTime - activationTime
     val timeSinceLastGeneration = currentTime - lastPeriodicGeneration
-    if timeSinceActivation >= ELIXIR_GENERATION_INTERVAL &&
-      timeSinceLastGeneration >= ELIXIR_GENERATION_INTERVAL then
+    Option.when(
+      timeSinceActivation >= ELIXIR_GENERATION_INTERVAL &&
+        timeSinceLastGeneration >= ELIXIR_GENERATION_INTERVAL
+    ):
       copy(
         totalElixir = totalElixir + PERIODIC_ELIXIR,
         lastPeriodicGeneration = currentTime
       )
-    else
-      this
 
   private def updateGeneratorWizardElixir(world: World): ElixirSystem =
-    val generatorEntities = world.getEntitiesWithTwoComponents[WizardTypeComponent, ElixirGeneratorComponent]
     val currentTime = System.currentTimeMillis()
-    var updatedSystem = this
+    val generatorEntities = world.getEntitiesWithTwoComponents[WizardTypeComponent, ElixirGeneratorComponent].toList
+    generatorEntities.foldLeft(this): (system, entityId) =>
+      processGeneratorEntity(world, entityId, currentTime, system)
 
-    generatorEntities.foreach: entityId =>
-      for
-        wizardType <- world.getComponent[WizardTypeComponent](entityId)
-        elixirGenerator <- world.getComponent[ElixirGeneratorComponent](entityId)
-      yield
-        if wizardType.wizardType == WizardType.Generator then
-          world.getComponent[CooldownComponent](entityId) match
-            case Some(cooldownComponent) =>
-              if cooldownComponent.remainingTime == 0L then
-                updateCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
-              else if cooldownComponent.remainingTime <= currentTime then
-                updatedSystem = updatedSystem.copy(totalElixir = updatedSystem.totalElixir + elixirGenerator.elixirPerSecond)
-                updateCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
-            case None =>
-              updateCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
-    updatedSystem
+  private def processGeneratorEntity(
+                                      world: World,
+                                      entityId: EntityId,
+                                      currentTime: Long,
+                                      system: ElixirSystem
+                                    ): ElixirSystem =
+    (for
+      wizardType <- world.getComponent[WizardTypeComponent](entityId)
+      _ <- Option.when(wizardType.wizardType == WizardType.Generator)(())
+      elixirGenerator <- world.getComponent[ElixirGeneratorComponent](entityId)
+    yield
+      processGeneratorCooldown(world, entityId, currentTime, elixirGenerator, system)
+      ).getOrElse(system)
 
-  private def updateCooldown(world: World, entityId: EntityId, newTime: Long): Unit =
-    if world.hasComponent[CooldownComponent](entityId) then
+  private def processGeneratorCooldown(
+                                        world: World,
+                                        entityId: EntityId,
+                                        currentTime: Long,
+                                        elixirGenerator: ElixirGeneratorComponent,
+                                        system: ElixirSystem
+                                      ): ElixirSystem =
+    world.getComponent[CooldownComponent](entityId)
+      .map: cooldown =>
+        handleCooldownState(world, entityId, currentTime, elixirGenerator, cooldown, system)
+      .getOrElse:
+        setCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
+        system
+
+  private def handleCooldownState(
+                                   world: World,
+                                   entityId: EntityId,
+                                   currentTime: Long,
+                                   elixirGenerator: ElixirGeneratorComponent,
+                                   cooldown: CooldownComponent,
+                                   system: ElixirSystem
+                                 ): ElixirSystem =
+    cooldown.remainingTime match
+      case 0L =>
+        setCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
+        system
+      case time if time <= currentTime =>
+        setCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
+        system.copy(totalElixir = system.totalElixir + elixirGenerator.elixirPerSecond)
+      case _ =>
+        system
+
+  private def setCooldown(world: World, entityId: EntityId, newTime: Long): Unit =
+    world.getComponent[CooldownComponent](entityId).foreach: _ =>
       world.removeComponent[CooldownComponent](entityId)
     world.addComponent(entityId, CooldownComponent(newTime))
 
   def spendElixir(amount: Int): (ElixirSystem, Boolean) =
-    if totalElixir >= amount then
-      (copy(totalElixir = totalElixir - amount), true)
-    else (this, false)
+    Option.when(totalElixir >= amount):
+      copy(totalElixir = totalElixir - amount)
+    .map((_, true))
+    .getOrElse((this, false))
 
   def addElixir(amount: Int): ElixirSystem =
     copy(totalElixir = totalElixir + amount)
@@ -80,8 +115,8 @@ case class ElixirSystem(
     val currentTime = System.currentTimeMillis()
     copy(
       firstWizardPlaced = true,
-      lastPeriodicGeneration = currentTime,  
-      activationTime = currentTime  
+      lastPeriodicGeneration = currentTime,
+      activationTime = currentTime
     )
 
   def reset(): ElixirSystem =
