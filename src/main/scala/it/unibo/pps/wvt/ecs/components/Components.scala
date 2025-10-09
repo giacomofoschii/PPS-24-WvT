@@ -25,6 +25,7 @@ case class DamageComponent(amount: Int, projectileType: ProjectileType) extends 
 case class CollisionComponent(amount: Int) extends Component
 case class CooldownComponent(remainingTime: Long) extends Component
 case class BlockedComponent(blockedBy: EntityId) extends Component
+case class FreezedComponent(remainingTime: Long, speedModifier: Double) extends Component
 
 // UI components
 case class ImageComponent(imagePath: String) extends Component

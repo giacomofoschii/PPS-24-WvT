@@ -49,8 +49,9 @@ case class RenderSystem(
           val entityData = for
             pos <- world.getComponent[PositionComponent](head)
             img <- world.getComponent[ImageComponent](head)
+            prefix = if world.hasComponent[FreezedComponent](head) then "freezed" else ""
           yield
-            (pos.position, img.imagePath)
+            (pos.position, prefix + img.imagePath)
 
           collectEntities(tail, entityData.fold(acc)(acc :+ _))
 

@@ -7,6 +7,8 @@ import it.unibo.pps.wvt.ecs.core.*
 import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 
 import scala.annotation.tailrec
+import scala.language.reflectiveCalls
+import scala.reflect.ClassTag
 
 case class CombatSystem() extends System:
 
@@ -15,9 +17,10 @@ case class CombatSystem() extends System:
 
   override def update(world: World): System =
     processRangedAttacks(world)
-    updateCooldowns(world)
+    updateComponentTimer(world, classOf[CooldownComponent], (t, _) => CooldownComponent(t))
+    updateComponentTimer(world, classOf[FreezedComponent], (t, c) => FreezedComponent(t, c.speedModifier))
     this
-
+  
   private def processRangedAttacks(world: World): Unit =
     processWizardProjectiles(world)
     processThrowerProjectiles(world)
@@ -97,18 +100,23 @@ case class CombatSystem() extends System:
   private def isOnCooldown(entity: EntityId, world: World): Boolean =
     world.getComponent[CooldownComponent](entity).exists(_.remainingTime > 0)
 
-  private def updateCooldowns(world: World): Unit =
+  private def updateComponentTimer[C <: Component](
+                                                    world: World,
+                                                    componentClass: Class[C],
+                                                    recreate: (Long, C) => C
+                                                  )(using ct: ClassTag[C]): Unit =
     @tailrec
-    def updateCooldownList(entities: List[EntityId]): Unit =
+    def updateList(entities: List[EntityId]): Unit =
       entities match
         case Nil => ()
         case head :: tail =>
-          world.getComponent[CooldownComponent](head).foreach: cooldown =>
-            val newTime = (cooldown.remainingTime - 16L).max(0L)
+          world.getComponent[C](head).foreach { comp =>
+            val newTime = (comp.asInstanceOf[{ def remainingTime: Long }].remainingTime - 16L).max(0L)
             if newTime > 0 then
-              world.addComponent(head, CooldownComponent(newTime))
+              world.addComponent(head, recreate(newTime, comp))
             else
-              world.removeComponent[CooldownComponent](head)
-          updateCooldownList(tail)
-
-    updateCooldownList(world.getEntitiesWithComponent[CooldownComponent].toList)
+              world.removeComponent[C](head)
+          }
+          updateList(tail)
+    updateList(world.getEntitiesWithComponent[C].toList)
+    

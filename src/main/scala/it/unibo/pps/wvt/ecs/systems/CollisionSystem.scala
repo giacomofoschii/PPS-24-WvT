@@ -52,6 +52,8 @@ case class CollisionSystem(
       val targets = getValidTargets(projType.projectileType, world)
       findCollidingEntity(projPos.position, targets, world) match
         case Some(target) =>
+          if projType.projectileType == ProjectileType.Ice then
+            world.addComponent(target, FreezedComponent(3, 0.5))
           world.addComponent(target, CollisionComponent(damage.amount))
           world.destroyEntity(projectile)
         case None => ()
