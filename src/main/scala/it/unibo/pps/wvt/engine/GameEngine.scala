@@ -36,33 +36,28 @@ class GameEngineImpl extends GameEngine:
     state = state
       .withController(ctrl)
       .withGameLoop(GameLoop.create(this))
-    println("Game Engine initialized")
 
   override def start(): Unit =
     if !state.isRunning then
       state = state.withRunning(true)
       state.gameLoop.foreach(_.start())
-      println("Game Engine started")
 
   override def stop(): Unit =
     if state.isRunning then
       state = state.withRunning(false).withPaused(false)
       state.gameLoop.foreach(_.stop())
-      println("Game Engine stopped")
 
   override def pause(): Unit =
     if state.isRunning && !state.isPaused then
       state = state
         .withPaused(true)
         .withGameState(state.gameState.copy(isPaused = true))
-      println("Game Engine paused")
 
   override def resume(): Unit =
     if state.isRunning && state.isPaused then
       state = state
         .withPaused(false)
         .withGameState(state.gameState.copy(isPaused = false))
-      println("Game Engine resumed")
 
   override def update(deltaTime: Long): Unit =
     state.controller.foreach(_.getEventHandler.processEvents())
