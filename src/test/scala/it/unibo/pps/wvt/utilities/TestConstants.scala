@@ -102,3 +102,48 @@ object TestConstants:
   val TEST_RIGHT_BOUNDARY: Int = GRID_COLS - 1
   val TEST_TOP_BOUNDARY = 0
   val TEST_BOTTOM_BOUNDARY: Int = GRID_ROWS - 1
+
+  // EntityFactory test constants
+  val TEST_PROJECTILE_X: Double = 300.0
+  val TEST_PROJECTILE_Y: Double = 200.0
+  val TEST_WIZARD_X: Double = 400.0
+  val TEST_WIZARD_Y: Double = 300.0
+  val TEST_TROLL_X: Double = 800.0
+  val TEST_TROLL_Y: Double = 400.0
+  val TEST_CUSTOM_X: Double = 500.0
+  val TEST_CUSTOM_Y: Double = 350.0
+
+  // Image paths for projectiles
+  val TEST_FIRE_PROJECTILE_PATH: String = "/projectile/fire.png"
+  val TEST_ICE_PROJECTILE_PATH: String = "/projectile/ice.png"
+  val TEST_TROLL_PROJECTILE_PATH: String = "/projectile/troll.png"
+  val TEST_WIND_PROJECTILE_PATH: String = "/projectile/base.png"
+
+  // HealthBarRenderSystem test constants
+  val TEST_HEALTH_BAR_X: Double = 600.0
+  val TEST_HEALTH_BAR_Y: Double = 300.0
+  val TEST_HEALTH_BAR_CUSTOM_X: Double = 650.0
+  val TEST_HEALTH_BAR_CUSTOM_Y: Double = 350.0
+  val TEST_HEALTH_BAR_MAX_HEALTH: Int = 100
+  val TEST_HEALTH_BAR_HALF_HEALTH: Int = 50
+  val TEST_HEALTH_BAR_HIGH_HEALTH: Int = 80
+  val TEST_HEALTH_BAR_MEDIUM_HEALTH: Int = 50
+  val TEST_HEALTH_BAR_LOW_HEALTH: Int = 20
+  val TEST_HEALTH_BAR_QUARTER_HEALTH: Int = 25
+  val TEST_HEALTH_BAR_DAMAGE_MEDIUM: Int = 20
+
+  // Health bar thresholds (matching HealthBarComponent logic)
+  val TEST_HEALTH_BAR_GREEN_THRESHOLD: Double = 0.6
+  val TEST_HEALTH_BAR_RED_THRESHOLD: Double = 0.3
+  val TEST_HEALTH_BAR_QUARTER_PERCENTAGE: Double = 0.25
+  val TEST_HEALTH_BAR_TOLERANCE: Double = 0.01
+
+  // Health bar counts
+  val TEST_NO_BARS: Int = 0
+  val TEST_ONE_BAR: Int = 1
+  val TEST_TWO_BARS: Int = 2
+  val TEST_THREE_BARS: Int = 3
+
+  // Average health calculations
+  val TEST_HEALTH_BAR_AVG_WIZARD_HEALTH: Double = 0.75 // (50 + 100) / 2 / 100
+  val TEST_HEALTH_BAR_AVG_TROLL_HEALTH: Double = 0.5 // (20 + 50 + 80) / 3 / 100
