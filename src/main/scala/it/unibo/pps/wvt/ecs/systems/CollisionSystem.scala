@@ -53,7 +53,12 @@ case class CollisionSystem(
       findCollidingEntity(projPos.position, targets, world) match
         case Some(target) =>
           if projType.projectileType == ProjectileType.Ice then
-            world.addComponent(target, FreezedComponent(3, 0.5))
+            if world.hasComponent[FreezedComponent](target) then
+              world.getComponent[FreezedComponent](target).foreach: freezed =>
+                val newDuration = (freezed.remainingTime + 4000).min(10000)
+                world.addComponent(target, FreezedComponent(newDuration, freezed.speedModifier))
+            else
+            world.addComponent(target, FreezedComponent(4000, 0.5))
           world.addComponent(target, CollisionComponent(damage.amount))
           world.destroyEntity(projectile)
         case None => ()
