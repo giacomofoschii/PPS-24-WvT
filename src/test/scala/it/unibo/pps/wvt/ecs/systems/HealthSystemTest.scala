@@ -51,7 +51,7 @@ class HealthSystemTest extends AnyFlatSpec with Matchers:
     val wizard = world.createEntity()
     world.addComponent(wizard, HealthComponent(currentHealth = TEST_ENTITY_VERY_LOW_HEALTH, maxHealth = TEST_ENTITY_HALF_HEALTH))
     world.addComponent(wizard, WizardTypeComponent(WizardType.Fire))
-    healthSystem.createCollision(world, wizard, TEST_DAMAGE_MEDIUM)
+    world.addComponent(wizard, CollisionComponent(amount = TEST_DAMAGE_MEDIUM))
     val updatedSystem = healthSystem.update(world).asInstanceOf[HealthSystem]
     world.getAllEntities should not contain wizard
     updatedSystem.elixirSystem.getCurrentElixir shouldBe INITIAL_ELIXIR
@@ -74,7 +74,7 @@ class HealthSystemTest extends AnyFlatSpec with Matchers:
     val healthSystem = HealthSystem(elixirSystem)
     val entity = world.createEntity()
     world.addComponent(entity, HealthComponent(currentHealth = TEST_ENTITY_DEAD_HEALTH, maxHealth = TEST_ENTITY_MAX_HEALTH))
-    healthSystem.createCollision(world, entity, TEST_DAMAGE_LIGHT)
+    world.addComponent(entity, CollisionComponent(amount = TEST_DAMAGE_LIGHT))
     val updatedSystem = healthSystem.update(world).asInstanceOf[HealthSystem]
     world.getAllEntities should not contain entity
 
@@ -83,7 +83,7 @@ class HealthSystemTest extends AnyFlatSpec with Matchers:
     val elixirSystem = ElixirSystem(totalElixir = INITIAL_ELIXIR)
     val healthSystem = HealthSystem(elixirSystem)
     val entity = world.createEntity()
-    healthSystem.createCollision(world, entity, TEST_DAMAGE_LIGHT)
+    world.addComponent(entity, CollisionComponent(amount = TEST_DAMAGE_LIGHT))
     val updatedSystem = healthSystem.update(world).asInstanceOf[HealthSystem]
     world.getComponent[CollisionComponent](entity) should be(empty)
     world.getAllEntities should contain(entity)
@@ -111,20 +111,6 @@ class HealthSystemTest extends AnyFlatSpec with Matchers:
     healthSystem.getCurrentHealth(world, entity) shouldBe Some(TEST_HEALTH_THREE_QUARTER)
     healthSystem.getCurrentHealth(world, noHealthEntity) shouldBe None
 
-  it should "calculate health percentage correctly" in:
-    val world = World()
-    val elixirSystem = ElixirSystem(totalElixir = INITIAL_ELIXIR)
-    val healthSystem = HealthSystem(elixirSystem)
-    val entity = world.createEntity()
-    world.addComponent(entity, HealthComponent(currentHealth = TEST_HEALTH_QUARTER, maxHealth = TEST_ENTITY_MAX_HEALTH))
-    val fullHealthEntity = world.createEntity()
-    world.addComponent(fullHealthEntity, HealthComponent(currentHealth = TEST_ENTITY_MAX_HEALTH, maxHealth = TEST_ENTITY_MAX_HEALTH))
-    val zeroMaxHealthEntity = world.createEntity()
-    world.addComponent(zeroMaxHealthEntity, HealthComponent(currentHealth = TEST_ENTITY_HALF_HEALTH, maxHealth = TEST_ENTITY_DEAD_HEALTH))
-    healthSystem.getHealthPercentage(world, entity) shouldBe Some(TEST_HEALTH_PERCENTAGE_QUARTER)
-    healthSystem.getHealthPercentage(world, fullHealthEntity) shouldBe Some(TEST_HEALTH_PERCENTAGE_FULL)
-    healthSystem.getHealthPercentage(world, zeroMaxHealthEntity) shouldBe Some(TEST_HEALTH_PERCENTAGE_ZERO)
-
   it should "not remove entities marked for removal twice" in:
     val world = World()
     val elixirSystem = ElixirSystem(totalElixir = INITIAL_ELIXIR)
@@ -132,7 +118,7 @@ class HealthSystemTest extends AnyFlatSpec with Matchers:
     val entity = world.createEntity()
     world.addComponent(entity, HealthComponent(currentHealth = TEST_ENTITY_VERY_LOW_HEALTH, maxHealth = TEST_ENTITY_MAX_HEALTH))
     world.addComponent(entity, TrollTypeComponent(TrollType.Base))
-    healthSystem.createCollision(world, entity, TEST_DAMAGE_MEDIUM)
+    world.addComponent(entity, CollisionComponent(amount = TEST_DAMAGE_MEDIUM))
     val updatedSystem1 = healthSystem.update(world).asInstanceOf[HealthSystem]
     world.getAllEntities should not contain entity
     val updatedSystem2 = updatedSystem1.update(world).asInstanceOf[HealthSystem]
@@ -157,8 +143,8 @@ class HealthSystemTest extends AnyFlatSpec with Matchers:
     val warriorTroll = world.createEntity()
     world.addComponent(warriorTroll, HealthComponent(currentHealth = TEST_ENTITY_MINIMAL_HEALTH, maxHealth = TEST_ENTITY_MAX_HEALTH))
     world.addComponent(warriorTroll, TrollTypeComponent(TrollType.Warrior))
-    healthSystem.createCollision(world, baseTroll, TEST_ENTITY_MINIMAL_HEALTH + 1)
-    healthSystem.createCollision(world, warriorTroll, TEST_ENTITY_MINIMAL_HEALTH + 1)
+    world.addComponent(baseTroll, CollisionComponent(amount = TEST_ENTITY_MINIMAL_HEALTH + 1))
+    world.addComponent(warriorTroll, CollisionComponent(amount = TEST_ENTITY_MINIMAL_HEALTH + 1))
     val updatedSystem = healthSystem.update(world).asInstanceOf[HealthSystem]
     world.getAllEntities should not contain baseTroll
     world.getAllEntities should not contain warriorTroll
