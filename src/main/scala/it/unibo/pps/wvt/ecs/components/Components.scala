@@ -10,6 +10,15 @@ sealed trait Component
 // Movement components
 case class PositionComponent(position: Position) extends Component
 case class MovementComponent(speed: Double) extends Component
+case class ZigZagStateComponent(
+                                 spawnRow: Int,
+                                 currentPhase: ZigZagPhase,
+                                 phaseStartTime: Long,
+                                 alternateRow: Int
+                               ) extends Component
+
+enum ZigZagPhase:
+  case OnSpawnRow, OnAlternateRow
 
 // Health components
 case class HealthComponent(currentHealth: Int, maxHealth: Int) extends Component:
