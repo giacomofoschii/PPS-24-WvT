@@ -182,6 +182,9 @@ class GameController(world: World):
       state = state.updateAll(world)
       val newWave = state.getCurrentWave
 
+      if state.selectedWizardType.isDefined then
+        repaintGrid()
+      
       if oldWave != newWave then
         notifyWaveChange(newWave)
 
@@ -222,10 +225,12 @@ class GameController(world: World):
         currentState
       else
         currentState.selectWizard(wizardType)
-
+    
+    repaintGrid()
+    
+  def repaintGrid(): Unit =
     val occupiedCells = calculateOccupiedCells()
     val freeCells = GridMapper.allCells.diff(occupiedCells)
-
     ViewController.drawPlacementGrid(freeCells, occupiedCells)
 
   private def calculateOccupiedCells(): Seq[Position] =
