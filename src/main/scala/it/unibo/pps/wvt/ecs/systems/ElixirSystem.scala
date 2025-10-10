@@ -12,8 +12,6 @@ case class ElixirSystem(
                          activationTime: Long = 0L
                        ) extends System:
 
-  
-
   override def update(world: World): System =
     Option.when(firstWizardPlaced):
       updatePeriodicElixirGeneration()
@@ -38,11 +36,8 @@ case class ElixirSystem(
       timeSinceActivation >= ELIXIR_GENERATION_INTERVAL &&
         timeSinceLastGeneration >= ELIXIR_GENERATION_INTERVAL
     ):
-      val elixirToAdd = Math.min(PERIODIC_ELIXIR, MAX_ELIXIR - totalElixir)
-      copy(
-        totalElixir = totalElixir + elixirToAdd,
-        lastPeriodicGeneration = currentTime
-      )
+      addElixir(PERIODIC_ELIXIR)
+        .copy(lastPeriodicGeneration = currentTime)
 
   private def updateGeneratorWizardElixir(world: World): ElixirSystem =
     val currentTime = System.currentTimeMillis()
@@ -92,14 +87,14 @@ case class ElixirSystem(
         system
       case time if time <= currentTime =>
         setCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
-        val elixirToAdd = Math.min(elixirGenerator.elixirPerSecond, MAX_ELIXIR - system.totalElixir)
-        system.copy(totalElixir = system.totalElixir + elixirToAdd)
+        system.addElixir(elixirGenerator.elixirPerSecond)
       case _ =>
         system
 
   private def setCooldown(world: World, entityId: EntityId, newTime: Long): Unit =
-    world.getComponent[CooldownComponent](entityId).foreach: _ =>
-      world.removeComponent[CooldownComponent](entityId)
+    world.getComponent[CooldownComponent](entityId) match
+      case Some(_) => world.removeComponent[CooldownComponent](entityId)
+      case None => ()
     world.addComponent(entityId, CooldownComponent(newTime))
 
   def spendElixir(amount: Int): (ElixirSystem, Boolean) =
@@ -109,8 +104,7 @@ case class ElixirSystem(
     .getOrElse((this, false))
 
   def addElixir(amount: Int): ElixirSystem =
-    val elixirToAdd = Math.min(amount, MAX_ELIXIR - totalElixir)
-    copy(totalElixir = totalElixir + elixirToAdd)
+    copy(totalElixir = Math.min(totalElixir + amount, MAX_ELIXIR))
 
   def getCurrentElixir: Int = totalElixir
 
