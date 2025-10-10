@@ -11,6 +11,7 @@ object GamePlayConstants:
   val INITIAL_ELIXIR: Int = 200
   val PERIODIC_ELIXIR: Int = 100
   val ELIXIR_GENERATION_INTERVAL: Long = 10000
+  val MAX_ELIXIR: Int = 1000
 
   // Troll spawn parameters
   val INITIAL_SPAWN_INTERVAL: Long = 3000L

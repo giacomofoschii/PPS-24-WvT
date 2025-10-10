@@ -12,6 +12,8 @@ case class ElixirSystem(
                          activationTime: Long = 0L
                        ) extends System:
 
+  
+
   override def update(world: World): System =
     Option.when(firstWizardPlaced):
       updatePeriodicElixirGeneration()
@@ -36,8 +38,9 @@ case class ElixirSystem(
       timeSinceActivation >= ELIXIR_GENERATION_INTERVAL &&
         timeSinceLastGeneration >= ELIXIR_GENERATION_INTERVAL
     ):
+      val elixirToAdd = Math.min(PERIODIC_ELIXIR, MAX_ELIXIR - totalElixir)
       copy(
-        totalElixir = totalElixir + PERIODIC_ELIXIR,
+        totalElixir = totalElixir + elixirToAdd,
         lastPeriodicGeneration = currentTime
       )
 
@@ -89,7 +92,8 @@ case class ElixirSystem(
         system
       case time if time <= currentTime =>
         setCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
-        system.copy(totalElixir = system.totalElixir + elixirGenerator.elixirPerSecond)
+        val elixirToAdd = Math.min(elixirGenerator.elixirPerSecond, MAX_ELIXIR - system.totalElixir)
+        system.copy(totalElixir = system.totalElixir + elixirToAdd)
       case _ =>
         system
 
@@ -105,7 +109,8 @@ case class ElixirSystem(
     .getOrElse((this, false))
 
   def addElixir(amount: Int): ElixirSystem =
-    copy(totalElixir = totalElixir + amount)
+    val elixirToAdd = Math.min(amount, MAX_ELIXIR - totalElixir)
+    copy(totalElixir = totalElixir + elixirToAdd)
 
   def getCurrentElixir: Int = totalElixir
 
