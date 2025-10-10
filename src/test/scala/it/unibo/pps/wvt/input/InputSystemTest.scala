@@ -5,7 +5,6 @@ import org.scalatest.matchers.should.Matchers
 import it.unibo.pps.wvt.utilities.ViewConstants
 
 class InputSystemTest extends AnyFlatSpec with Matchers:
-
   val inputSystem = InputSystem()
 
   "handleMouseClick" should "return valid ClickResult for valid screen coordinates" in:
