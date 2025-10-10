@@ -81,7 +81,7 @@ case class CombatSystem() extends System:
           world.getComponent[PositionComponent](head) match
             case Some(targetPos) =>
               val distance = calculateDistance(attackerPos, targetPos.position)
-              val correctDirection = if attacksLeft then distance < 0 else distance > 0
+              val correctDirection = if attacksLeft then distance <= 0 else distance >= 0
               val inRange = math.abs(distance) <= range
               if inRange && correctDirection then true
               else checkTargets(tail)
