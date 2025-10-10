@@ -55,7 +55,7 @@ object GamePlayConstants:
   val THROWER_TROLL_SPEED: Double = 0.10
   val THROWER_TROLL_DAMAGE: Int = 10
   val THROWER_TROLL_RANGE: Double = 5.0
-  val THROWER_TROLL_COOLDOWN: Long = 2000L
+  val THROWER_TROLL_COOLDOWN: Long = 3000L
   val THROWER_TROLL_REWARD: Int = 125
 
   // Wizard parameters

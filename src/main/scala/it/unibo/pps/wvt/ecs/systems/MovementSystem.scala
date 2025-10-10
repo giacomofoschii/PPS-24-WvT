@@ -87,9 +87,8 @@ case class MovementSystem(
 
   private val trollMovementStrategy: TrollTypeComponent => MovementStrategy = trollType =>
     trollType.trollType match
-      case Base | Warrior => linearLeftMovement
       case Assassin => zigzagMovement
-      case Thrower => conditionalMovement(GRID_OFFSET_X + CELL_WIDTH * 6)
+      case _ => linearLeftMovement
 
   private val linearLeftMovement: MovementStrategy = (pos, movement, _, _, dt) =>
     val pixelsPerSecond = movement.speed * CELL_WIDTH
@@ -122,15 +121,6 @@ case class MovementSystem(
       case None =>
         initializeZigzagComponent(entity, pos, world)
         pos
-
-  private def conditionalMovement(stopX: Double): MovementStrategy = (pos, movement, _, _, dt) =>
-    if pos.x > stopX then
-      val pixelsPerSecond = movement.speed * CELL_WIDTH
-      Position(
-        (pos.x - pixelsPerSecond * dt).max(stopX),
-        pos.y
-      )
-    else pos
 
   private val defaultMovementStrategy: MovementStrategy = (pos, _, _, _, _) => pos
 
