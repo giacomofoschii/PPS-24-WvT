@@ -267,6 +267,7 @@ class GameController(world: World):
     world.clear()
     state = state.reset()
     notifyWaveChange(state.getCurrentWave)
+    ViewController.hidePlacementGrid()
     ViewController.render()
 
   private def notifyWaveChange(newWave: Int): Unit =
