@@ -6,7 +6,7 @@ object GridMapper:
 
   type LogicalCoords = (Int, Int)
   
-  def allCells: Seq[Position] =
+  lazy val allCells: Seq[Position] =
     for  
       row <- 0 until GRID_ROWS
       col <- 0 until GRID_COLS
