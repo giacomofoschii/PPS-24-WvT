@@ -10,7 +10,7 @@ case class InputProcessor():
 
     (for
       validPos <- Option.when(position.isValid)(position)
-      _ <- Option.when(isInGridArea(click.x, click.y))(())
+      _ <- Option.when(isWithinGridBounds(click.x, click.y))(())
     yield ClickResult.valid(validPos))
       .getOrElse(ClickResult.invalid("Invalid Position"))
 
@@ -25,6 +25,12 @@ case class InputProcessor():
     gridBounds match
       case (xMin, xMax, yMin, yMax) =>
         isInRange(x, xMin, xMax) && isInRange(y, yMin, yMax)
+
+
+  private def isWithinGridBounds(x: Double, y: Double): Boolean =
+    gridBounds match
+      case (xMin, xMax, yMin, yMax) =>
+        x >= xMin && x <= xMax && y >= yMin && y <= yMax
 
   private lazy val gridBounds: (Double, Double, Double, Double) =
     (
