@@ -289,14 +289,14 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
 
     var currentSystem = system.activateWith(world)
+    Thread.sleep(spawnInterval + MEDIUM_DELAY)
     currentSystem = currentSystem.update(world).asInstanceOf[SpawnSystem]
-    val firstPending = currentSystem.getPendingSpawnsCount
+    val timeAfterFirstSpawn = currentSystem.lastSpawnTime
 
     Thread.sleep(spawnInterval / 2)
     currentSystem = currentSystem.update(world).asInstanceOf[SpawnSystem]
-    val secondPending = currentSystem.getPendingSpawnsCount
 
-    secondPending shouldBe firstPending
+    currentSystem.lastSpawnTime shouldBe timeAfterFirstSpawn
 
   it should "generate new spawns after interval expires" in:
     val world = World()
