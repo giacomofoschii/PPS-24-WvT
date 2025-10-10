@@ -35,8 +35,7 @@ case class CombatSystem() extends System:
             case WizardType.Fire => ProjectileType.Fire
             case WizardType.Ice => ProjectileType.Ice
             case _ => ProjectileType.Wind
-          EntityFactory.createProjectile(world, pos, projType)
-          world.addComponent(entity, CooldownComponent(attack.cooldown))
+          spawnProjectileAndSetCooldown(world, entity, pos, projType, attack.cooldown)
           processWizardList(tail)
 
     val wizards = for
@@ -46,25 +45,49 @@ case class CombatSystem() extends System:
       pos <- world.getComponent[PositionComponent](entity)
       attack <- world.getComponent[AttackComponent](entity)
       if !isOnCooldown(entity, world)
-      if hasTargetsInRange(entity, pos.position, attack.range, world)
+      if hasTargetsInRange(pos.position, attack.range, "troll", world, false)
     yield (entity, wizardType.wizardType, pos.position, attack)
 
     processWizardList(wizards.toList)
 
-  private def hasTargetsInRange(wizardEntity: EntityId, wizardPos: Position, range: Double, world: World): Boolean =
+  private def processThrowerProjectiles(world: World): Unit =
     @tailrec
-    def checkTrolls(trolls: List[EntityId]): Boolean =
-      trolls match
+    def processThrowerList(throwers: List[(EntityId, Position, AttackComponent)]): Unit =
+      throwers match
+        case Nil => ()
+        case (entity, pos, attack) :: tail =>
+          spawnProjectileAndSetCooldown(world, entity, pos, ProjectileType.Troll, attack.cooldown)
+          processThrowerList(tail)
+
+    val throwers = for
+      entity <- world.getEntitiesByType("troll")
+      trollType <- world.getComponent[TrollTypeComponent](entity)
+      if trollType.trollType == Thrower
+      pos <- world.getComponent[PositionComponent](entity)
+      attack <- world.getComponent[AttackComponent](entity)
+      if !isOnCooldown(entity, world)
+      if hasTargetsInRange(pos.position, attack.range, "wizard", world, true)
+    yield (entity, pos.position, attack)
+
+    processThrowerList(throwers.toList)
+
+  private def hasTargetsInRange(attackerPos: Position, range: Double,
+                                targetType: String, world: World, attacksLeft: Boolean): Boolean =
+    @tailrec
+    def checkTargets(targets: List[EntityId]): Boolean =
+      targets match
         case Nil => false
         case head :: tail =>
           world.getComponent[PositionComponent](head) match
-            case Some(trollPos) =>
-              val distance = calculateDistance(wizardPos, trollPos.position)
-              if distance <= range && distance >= 0 then true
-              else checkTrolls(tail)
-            case None => checkTrolls(tail)
+            case Some(targetPos) =>
+              val distance = calculateDistance(attackerPos, targetPos.position)
+              val correctDirection = if attacksLeft then distance < 0 else distance > 0
+              val inRange = math.abs(distance) <= range
+              if inRange && correctDirection then true
+              else checkTargets(tail)
+            case None => checkTargets(tail)
 
-    checkTrolls(world.getEntitiesByType("troll").toList)
+    checkTargets(world.getEntitiesByType(targetType).toList)
 
   private def calculateDistance(pos1: Position, pos2: Position): Double =
     (GridMapper.physicalToLogical(pos1), GridMapper.physicalToLogical(pos2)) match
@@ -73,29 +96,10 @@ case class CombatSystem() extends System:
       case _ =>
         Double.MaxValue
 
-
-
-  private def processThrowerProjectiles(world: World): Unit =
-    @tailrec
-    def processThrowerList(throwers: List[(EntityId, Position, AttackComponent)]): Unit =
-      throwers match
-        case Nil => ()
-        case (entity, pos, attack) :: tail =>
-          EntityFactory.createProjectile(world, pos, ProjectileType.Troll)
-          world.addComponent(entity, CooldownComponent(attack.cooldown))
-          processThrowerList(tail)
-
-    val throwers = for
-      entity <- world.getEntitiesByType("troll")
-      trollType <- world.getComponent[TrollTypeComponent](entity)
-      if trollType.trollType == Thrower
-      pos <- world.getComponent[PositionComponent](entity)
-      if GridMapper.physicalToLogical(pos.position).get._2 <= 6
-      attack <- world.getComponent[AttackComponent](entity)
-      if !isOnCooldown(entity, world)
-    yield (entity, pos.position, attack)
-
-    processThrowerList(throwers.toList)
+  private def spawnProjectileAndSetCooldown(world: World, entity: EntityId, position: Position,
+                                           projectileType: ProjectileType, cooldown: Long): Unit =
+    EntityFactory.createProjectile(world, position, projectileType)
+    world.addComponent(entity, CooldownComponent(cooldown))
 
   private def isOnCooldown(entity: EntityId, world: World): Boolean =
     world.getComponent[CooldownComponent](entity).exists(_.remainingTime > 0)

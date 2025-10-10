@@ -84,7 +84,7 @@ case class CollisionSystem(
     currentGrid.flatMap(_ => findCollision(targets))
       
   private def processMeleeCollisions(world: World): Unit =
-    val meleeTrolls = getMeleeTrolls(world)
+    val meleeTrolls = world.getEntitiesByType("troll").toList
     
     @tailrec
     def processMeleeList(remaining: List[EntityId]): Unit = remaining match
@@ -105,20 +105,14 @@ case class CollisionSystem(
       val wizards = world.getEntitiesByType("wizard").toList
       findCollidingEntity(trollPos.position, wizards, world) match
         case Some(wizard) =>
-          val damage = calculateMeleeDamage(trollType.trollType, attack.damage)
           world.addComponent(troll, BlockedComponent(wizard))
-          world.addComponent(wizard, CollisionComponent(damage))
-          world.addComponent(troll, CooldownComponent(attack.cooldown))
+          if trollType.trollType != TrollType.Thrower then
+            val damage = calculateMeleeDamage(trollType.trollType, attack.damage)
+            world.addComponent(wizard, CollisionComponent(damage))
+            world.addComponent(troll, CooldownComponent(attack.cooldown))
         case None =>
           if world.hasComponent[BlockedComponent](troll) then
             world.removeComponent[BlockedComponent](troll)
-  
-  private def getMeleeTrolls(world: World): List[EntityId] =
-    world.getEntitiesByType("troll")
-      .filter(troll =>
-        world.getComponent[TrollTypeComponent](troll)
-          .exists(_.trollType != TrollType.Thrower))
-      .toList
       
   private def calculateMeleeDamage(trollType: TrollType, baseDamage: Int): Int =
     trollType match
