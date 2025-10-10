@@ -8,7 +8,7 @@ object WaveLevel:
   def calculateSpawnInterval(wave: Int): Long =
     Math.max(
       MIN_SPAWN_INTERVAL,
-      INITIAL_SPAWN_INTERVAL - (wave - 1) * INTERVAL_DECREASE_PER_WAVE
+      SPAWN_INTERVAL - (wave - 1) * INTERVAL_DECREASE_PER_WAVE
     )
 
   private def calculateHealthMultiplier(wave: Int): Double =
