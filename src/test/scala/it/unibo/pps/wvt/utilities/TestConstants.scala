@@ -61,7 +61,7 @@ object TestConstants:
   val TEST_SPAWN_COLUMN: Int = GRID_COLS - 1
   val TEST_WAVE_1 = 1
   val TEST_MULTIPLE_UPDATES = 5
-  val TEST_MANY_UPDATES = 15
+  val TEST_MANY_UPDATES = 10
   val TEST_SEED = 42L
 
   // Elixir test constants

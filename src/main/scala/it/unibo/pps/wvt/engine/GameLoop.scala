@@ -76,8 +76,6 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop:
         TimeUnit.MILLISECONDS
       )
 
-      println(s"Game loop started with target FPS: $TARGET_FPS")
-
   override def stop(): Unit =
     if loopState.running then
       loopState = loopState.stopRunning
@@ -93,7 +91,6 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop:
             Thread.currentThread().interrupt()
 
       scheduler = None
-      println("Game loop stopped")
 
   override def isRunning: Boolean = loopState.running
 

@@ -96,7 +96,7 @@ case class SpawnSystem(
 
   private def shouldGenerateNewSpawn(system: SpawnSystem, currentTime: Long): Boolean =
     val interval = if !system.hasSpawnedAtLeastOnce then
-      FIRST_SPAWN_DELAY
+      INITIAL_SPAWN_INTERVAL
     else
       WaveLevel.calculateSpawnInterval(currentWave)
     currentTime - system.lastSpawnTime >= interval
@@ -124,14 +124,9 @@ case class SpawnSystem(
     WaveLevel.selectRandomTrollType(WaveLevel.calculateTrollDistribution(currentWave))
 
   private val generateSpawnPosition: PositionGenerator = (rng, fixedRow) =>
-    val row = fixedRow.getOrElse {
-      val baseRow = rng.nextInt(GRID_ROWS)
-      val offset = rng.nextInt(2) - 1
-      Math.max(0, Math.min(GRID_ROWS - 1, baseRow + offset))
-    }
+    val row = fixedRow.getOrElse(rng.nextInt(GRID_ROWS))
     val col = GRID_COLS - 1
     GridMapper.logicalToPhysical(row, col).get
-
 
   private def spawnTroll(event: SpawnEvent, world: World): EntityId =
     val entity = createTrollEntity(event, world)
