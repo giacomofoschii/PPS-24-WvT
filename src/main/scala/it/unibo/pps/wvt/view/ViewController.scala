@@ -38,20 +38,18 @@ object ViewController extends JFXApp3:
 
   private def shouldInitializeWorld(previousState: ViewState, newState: ViewState): Boolean =
     (previousState, newState) match
-      case (ViewState.MainMenu, ViewState.GameView) => true
-      case (ViewState.PauseMenu, ViewState.GameView) => false
-      case (ViewState.Victory, ViewState.GameView) => false
-      case (ViewState.Defeat, ViewState.GameView) => false
-      case (_, ViewState.GameView) => true
-      case _ => false
+      case (prev, ViewState.GameView) =>
+        prev match
+          case ViewState.MainMenu => true
+          case ViewState.PauseMenu | ViewState.Victory | ViewState.Defeat => false
+          case _ => true
+      case _  => false
 
   private def shouldCleanup(previousState: ViewState, newState: ViewState): Boolean =
     (previousState, newState) match
-      case (ViewState.PauseMenu, ViewState.MainMenu) => true
-      case (ViewState.GameView, ViewState.MainMenu) => true
+      case (ViewState.PauseMenu | ViewState.GameView |
+            ViewState.Victory | ViewState.Defeat, ViewState.MainMenu) => true
       case (ViewState.MainMenu, ViewState.GameView) => true
-      case (ViewState.Victory, ViewState.MainMenu) => true
-      case (ViewState.Defeat, ViewState.MainMenu) => true
       case _ => false
 
   def updateView(viewState: ViewState): Unit =
