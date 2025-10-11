@@ -1,10 +1,20 @@
 package it.unibo.pps.wvt.engine
 
-enum GamePhase:
-  case MainMenu, InfoMenu, Playing, Paused, GameOver
+import it.unibo.pps.wvt.engine.GamePhase.*
 
-  def isPlayable: Boolean = this == Playing
-  def isMenu: Boolean = this == MainMenu || this == InfoMenu
+sealed trait GamePhase:
+  def isPlayable: Boolean = this == GamePhase.Playing
+
+  def isMenu: Boolean = this match
+    case GamePhase.MainMenu | GamePhase.InfoMenu => true
+    case _ => false
+
+object GamePhase:
+  case object MainMenu extends GamePhase
+  case object InfoMenu extends GamePhase
+  case object Playing extends GamePhase
+  case object Paused extends GamePhase
+  case object GameOver extends GamePhase
 
 case class GameState(
                       phase: GamePhase = GamePhase.MainMenu,
@@ -15,23 +25,21 @@ case class GameState(
   def isInGame: Boolean = phase.isPlayable
   def isInMenu: Boolean = phase.isMenu
 
-  // functional method for the state transition
   def transitionTo(newPhase: GamePhase): GameState = newPhase match
-    case GamePhase.Paused => copy(phase = newPhase, isPaused = true)
-    case GamePhase.Playing => copy(phase = newPhase, isPaused = false)
+    case Paused => copy(phase = newPhase, isPaused = true)
+    case Playing => copy(phase = newPhase, isPaused = false)
     case other => copy(phase = other)
 
   def updateTime(deltaTime: Long): GameState =
-    if !isPaused then copy(elapsedTime = elapsedTime + deltaTime)
-    else this
+    Option.when(!isPaused)(copy(elapsedTime = elapsedTime + deltaTime))
+      .getOrElse(this)
 
 object GameState:
   def initial(): GameState = GameState()
 
-  // Helper for transition validation
   def isValidTransition(from: GamePhase, to: GamePhase): Boolean = (from, to) match
-    case (GamePhase.Playing, GamePhase.Paused) => true
-    case (GamePhase.Paused, GamePhase.Playing) => true
-    case (_, GamePhase.MainMenu) => true
-    case (GamePhase.MainMenu, _) => true
+    case (Playing, Paused) => true
+    case (Paused, Playing) => true
+    case (_, MainMenu) => true
+    case (MainMenu, _) => true
     case _ => false
