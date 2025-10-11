@@ -21,20 +21,23 @@ object ViewState:
   case object Defeat extends ViewState
 
 object ViewController extends JFXApp3:
-  private val world: World = new World()
   private var gameController: Option[GameController] = None
   private var currentViewState: ViewState = ViewState.MainMenu
   private var gameViewRoot: Option[Parent] = None
 
   override def start(): Unit =
-    gameController = Some(GameController(world))
-    gameController.foreach(_.initialize())
+    initializeController()
     updateView(ViewState.MainMenu)
 
   override def stopApp(): Unit =
-    cleanupGame()
+    cleanup()
     gameController.foreach(_.stop())
     super.stopApp()
+
+  private def initializeController(): Unit =
+    val world = new World()
+    gameController = Some(GameController(world))
+    gameController.foreach(_.initialize())
 
   private def shouldInitializeWorld(previousState: ViewState, newState: ViewState): Boolean =
     (previousState, newState) match
@@ -57,15 +60,12 @@ object ViewController extends JFXApp3:
     currentViewState = viewState
 
     if shouldCleanup(previousState, viewState) then
-      cleanupGame()
+      cleanup()
 
     val newRoot = createViewForState(viewState, previousState)
     updateStage(newRoot, viewState)
 
-  private def createViewForState(
-                                  viewState: ViewState,
-                                  previousState: ViewState
-                                ): Parent =
+  private def createViewForState(viewState: ViewState, previousState: ViewState): Parent =
     viewState match
       case ViewState.MainMenu =>
         gameViewRoot = None
@@ -92,16 +92,17 @@ object ViewController extends JFXApp3:
         existingView
 
       case (ViewState.Victory, Some(existingView)) =>
-        Platform.runLater {
-          updateShopAndWavePanel()
-        }
+        Platform.runLater(updateShopAndWavePanel())
         existingView
 
       case (ViewState.Defeat, Some(existingView)) =>
         existingView
 
       case _ =>
-        initializeWorld()
+        gameController.foreach: controller =>
+          controller.stop()
+          controller.initialize()
+        
         val view = GameView()
         gameViewRoot = Some(view)
         render()
@@ -126,7 +127,6 @@ object ViewController extends JFXApp3:
         stage.sizeToScene()
         stage.centerOnScreen()
 
-  // Request functions
   def requestMainMenu(): Unit =
     gameController.foreach(_.postEvent(GameEvent.ShowMainMenu))
 
@@ -152,29 +152,56 @@ object ViewController extends JFXApp3:
     gameController.foreach(_.postEvent(GameEvent.NewGame))
 
   def requestPlaceWizard(wizardType: WizardType): Unit =
-    gameController.foreach(_.selectWizard(wizardType))
+    gameController.foreach(_.selectWizard(wizardType)) // TODO request with post event
+    //gameController.foreach(_.postEvent(GameEvent.SelectWizard(wizardType)))
+
+  def requestGridClick(x: Double, y: Double): Unit =
+    gameController.foreach: controller =>
+      if controller.getInputSystem.isInGridArea(x, y) then
+        controller.handleMouseClick(x,y) // TODO request with post event
+        //gameController.foreach(_.postEvent(GameEvent.GridClick(x, y)))
+
+  private def postEvent(event: GameEvent): Unit =
+    gameController.foreach(_.postEvent(event))
+    
+  def getController: Option[GameController] = gameController
+  
+  private def getCurrentElixir: Option[Int] = gameController.map(_.getCurrentElixir)
+  
+  private def getCurrentWave: Option[Int] = gameController.map(_.getCurrentWaveInfo._1)
+  
+  def render(): Unit =
+    gameController.foreach: controller =>
+      controller.getRenderSystem.update(controller.getWorld)
+      updateShopAndWavePanel()
+  
+  def drawPlacementGrid(green: Seq[Position], red: Seq[Position]): Unit =
+    GameView.drawGrid(green, red)
+
+  def hidePlacementGrid(): Unit =
+    GameView.clearGrid()
+  
+  def showError(message: String): Unit =
+    GameView.showError(message)
 
   private def updateShopAndWavePanel(): Unit =
     Platform.runLater:
       ShopPanel.updateElixir()
       WavePanel.updateWave()
 
-  def drawPlacementGrid(green: Seq[Position], red: Seq[Position]): Unit =
-    GameView.drawGrid(green, red)
+  def cleanupBeforeExit(): Unit =
+    cleanup()
 
-  def hidePlacementGrid(): Unit =
-    GameView.clearGrid()
+  private def cleanup(): Unit =
+    gameController.foreach(_.stop())
+    gameController.foreach(_.getWorld.clear())
+    GameView.cleanup()
+    gameViewRoot = None
+    ImageFactory.clearCache()
 
-  def render(): Unit =
-    gameController.foreach: controller =>
-      controller.getRenderSystem.update(world)
-      updateShopAndWavePanel()
-
-  def getWorld: World = world
-  def getController: Option[GameController] = gameController
-
-  def showError(message: String): Unit =
-    GameView.showError(message)
+    Platform.runLater:
+      ShopPanel.updateElixir()
+      WavePanel.reset()
 
   private def createStandardStage(pRoot: Parent): PrimaryStage =
     new PrimaryStage:
@@ -196,23 +223,3 @@ object ViewController extends JFXApp3:
 
   private def handleWindowClose(): Unit =
     gameController.foreach(_.postEvent(ExitGame))
-
-  private def initializeWorld(): Unit =
-    world.clear()
-    gameController.foreach: controller =>
-      controller.stop()
-      controller.initialize()
-
-  def cleanupBeforeExit(): Unit =
-    cleanupGame()
-
-  private def cleanupGame(): Unit =
-    gameController.foreach(_.stop())
-    world.clear()
-    GameView.cleanup()
-    gameViewRoot = None
-    ImageFactory.clearCache()
-
-    Platform.runLater:
-      ShopPanel.updateElixir()
-      WavePanel.reset()
