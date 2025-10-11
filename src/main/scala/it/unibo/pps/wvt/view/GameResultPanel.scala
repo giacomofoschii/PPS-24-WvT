@@ -1,10 +1,11 @@
 package it.unibo.pps.wvt.view
 
 import scalafx.scene.Parent
-import scalafx.scene.layout._
-import scalafx.geometry.{Pos, Insets}
+import scalafx.scene.layout.*
+import scalafx.geometry.{Insets, Pos}
 import scalafx.scene.image.ImageView
 import it.unibo.pps.wvt.view.ButtonFactory._
+import it.unibo.pps.wvt.view.ButtonFactory.Presets._
 import it.unibo.pps.wvt.view.ImageFactory._
 import it.unibo.pps.wvt.utilities.ViewConstants._
 
@@ -47,22 +48,10 @@ object GameResultPanel:
       children = Seq(backgroundImage, menuLayout)
 
   private def createMenuLayout(titleImg: ImageView, resultType: ResultType): BorderPane =
-    val buttonConfigs = Map(
-      "continue" -> ButtonConfig(
-        resultType.continueButtonText,
-        PAUSE_BUTTON_WIDTH,
-        PAUSE_BUTTON_HEIGHT,
-        PAUSE_BUTTON_FONT_SIZE,
-        "Times New Roman"
-      ),
-      "exit" -> ButtonConfig(
-        "Exit",
-        PAUSE_BUTTON_WIDTH,
-        PAUSE_BUTTON_HEIGHT,
-        PAUSE_BUTTON_FONT_SIZE,
-        "Times New Roman"
-      )
+    val continueButton = createStyledButton(inGameButtonPreset(resultType.continueButtonText))(
+      handleAction(resultType.continueAction)
     )
+    val exitButton = createStyledButton(inGameButtonPreset("Exit"))(handleAction(ExitGame))
 
     new BorderPane:
       top = new VBox:
@@ -72,7 +61,4 @@ object GameResultPanel:
         alignment = Pos.Center
         spacing = PAUSE_BUTTON_SPICING
         padding = Insets(PADDING_MENU)
-        children = Seq(
-          createStyledButton(buttonConfigs("continue"))(handleAction(resultType.continueAction)),
-          createStyledButton(buttonConfigs("exit"))(handleAction(ExitGame))
-        )
+        children = Seq(continueButton, exitButton)
