@@ -1,6 +1,5 @@
 package it.unibo.pps.wvt.view
 
-import it.unibo.pps.wvt.ecs.components.WizardType
 import it.unibo.pps.wvt.utilities.Position
 import it.unibo.pps.wvt.view.ButtonFactory.*
 import it.unibo.pps.wvt.view.ImageFactory.*
@@ -16,20 +15,26 @@ import scalafx.application.Platform
 
 import scala.annotation.tailrec
 
+case class GameViewState(
+                        entities: Seq[(Position, String)] = Seq.empty,
+                        healthBars: Seq[(Position, Double, Color, Double, Double, Double)] = Seq.empty,
+                        gridCells: (Seq[Position], Seq[Position]) = (Seq.empty, Seq.empty)
+                        )
+
+private case class RenderablePanes(
+                                  grid: Pane,
+                                  entities: Pane,
+                                  projectiles: Pane,
+                                  healthBars: Pane,
+                                  ui: Pane,
+                                  stack: StackPane
+                                  )
+
 object GameView:
-  private var gridPane: Option[Pane] = None
-  private var entityPane: Option[Pane] = None
-  private var projectilePane: Option[Pane] = None
-  private var wizardButtons: Map[WizardType, Button] = Map.empty
-  private var gameStackPane: Option[StackPane] = None
-  private var healthBarPane: Option[Pane] = None
+  private var panes: Option[RenderablePanes] = None
 
   def apply(): Parent =
-    gridPane = None
-    entityPane = None
-    projectilePane = None
-    gameStackPane = None
-    wizardButtons = Map.empty
+    cleanup()
 
     lazy val backgroundImage =
       createBackgroundView("/background_grid.png", GAME_MAP_SCALE_FACTOR).getOrElse(new ImageView())
@@ -50,31 +55,45 @@ object GameView:
     val stackPane = new StackPane:
       children = Seq(backgroundImage, gridOverlay, entityOverlay, projectileOverlay, uiOverlay, healthBarOverlay)
       onMouseClicked = event =>
-        val clickX = event.getX
-        val clickY = event.getY
-        val isOnShop = clickX >= 10 && clickX <= 260 && clickY >= 10
-        if !isOnShop then
-          handleGridClick(clickX, clickY)
+        handleMouseClick(event.getX, event.getY)
 
-    healthBarPane = Some(healthBarOverlay)
-    entityPane = Some(entityOverlay)
-    projectilePane = Some(projectileOverlay)
-    gridPane = Some(gridOverlay)
-    gameStackPane = Some(stackPane)
+    panes = Some(RenderablePanes(
+      gridOverlay,
+      entityOverlay,
+      projectileOverlay,
+      healthBarOverlay,
+      uiOverlay,
+      stackPane
+    ))
 
     stackPane
 
+  def renderEntities(entities: Seq[(Position, String)]): Unit =
+    Platform.runLater:
+      panes.foreach: p =>
+        val (projectiles, others) = entities.partition { case (_, path) => path.contains("/projectile/") }
+
+        renderEntitiesInPane(p.entities, others)
+        renderEntitiesInPane(p.projectiles, projectiles)
+
+  def renderHealthBars(healthBars: Seq[(Position, Double, Color, Double, Double, Double)]): Unit =
+    Platform.runLater:
+      panes.foreach: p =>
+        p.healthBars.children.clear()
+        healthBars.foreach(renderSingleHealthBar(p.healthBars))
+
+
   def drawGrid(greenCells: Seq[Position], redCells: Seq[Position]): Unit =
     Platform.runLater:
-      gridPane.foreach: pane =>
-        pane.children.clear()
+      panes.foreach: p =>
+        p.grid.children.clear()
   
         @tailrec
         def drawCells(cells: List[Position], color: Color): Unit =
           cells match
             case Nil => ()
             case Position(x, y) :: tail =>
-              pane.children.add(createStatusCell(x, y, color))
+              p.grid.children.add(createStatusCell(x, y, color))
               drawCells(tail, color)
   
         drawCells(greenCells.toList, Color.Green)
@@ -83,32 +102,7 @@ object GameView:
 
   def clearGrid(): Unit =
     Platform.runLater:
-      gridPane.foreach(_.children.clear())
-
-  def renderEntities(entities: Seq[(Position, String)]): Unit =
-    Platform.runLater:
-      val (projectiles, others) = entities.partition { case (_, path) => path.contains("/projectile/") }
-      entityPane.foreach: pane =>
-        pane.children.clear()
-        pane.children.addAll(createEntitiesPane(others).children)
-      projectilePane.foreach: pane =>
-        pane.children.clear()
-        pane.children.addAll(createEntitiesPane(projectiles).children)
-
-  def renderHealthBars(healthBars: Seq[(Position, Double, Color, Double, Double, Double)]): Unit =
-    Platform.runLater:
-      healthBarPane.foreach: pane =>
-        pane.children.clear()
-
-        @tailrec
-        def renderBars(bars: List[(Position, Double, Color, Double, Double, Double)]): Unit =
-          bars match
-            case Nil => ()
-            case head :: tail =>
-              renderSingleHealthBar(pane)(head)
-              renderBars(tail)
-
-        renderBars(healthBars.toList)
+      panes.foreach(_.grid.children.clear())
 
   def showError(message: String) : Unit =
     Platform.runLater:
@@ -118,26 +112,12 @@ object GameView:
         contentText = message
       alert.showAndWait()
 
-  private def handleGridClick(x: Double, y: Double): Unit =
-    ViewController.getController match
-      case Some(controller) =>
-        if !controller.getEngine.isPaused then
-          if controller.getInputSystem.isInGridArea(x, y) then
-            controller.handleMouseClick(x, y)
-      case None =>
+  private def handleMouseClick(x: Double, y: Double): Unit =
+    val isOnShop = x >= 10 && x <= 260 && y >= 10
+    if !isOnShop then
+      ViewController.requestGridClick(x, y)
 
-  private def createStatusCell(myX: Double, myY: Double, color: Color): Rectangle =
-    new Rectangle:
-      x = myX
-      y = myY
-      width = CELL_WIDTH
-      height = CELL_HEIGHT
-      fill = color
-      opacity = CELL_OPACITY
-      stroke = Color.White
-
-  private def createEntitiesPane(entities: Seq[(Position, String)]): Pane =
-    val pane = new Pane()
+  private def renderEntitiesInPane(pane: Pane, entities: Seq[(Position, String)]): Unit =
     pane.children.clear()
 
     @tailrec
@@ -156,7 +136,37 @@ object GameView:
           addEntities(tail)
 
     addEntities(entities.toList)
-    pane
+
+  private def renderSingleHealthBar(pane: Pane)(data: (Position, Double, Color, Double, Double, Double)): Unit =
+    val (Position(centerX, centerY), healthPercent, color, barWidth, barHeight, offsetY) = data
+
+    val backgroundBar = new Rectangle:
+      x = centerX - barWidth / 2.0
+      y = centerY + offsetY
+      width = barWidth
+      height = barHeight
+      fill = Color.DarkGray
+      stroke = Color.Black
+      strokeWidth = 0.5
+
+    val healthBar = new Rectangle:
+      x = centerX - barWidth / 2.0
+      y = centerY + offsetY
+      width = barWidth * healthPercent
+      height = barHeight
+      fill = color
+
+    pane.children.addAll(backgroundBar, healthBar)
+
+  private def createStatusCell(myX: Double, myY: Double, color: Color): Rectangle =
+    new Rectangle:
+      x = myX
+      y = myY
+      width = CELL_WIDTH
+      height = CELL_HEIGHT
+      fill = color
+      opacity = CELL_OPACITY
+      stroke = Color.White
 
   private def createUIOverlay: Pane =
     val buttonConfigs = Map(
@@ -185,31 +195,6 @@ object GameView:
     pauseButton.layoutY = 30
     overlayPane
 
-  private def renderSingleHealthBar(pane: Pane): ((Position, Double, Color, Double, Double, Double)) => Unit =
-    case (Position(centerX, centerY), percentage, color, barWidth, barHeight, offsetY) =>
-      val backgroundBar = new Rectangle:
-        this.x = centerX - barWidth / 2
-        this.y = centerY + offsetY
-        width = barWidth
-        height = barHeight
-        fill = Color.DarkGray
-        stroke = Color.Black
-        strokeWidth = 0.5
-
-      val healthBar = new Rectangle:
-        this.x = centerX - barWidth / 2
-        this.y = centerY + offsetY
-        width = barWidth * percentage
-        height = barHeight
-        fill = color
-
-      pane.children.addAll(backgroundBar, healthBar)
-
   def cleanup(): Unit =
-    gridPane = None
-    entityPane = None
-    projectilePane = None
-    gameStackPane = None
-    healthBarPane = None
-    wizardButtons = Map.empty
+    panes = None
     WavePanel.updateWave()
