@@ -4,11 +4,13 @@ import scalafx.scene._
 import scalafx.scene.layout.*
 import scalafx.geometry.*
 import scalafx.scene.image.*
+
 import it.unibo.pps.wvt.utilities.ViewConstants._
 import it.unibo.pps.wvt.view.ButtonFactory._
+import it.unibo.pps.wvt.view.ButtonFactory.Presets.{smallButtonPreset, mainMenuButtonPreset}
 import it.unibo.pps.wvt.view.ImageFactory._
 
-object MainMenu {
+object MainMenu:
   def apply(): Parent =
     lazy val backgroundImage = createBackgroundView("/main_menu.jpg", MENU_SCALE_FACTOR).getOrElse(new ImageView())
     lazy val logoImage =
@@ -24,14 +26,9 @@ object MainMenu {
     }
 
   private def createMenuLayout(logo: ImageView): BorderPane =
-    val buttonConfigs = Map(
-      "start" -> ButtonConfig("Start Game", 250, 150, 24, "Times New Roman"),
-      "info" -> ButtonConfig("Game Info", 150, 80, 15, "Times New Roman"),
-      "exit" -> ButtonConfig("Exit", 150, 80, 15, "Times New Roman")
-    )
-    val startButton = createStyledButton(buttonConfigs("start"))(handleAction(StartGame))
-    val infoButton = createStyledButton(buttonConfigs("info"))(handleAction(ShowInfo))
-    val exitButton = createStyledButton(buttonConfigs("exit"))(handleAction(ExitGame))
+    val startButton = createStyledButton(mainMenuButtonPreset("Start Game"))(handleAction(StartGame))
+    val infoButton = createStyledButton(smallButtonPreset("Game Info"))(handleAction(ShowInfo))
+    val exitButton = createStyledButton(smallButtonPreset("Exit"))(handleAction(ExitGame))
 
     new BorderPane {
       top = new VBox {
@@ -52,4 +49,3 @@ object MainMenu {
         right = exitButton
       }
     }
-}

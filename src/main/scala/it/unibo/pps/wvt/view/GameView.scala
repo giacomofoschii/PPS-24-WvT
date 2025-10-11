@@ -6,7 +6,7 @@ import it.unibo.pps.wvt.view.ImageFactory.*
 import it.unibo.pps.wvt.utilities.ViewConstants.*
 import scalafx.scene.Parent
 import scalafx.scene.control.Alert.AlertType
-import scalafx.scene.control.{Alert, Button}
+import scalafx.scene.control.Alert
 import scalafx.scene.image.ImageView
 import scalafx.scene.layout.{Pane, StackPane}
 import scalafx.scene.paint.Color
@@ -169,10 +169,9 @@ object GameView:
       stroke = Color.White
 
   private def createUIOverlay: Pane =
-    val buttonConfigs = Map(
-      "pause" -> ButtonConfig("Pause", 200, 100, 20, "Times New Roman"),
-    )
-    val pauseButton = createStyledButton(buttonConfigs("pause"))(handleAction(PauseGame))
+    import ButtonFactory.Presets._
+    
+    val pauseButton = createStyledButton(shopButtonPreset("Pause"))(handleAction(PauseGame))
     val shopPanel = ShopPanel.createShopPanel()
     val shopButton = ShopPanel.createShopButton()
     val wavePanel = WavePanel.createWavePanel()
