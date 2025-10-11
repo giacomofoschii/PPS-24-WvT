@@ -7,116 +7,245 @@ import it.unibo.pps.wvt.utilities.Position
 import it.unibo.pps.wvt.utilities.ViewConstants.*
 import scalafx.scene.paint.Color
 
-object EntityFactory:
-  def createProjectile(world: World, position:Position, projectileType: ProjectileType): EntityId =
-    val entity = world.createEntity()
-    world.addComponent(entity, PositionComponent(position))
-    world.addComponent(entity, MovementComponent(PROJECTILE_SPEED))
-    world.addComponent(entity, ProjectileTypeComponent(projectileType))
+case class ProjectileConfig(
+                             projectileType: ProjectileType,
+                             damage: Int,
+                             imagePath: String
+                           )
 
-    val (damage, imagePath) = projectileType match
-      case ProjectileType.Fire => (FIRE_WIZARD_ATTACK_DAMAGE, "/projectile/fire.png")
-      case ProjectileType.Ice => (ICE_WIZARD_ATTACK_DAMAGE, "/projectile/ice.png")
-      case ProjectileType.Troll => (THROWER_TROLL_DAMAGE, "/projectile/troll.png")
-      case ProjectileType.Wind => (WIND_WIZARD_ATTACK_DAMAGE, "/projectile/base.png")
-      
-    world.addComponent(entity, DamageComponent(damage, projectileType))
-    world.addComponent(entity, ImageComponent(imagePath))
+case class WizardConfig(
+                         wizardType: WizardType,
+                         health: Int,
+                         cost: Int,
+                         imagePath: String,
+                         attack: Option[AttackComponent] = None,
+                         elixirGenerator: Option[ElixirGeneratorComponent] = None
+                       )
+
+case class TrollConfig(
+                        trollType: TrollType,
+                        health: Int,
+                        speed: Double,
+                        damage: Int,
+                        range: Double,
+                        cooldown: Long,
+                        imagePath: String
+                      )
+
+trait EntityBuilder[T]:
+  def buildComponents(config: T, position: Position): List[Component]
+
+object EntityBuilder:
+  given EntityBuilder[ProjectileConfig] with
+    def buildComponents(config: ProjectileConfig, position: Position): List[Component] =
+      List(
+        PositionComponent(position),
+        MovementComponent(PROJECTILE_SPEED),
+        ProjectileTypeComponent(config.projectileType),
+        DamageComponent(config.damage, config.projectileType),
+        ImageComponent(config.imagePath)
+      )
+
+  given EntityBuilder[WizardConfig] with
+    def buildComponents(config: WizardConfig, position: Position): List[Component] =
+      val baseComponents = List(
+        PositionComponent(position),
+        HealthComponent(config.health, config.health),
+        CostComponent(config.cost),
+        ImageComponent(config.imagePath),
+        WizardTypeComponent(config.wizardType),
+        HealthBarComponent(
+          barColor = Color.Blue,
+          barWidth = HEALTH_BAR_WIDTH,
+          offsetY = HEALTH_BAR_OFFSET_Y
+        )
+      )
+      val optionalComponents = List(config.attack, config.elixirGenerator).flatten
+      baseComponents ++ optionalComponents
+
+  given EntityBuilder[TrollConfig] with
+    def buildComponents(config: TrollConfig, position: Position): List[Component] =
+      List(
+        PositionComponent(position),
+        TrollTypeComponent(config.trollType),
+        HealthComponent(config.health, config.health),
+        MovementComponent(config.speed),
+        AttackComponent(config.damage, config.range, config.cooldown),
+        ImageComponent(config.imagePath),
+        HealthBarComponent(
+          barColor = Color.Red,
+          barWidth = HEALTH_BAR_WIDTH,
+          offsetY = HEALTH_BAR_OFFSET_Y
+        )
+      )
+
+
+object EntityFactory:
+
+  private val projectileConfigs: Map[ProjectileType, ProjectileConfig] = Map(
+    ProjectileType.Fire -> ProjectileConfig(
+      ProjectileType.Fire,
+      FIRE_WIZARD_ATTACK_DAMAGE,
+      "/projectile/fire.png"
+    ),
+    ProjectileType.Ice -> ProjectileConfig(
+      ProjectileType.Ice,
+      ICE_WIZARD_ATTACK_DAMAGE,
+      "/projectile/ice.png"
+    ),
+    ProjectileType.Troll -> ProjectileConfig(
+      ProjectileType.Troll,
+      THROWER_TROLL_DAMAGE,
+      "/projectile/troll.png"
+    ),
+    ProjectileType.Wind -> ProjectileConfig(
+      ProjectileType.Wind,
+      WIND_WIZARD_ATTACK_DAMAGE,
+      "/projectile/base.png"
+    )
+  )
+
+  private val wizardConfigs: Map[WizardType, WizardConfig] = Map(
+    WizardType.Generator -> WizardConfig(
+      wizardType = WizardType.Generator,
+      health = GENERATOR_WIZARD_HEALTH,
+      cost = GENERATOR_WIZARD_COST,
+      imagePath = "/wizard/generator.png",
+      elixirGenerator = Some(ElixirGeneratorComponent(
+        GENERATOR_WIZARD_ELIXIR_PER_SECOND,
+        GENERATOR_WIZARD_COOLDOWN
+      ))
+    ),
+    WizardType.Wind -> WizardConfig(
+      wizardType = WizardType.Wind,
+      health = WIND_WIZARD_HEALTH,
+      cost = WIND_WIZARD_COST,
+      imagePath = "/wizard/wind.png",
+      attack = Some(AttackComponent(
+        WIND_WIZARD_ATTACK_DAMAGE,
+        WIND_WIZARD_RANGE,
+        WIND_WIZARD_COOLDOWN
+      ))
+    ),
+    WizardType.Barrier -> WizardConfig(
+      wizardType = WizardType.Barrier,
+      health = BARRIER_WIZARD_HEALTH,
+      cost = BARRIER_WIZARD_COST,
+      imagePath = "/wizard/barrier.png"
+    ),
+    WizardType.Fire -> WizardConfig(
+      wizardType = WizardType.Fire,
+      health = FIRE_WIZARD_HEALTH,
+      cost = FIRE_WIZARD_COST,
+      imagePath = "/wizard/fire.png",
+      attack = Some(AttackComponent(
+        FIRE_WIZARD_ATTACK_DAMAGE,
+        FIRE_WIZARD_RANGE,
+        FIRE_WIZARD_COOLDOWN
+      ))
+    ),
+    WizardType.Ice -> WizardConfig(
+      wizardType = WizardType.Ice,
+      health = ICE_WIZARD_HEALTH,
+      cost = ICE_WIZARD_COST,
+      imagePath = "/wizard/ice.png",
+      attack = Some(AttackComponent(
+        ICE_WIZARD_ATTACK_DAMAGE,
+        ICE_WIZARD_RANGE,
+        ICE_WIZARD_COOLDOWN
+      ))
+    )
+  )
+
+  private val trollConfigs: Map[TrollType, TrollConfig] = Map(
+    TrollType.Base -> TrollConfig(
+      trollType = TrollType.Base,
+      health = BASE_TROLL_HEALTH,
+      speed = BASE_TROLL_SPEED,
+      damage = BASE_TROLL_DAMAGE,
+      range = BASE_TROLL_RANGE,
+      cooldown = BASE_TROLL_COOLDOWN,
+      imagePath = "/troll/BaseTroll.png"
+    ),
+    TrollType.Warrior -> TrollConfig(
+      trollType = TrollType.Warrior,
+      health = WARRIOR_TROLL_HEALTH,
+      speed = WARRIOR_TROLL_SPEED,
+      damage = WARRIOR_TROLL_DAMAGE,
+      range = WARRIOR_TROLL_RANGE,
+      cooldown = WARRIOR_TROLL_COOLDOWN,
+      imagePath = "/troll/WarriorTroll.png"
+    ),
+    TrollType.Assassin -> TrollConfig(
+      trollType = TrollType.Assassin,
+      health = ASSASSIN_TROLL_HEALTH,
+      speed = ASSASSIN_TROLL_SPEED,
+      damage = ASSASSIN_TROLL_DAMAGE,
+      range = ASSASSIN_TROLL_RANGE,
+      cooldown = ASSASSIN_TROLL_COOLDOWN,
+      imagePath = "/troll/Assassin.png"
+    ),
+    TrollType.Thrower -> TrollConfig(
+      trollType = TrollType.Thrower,
+      health = THROWER_TROLL_HEALTH,
+      speed = THROWER_TROLL_SPEED,
+      damage = THROWER_TROLL_DAMAGE,
+      range = THROWER_TROLL_RANGE,
+      cooldown = THROWER_TROLL_COOLDOWN,
+      imagePath = "/troll/ThrowerTroll.png"
+    )
+  )
+
+  private def createEntity[T: EntityBuilder](
+                                              world: World,
+                                              position: Position,
+                                              config: T
+                                            ): EntityId =
+    val entity = world.createEntity()
+    val builder = summon[EntityBuilder[T]]
+    val components = builder.buildComponents(config, position)
+    components.foreach(component => world.addComponent(entity, component))
     entity
+
+
+  def createProjectile(world: World, position: Position, projectileType: ProjectileType): EntityId =
+    projectileConfigs.get(projectileType) match
+      case Some(config) => createEntity(world, position, config)
+      case None => throw IllegalArgumentException(s"Unknown projectile type: $projectileType")
+
+  private def createWizard(world: World, position: Position, wizardType: WizardType): EntityId =
+    wizardConfigs.get(wizardType) match
+      case Some(config) => createEntity(world, position, config)
+      case None => throw IllegalArgumentException(s"Unknown wizard type: $wizardType")
+
+  private def createTroll(world: World, position: Position, trollType: TrollType): EntityId =
+    trollConfigs.get(trollType) match
+      case Some(config) => createEntity(world, position, config)
+      case None => throw IllegalArgumentException(s"Unknown troll type: $trollType")
 
   def createGeneratorWizard(world: World, position: Position): EntityId =
-    val entity = createBaseWizard(world, position, WizardType.Generator, GENERATOR_WIZARD_HEALTH,
-      GENERATOR_WIZARD_COST, "/wizard/generator.png")
-    world.addComponent(entity, ElixirGeneratorComponent(GENERATOR_WIZARD_ELIXIR_PER_SECOND, GENERATOR_WIZARD_COOLDOWN))
-    entity
+    createWizard(world, position, WizardType.Generator)
 
   def createWindWizard(world: World, position: Position): EntityId =
-    val entity = createBaseWizard(world, position, WizardType.Wind, WIND_WIZARD_HEALTH,
-      WIND_WIZARD_COST, "/wizard/wind.png")
-    world.addComponent(entity, AttackComponent(WIND_WIZARD_ATTACK_DAMAGE, WIND_WIZARD_RANGE, WIND_WIZARD_COOLDOWN))
-    entity
+    createWizard(world, position, WizardType.Wind)
 
   def createBarrierWizard(world: World, position: Position): EntityId =
-    val entity = createBaseWizard(world, position, WizardType.Barrier, BARRIER_WIZARD_HEALTH,
-      BARRIER_WIZARD_COST, "/wizard/barrier.png")
-    entity
+    createWizard(world, position, WizardType.Barrier)
 
   def createFireWizard(world: World, position: Position): EntityId =
-    val entity = createBaseWizard(world, position, WizardType.Fire, FIRE_WIZARD_HEALTH,
-      FIRE_WIZARD_COST, "/wizard/fire.png")
-    world.addComponent(entity, AttackComponent(FIRE_WIZARD_ATTACK_DAMAGE, FIRE_WIZARD_RANGE, FIRE_WIZARD_COOLDOWN))
-    entity
+    createWizard(world, position, WizardType.Fire)
 
   def createIceWizard(world: World, position: Position): EntityId =
-    val entity = createBaseWizard(world, position, WizardType.Ice, ICE_WIZARD_HEALTH,
-      ICE_WIZARD_COST, "/wizard/ice.png")
-    world.addComponent(entity, AttackComponent(ICE_WIZARD_ATTACK_DAMAGE, ICE_WIZARD_RANGE, ICE_WIZARD_COOLDOWN))
-    entity
+    createWizard(world, position, WizardType.Ice)
 
-  private def createBaseWizard(world: World, position: Position, wizardType: WizardType,
-                               health: Int, cost: Int, spritePath: String): EntityId =
-    val entity = world.createEntity()
-    world.addComponent(entity, PositionComponent(position))
-    world.addComponent(entity, HealthComponent(health, health))
-    world.addComponent(entity, CostComponent(cost))
-    world.addComponent(entity, ImageComponent(spritePath))
-    world.addComponent(entity, WizardTypeComponent(wizardType))
-    world.addComponent(entity, HealthBarComponent(
-      barColor = Color.Blue,
-      barWidth = HEALTH_BAR_WIDTH,
-      offsetY = HEALTH_BAR_OFFSET_Y,
-    ))
-    entity
-  
   def createBaseTroll(world: World, pos: Position): EntityId =
-    val entity = createStandardTroll(world, pos, TrollType.Base,
-      BASE_TROLL_HEALTH, BASE_TROLL_SPEED,
-      BASE_TROLL_DAMAGE, BASE_TROLL_RANGE,
-      BASE_TROLL_COOLDOWN, "/troll/BaseTroll.png"
-    )
-    entity
+    createTroll(world, pos, TrollType.Base)
 
   def createWarriorTroll(world: World, pos: Position): EntityId =
-    val entity = createStandardTroll(world, pos, TrollType.Warrior,
-      WARRIOR_TROLL_HEALTH, WARRIOR_TROLL_SPEED,
-      WARRIOR_TROLL_DAMAGE, WARRIOR_TROLL_RANGE,
-      WARRIOR_TROLL_COOLDOWN, "/troll/WarriorTroll.png"
-    )
-    entity
+    createTroll(world, pos, TrollType.Warrior)
 
   def createAssassinTroll(world: World, pos: Position): EntityId =
-    val entity = createStandardTroll(world, pos, TrollType.Assassin,
-      ASSASSIN_TROLL_HEALTH, ASSASSIN_TROLL_SPEED,
-      ASSASSIN_TROLL_DAMAGE, ASSASSIN_TROLL_RANGE,
-      ASSASSIN_TROLL_COOLDOWN, "/troll/Assassin.png"
-    )
-    entity
+    createTroll(world, pos, TrollType.Assassin)
 
   def createThrowerTroll(world: World, pos: Position): EntityId =
-    val entity = createStandardTroll(world, pos, TrollType.Thrower,
-      THROWER_TROLL_HEALTH, THROWER_TROLL_SPEED,
-      THROWER_TROLL_DAMAGE, THROWER_TROLL_RANGE,
-      THROWER_TROLL_COOLDOWN, "/troll/ThrowerTroll.png"
-    )
-    entity
-
-  private def createStandardTroll(world: World, pos: Position, tType: TrollType,
-                                  health: Int, speed: Double, damage: Int,
-                                  range: Double, cooldown: Long, spritePath: String): EntityId =
-    val entity = world.createEntity()
-    world.addComponent(entity, PositionComponent(pos))
-    world.addComponent(entity, TrollTypeComponent(tType))
-    world.addComponent(entity, HealthComponent(health, health))
-    world.addComponent(entity, MovementComponent(speed))
-    world.addComponent(entity, AttackComponent(
-      damage = damage,
-      range = range,
-      cooldown = cooldown
-    ))
-    world.addComponent(entity, ImageComponent(spritePath))
-    world.addComponent(entity, HealthBarComponent(
-      barColor = Color.Red,
-      barWidth = HEALTH_BAR_WIDTH,
-      offsetY = HEALTH_BAR_OFFSET_Y,
-    ))
-    entity
+    createTroll(world, pos, TrollType.Thrower)
