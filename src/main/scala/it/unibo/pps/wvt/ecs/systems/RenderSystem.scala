@@ -13,21 +13,23 @@ case class RenderSystem(
                          private val lastRenderedState: Option[String] = None
                        ) extends System:
 
-  override def update(world: World): System =
-    val updatedHealthBars = healthBarSystem.update(world).asInstanceOf[HealthBarRenderSystem]
-    val entities = collectEntitiesWithImages(world)
+  override def update(world: World): (World, System) =
+    val (world1, updatedHealthBars) = healthBarSystem.update(world)
+    val healthBarSystemTyped = updatedHealthBars.asInstanceOf[HealthBarRenderSystem]
+    
+    val entities = collectEntitiesWithImages(world1)
     val healthBars = updatedHealthBars.getHealthBarsToRender
 
     val currentState = generateStateHash(entities, healthBars)
     if shouldRender(currentState) then
       GameView.renderEntities(entities)
       GameView.renderHealthBars(healthBars)
-      copy(
-        healthBarSystem = updatedHealthBars,
+      (world1, copy(
+        healthBarSystem = healthBarSystemTyped,
         lastRenderedState = Some(currentState)
-      )
+      ))
     else
-      copy(healthBarSystem = updatedHealthBars)
+      (world1, copy(healthBarSystem = healthBarSystemTyped))
 
   private def shouldRender(currentState: String): Boolean =
     !lastRenderedState.contains(currentState)
