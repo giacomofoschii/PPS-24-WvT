@@ -123,12 +123,13 @@ object ViewController extends JFXApp3:
       vcState.primaryStage match
         case Some(stage) =>
           stage.scene().root = newRoot
+          resizeStageForView(stage, viewState)
         case None =>
           val newStage = createStandardStage(newRoot)
           vcState = vcState.copy(primaryStage = Some(newStage))
           stage = newStage
 
-  private def resizeStageForView(viewState: ViewState): Unit =
+  private def resizeStageForView(stage: PrimaryStage, viewState: ViewState): Unit =
     viewState match
       case ViewState.GameView =>
         stage.sizeToScene()
@@ -199,8 +200,9 @@ object ViewController extends JFXApp3:
     cleanup()
 
   private def cleanup(): Unit =
-    vcState.gameController.foreach(_.stop())
-    vcState.gameController.foreach(_.getWorld.clear())
+    vcState.gameController.foreach: controller =>
+      controller.stop()
+      controller.getWorld.clear()
     
     GameView.cleanup()
     vcState = vcState.copy(gameViewRoot = None)
@@ -216,10 +218,9 @@ object ViewController extends JFXApp3:
       scene = new Scene:
         root = pRoot
 
-      for
-        stream <- Option(getClass.getResourceAsStream("/window_logo.png"))
-        icon = new Image(stream)
-      do icons += icon
+      Option(getClass.getResourceAsStream("/window_logo.png"))
+        .map(new Image(_))
+        .foreach(icons += _)
 
       resizable = false
       centerOnScreen()
