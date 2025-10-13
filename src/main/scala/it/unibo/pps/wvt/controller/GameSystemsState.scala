@@ -6,7 +6,6 @@ import it.unibo.pps.wvt.ecs.core.World
 import it.unibo.pps.wvt.ecs.systems.{CollisionSystem, CombatSystem, ElixirSystem, HealthSystem, MovementSystem, RenderSystem, SpawnSystem}
 import it.unibo.pps.wvt.utilities.GridMapper
 import it.unibo.pps.wvt.view.ViewController
-import it.unibo.pps.wvt.ecs.core.System
 
 
 private[controller] case class GameSystemsState(
