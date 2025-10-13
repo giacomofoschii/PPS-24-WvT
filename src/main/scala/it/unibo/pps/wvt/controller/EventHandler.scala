@@ -22,7 +22,7 @@ trait EventHandler:
   def getCurrentPhase: GamePhase
   def clearQueue(): Unit
 
-case class EventHandlerImpl(private val engine: GameEngine) extends EventHandler:
+class EventHandlerImpl(private val engine: GameEngine) extends EventHandler:
 
   private val stateRef = new AtomicReference(EventHandlerState())
 
