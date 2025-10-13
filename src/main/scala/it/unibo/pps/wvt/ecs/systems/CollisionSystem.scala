@@ -1,6 +1,6 @@
 package it.unibo.pps.wvt.ecs.systems
 
-import it.unibo.pps.wvt.ecs.core.{EntityId, System, World, WorldMutable}
+import it.unibo.pps.wvt.ecs.core.{EntityId, System, World}
 import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 
