@@ -4,7 +4,7 @@ import it.unibo.pps.wvt.controller.GameEvent.ExitGame
 import it.unibo.pps.wvt.controller.{GameController, GameEvent}
 import it.unibo.pps.wvt.ecs.components.WizardType
 import it.unibo.pps.wvt.ecs.core.World
-import it.unibo.pps.wvt.utilities.Position
+import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 import scalafx.Includes.jfxScene2sfx
 import scalafx.scene.*
 import scalafx.application.{JFXApp3, Platform}
@@ -20,24 +20,30 @@ object ViewState:
   case object Victory extends ViewState
   case object Defeat extends ViewState
 
+case class ViewControllerState(
+                              gameController: Option[GameController] = None,
+                              currentViewState: ViewState = ViewState.MainMenu,
+                              gameViewRoot: Option[Parent] = None,
+                              primaryStage: Option[PrimaryStage] = None
+                              )
+
 object ViewController extends JFXApp3:
-  private var gameController: Option[GameController] = None
-  private var currentViewState: ViewState = ViewState.MainMenu
-  private var gameViewRoot: Option[Parent] = None
+  private var vcState: ViewControllerState = ViewControllerState()
 
   override def start(): Unit =
-    initializeController()
+    vcState = initializeController(vcState)
     updateView(ViewState.MainMenu)
 
   override def stopApp(): Unit =
     cleanup()
-    gameController.foreach(_.stop())
+    vcState.gameController.foreach(_.stop())
     super.stopApp()
 
-  private def initializeController(): Unit =
+  private def initializeController(state: ViewControllerState): ViewControllerState =
     val world = new World()
-    gameController = Some(GameController(world))
-    gameController.foreach(_.initialize())
+    val gameController = GameController(world)
+    gameController.initialize()
+    state.copy(gameController = Some(gameController))
 
   private def shouldInitializeWorld(previousState: ViewState, newState: ViewState): Boolean =
     (previousState, newState) match
@@ -56,65 +62,71 @@ object ViewController extends JFXApp3:
       case _ => false
 
   def updateView(viewState: ViewState): Unit =
-    val previousState = currentViewState
-    currentViewState = viewState
+    val previousState = vcState.currentViewState
+    vcState = vcState.copy(currentViewState = viewState)
 
-    if shouldCleanup(previousState, viewState) then
-      cleanup()
+    Option.when(shouldCleanup(previousState, viewState))(cleanup())
 
-    val newRoot = createViewForState(viewState, previousState)
+    val (newRoot, updatedState) = createViewForState(viewState, previousState, vcState)
+    vcState = updatedState
+    
     updateStage(newRoot, viewState)
 
-  private def createViewForState(viewState: ViewState, previousState: ViewState): Parent =
+  private def createViewForState(viewState: ViewState,
+                                 previousState: ViewState,
+                                 state: ViewControllerState
+                                ): (Parent, ViewControllerState) =
     viewState match
       case ViewState.MainMenu =>
-        gameViewRoot = None
-        MainMenu()
+        (MainMenu(), state.copy(gameViewRoot = None))
 
       case ViewState.GameView =>
-        createGameView(previousState)
+        createGameView(previousState, state)
 
       case ViewState.InfoMenu =>
-        InfoMenu()
+        (InfoMenu(), state)
 
       case ViewState.PauseMenu =>
-        PauseMenu()
+        (PauseMenu(), state)
 
       case ViewState.Victory =>
-        GameResultPanel(GameResultPanel.Victory)
+        (GameResultPanel(GameResultPanel.Victory), state)
 
       case ViewState.Defeat =>
-        GameResultPanel(GameResultPanel.Defeat)
+        (GameResultPanel(GameResultPanel.Defeat), state)
 
-  private def createGameView(previousState: ViewState): Parent =
-    (previousState, gameViewRoot) match
+  private def createGameView(previousState: ViewState, 
+                             state: ViewControllerState
+                            ): (Parent, ViewControllerState) =
+    (previousState, state.gameViewRoot) match
       case (ViewState.PauseMenu, Some(existingView)) =>
-        existingView
+        (existingView, state)
 
       case (ViewState.Victory, Some(existingView)) =>
         Platform.runLater(updateShopAndWavePanel())
-        existingView
+        (existingView, state)
 
       case (ViewState.Defeat, Some(existingView)) =>
-        existingView
+        (existingView, state)
 
       case _ =>
-        gameController.foreach: controller =>
+        state.gameController.foreach: controller =>
           controller.stop()
           controller.initialize()
         
         val view = GameView()
-        gameViewRoot = Some(view)
         render()
-        view
+        (view, state.copy(gameViewRoot = Some(view)))
 
   private def updateStage(newRoot: Parent, viewState: ViewState): Unit =
     Platform.runLater:
-      if stage != null then
-        stage.scene().root = newRoot
-        resizeStageForView(viewState)
-      else
-        stage = createStandardStage(newRoot)
+      vcState.primaryStage match
+        case Some(stage) =>
+          stage.scene().root = newRoot
+        case None =>
+          val newStage = createStandardStage(newRoot)
+          vcState = vcState.copy(primaryStage = Some(newStage))
+          stage = newStage
 
   private def resizeStageForView(viewState: ViewState): Unit =
     viewState match
@@ -128,50 +140,44 @@ object ViewController extends JFXApp3:
         stage.centerOnScreen()
 
   def requestMainMenu(): Unit =
-    gameController.foreach(_.postEvent(GameEvent.ShowMainMenu))
+    vcState.gameController.foreach(_.postEvent(GameEvent.ShowMainMenu))
 
   def requestGameView(): Unit =
-    gameController.foreach(_.postEvent(GameEvent.ShowGameView))
+    vcState.gameController.foreach(_.postEvent(GameEvent.ShowGameView))
 
   def requestInfoMenu(): Unit =
-    gameController.foreach(_.postEvent(GameEvent.ShowInfoMenu))
+    vcState.gameController.foreach(_.postEvent(GameEvent.ShowInfoMenu))
 
   def requestExitGame(): Unit =
-    gameController.foreach(_.postEvent(GameEvent.ExitGame))
+    vcState.gameController.foreach(_.postEvent(GameEvent.ExitGame))
 
   def requestPauseGame(): Unit =
-    gameController.foreach(_.postEvent(GameEvent.Pause))
+    vcState.gameController.foreach(_.postEvent(GameEvent.Pause))
 
   def requestResumeGame(): Unit =
-    gameController.foreach(_.postEvent(GameEvent.Resume))
+    vcState.gameController.foreach(_.postEvent(GameEvent.Resume))
 
   def requestContinueBattle(): Unit =
-    gameController.foreach(_.postEvent(GameEvent.ContinueBattle))
+    vcState.gameController.foreach(_.postEvent(GameEvent.ContinueBattle))
 
   def requestNewGame(): Unit =
-    gameController.foreach(_.postEvent(GameEvent.NewGame))
+    vcState.gameController.foreach(_.postEvent(GameEvent.NewGame))
 
   def requestPlaceWizard(wizardType: WizardType): Unit =
-    gameController.foreach(_.selectWizard(wizardType)) // TODO request with post event
-    //gameController.foreach(_.postEvent(GameEvent.SelectWizard(wizardType)))
+    vcState.gameController.foreach: controller =>
+      controller.postEvent(GameEvent.SelectWizard(wizardType))
 
   def requestGridClick(x: Double, y: Double): Unit =
-    gameController.foreach: controller =>
-      if controller.getInputSystem.isInGridArea(x, y) then
-        controller.handleMouseClick(x,y) // TODO request with post event
-        //gameController.foreach(_.postEvent(GameEvent.GridClick(x, y)))
-
-  private def postEvent(event: GameEvent): Unit =
-    gameController.foreach(_.postEvent(event))
+    vcState.gameController.foreach: controller =>
+      Option.when(controller.getInputSystem.isInGridArea(x, y)):
+        for
+          logical <- GridMapper.physicalToLogical(Position(x, y))
+        yield controller.postEvent(GameEvent.GridClicked(logical, x.toInt, y.toInt))
     
-  def getController: Option[GameController] = gameController
-  
-  private def getCurrentElixir: Option[Int] = gameController.map(_.getCurrentElixir)
-  
-  private def getCurrentWave: Option[Int] = gameController.map(_.getCurrentWaveInfo._1)
+  def getController: Option[GameController] = vcState.gameController
   
   def render(): Unit =
-    gameController.foreach: controller =>
+    vcState.gameController.foreach: controller =>
       controller.getRenderSystem.update(controller.getWorld)
       updateShopAndWavePanel()
   
@@ -193,10 +199,11 @@ object ViewController extends JFXApp3:
     cleanup()
 
   private def cleanup(): Unit =
-    gameController.foreach(_.stop())
-    gameController.foreach(_.getWorld.clear())
+    vcState.gameController.foreach(_.stop())
+    vcState.gameController.foreach(_.getWorld.clear())
+    
     GameView.cleanup()
-    gameViewRoot = None
+    vcState = vcState.copy(gameViewRoot = None)
     ImageFactory.clearCache()
 
     Platform.runLater:
@@ -222,4 +229,4 @@ object ViewController extends JFXApp3:
         handleWindowClose()
 
   private def handleWindowClose(): Unit =
-    gameController.foreach(_.postEvent(ExitGame))
+    vcState.gameController.foreach(_.postEvent(ExitGame))
