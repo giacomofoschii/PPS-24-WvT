@@ -15,30 +15,32 @@ case class CombatSystem() extends System:
   type TargetSelector = (EntityId, World)
   type DamageModifier = Int => Int
 
-  override def update(world: World): System =
-    processRangedAttacks(world)
-    updateComponentTimer(world, classOf[CooldownComponent], (t, _) => CooldownComponent(t))
-    updateComponentTimer(world, classOf[FreezedComponent], (t, c) => FreezedComponent(t, c.speedModifier))
-    this
+  override def update(world: World): (World, System) =
+    val world1 = processRangedAttacks(world)
+    val world2 = updateComponentTimer(world1, classOf[CooldownComponent], (t, _) => CooldownComponent(t))
+    val world3 = updateComponentTimer(world2, classOf[FreezedComponent], (t, c) => FreezedComponent(t, c.speedModifier))
+    (world3, this)
   
-  private def processRangedAttacks(world: World): Unit =
-    processWizardProjectiles(world)
-    processThrowerProjectiles(world)
+  private def processRangedAttacks(world: World): World =
+    val world1 = processWizardProjectiles(world)
+    val world2= processThrowerProjectiles(world1)
+    world2
 
-  private def processWizardProjectiles(world: World): Unit =
+  private def processWizardProjectiles(world: World): World =
     @tailrec
-    def processWizardList(wizards: List[(EntityId, WizardType, Position, AttackComponent)]): Unit =
+    def processWizardList(wizards: List[(EntityId, WizardType, Position, AttackComponent)],
+                          currentWorld: World): World =
       wizards match
-        case Nil => ()
+        case Nil => currentWorld
         case (entity, wizardType, pos, attack) :: tail =>
           val projType = wizardType match
             case WizardType.Fire => ProjectileType.Fire
             case WizardType.Ice => ProjectileType.Ice
             case _ => ProjectileType.Wind
-          spawnProjectileAndSetCooldown(world, entity, pos, projType, attack.cooldown)
-          processWizardList(tail)
+          val updatedWorld = spawnProjectileAndSetCooldown(currentWorld, entity, pos, projType, attack.cooldown)
+          processWizardList(tail, updatedWorld)
 
-    val wizards = for
+    val wizards = (for
       entity <- world.getEntitiesByType("wizard")
       wizardType <- world.getComponent[WizardTypeComponent](entity)
       if wizardType.wizardType != WizardType.Generator && wizardType.wizardType != WizardType.Barrier
@@ -46,20 +48,20 @@ case class CombatSystem() extends System:
       attack <- world.getComponent[AttackComponent](entity)
       if !isOnCooldown(entity, world)
       if hasTargetsInRange(pos.position, attack.range, "troll", world, false)
-    yield (entity, wizardType.wizardType, pos.position, attack)
+    yield (entity, wizardType.wizardType, pos.position, attack)).toList
 
-    processWizardList(wizards.toList)
+    processWizardList(wizards, world)
 
-  private def processThrowerProjectiles(world: World): Unit =
+  private def processThrowerProjectiles(world: World): World =
     @tailrec
-    def processThrowerList(throwers: List[(EntityId, Position, AttackComponent)]): Unit =
+    def processThrowerList(throwers: List[(EntityId, Position, AttackComponent)], currentWorld: World): World =
       throwers match
-        case Nil => ()
+        case Nil => currentWorld
         case (entity, pos, attack) :: tail =>
-          spawnProjectileAndSetCooldown(world, entity, pos, ProjectileType.Troll, attack.cooldown)
-          processThrowerList(tail)
+          val updatedWorld = spawnProjectileAndSetCooldown(world, entity, pos, ProjectileType.Troll, attack.cooldown)
+          processThrowerList(tail, updatedWorld)
 
-    val throwers = for
+    val throwers = (for
       entity <- world.getEntitiesByType("troll")
       trollType <- world.getComponent[TrollTypeComponent](entity)
       if trollType.trollType == Thrower
@@ -67,9 +69,9 @@ case class CombatSystem() extends System:
       attack <- world.getComponent[AttackComponent](entity)
       if !isOnCooldown(entity, world)
       if hasTargetsInRange(pos.position, attack.range, "wizard", world, true)
-    yield (entity, pos.position, attack)
+    yield (entity, pos.position, attack)).toList
 
-    processThrowerList(throwers.toList)
+    processThrowerList(throwers, world)
 
   private def hasTargetsInRange(attackerPos: Position, range: Double,
                                 targetType: String, world: World, attacksLeft: Boolean): Boolean =
@@ -97,9 +99,9 @@ case class CombatSystem() extends System:
         Double.MaxValue
 
   private def spawnProjectileAndSetCooldown(world: World, entity: EntityId, position: Position,
-                                           projectileType: ProjectileType, cooldown: Long): Unit =
-    EntityFactory.createProjectile(world, position, projectileType)
-    world.addComponent(entity, CooldownComponent(cooldown))
+                                            projectileType: ProjectileType, cooldown: Long): World =
+    val (world1, _) = EntityFactory.createProjectile(world, position, projectileType)
+    world1.addComponent(entity, CooldownComponent(cooldown))
 
   private def isOnCooldown(entity: EntityId, world: World): Boolean =
     world.getComponent[CooldownComponent](entity).exists(_.remainingTime > 0)
@@ -108,19 +110,20 @@ case class CombatSystem() extends System:
                                                     world: World,
                                                     componentClass: Class[C],
                                                     recreate: (Long, C) => C
-                                                  )(using ct: ClassTag[C]): Unit =
+                                                  )(using ct: ClassTag[C]): World =
     @tailrec
-    def updateList(entities: List[EntityId]): Unit =
+    def updateList(entities: List[EntityId], currentWorld: World): World =
       entities match
-        case Nil => ()
+        case Nil => currentWorld
         case head :: tail =>
-          world.getComponent[C](head).foreach { comp =>
-            val newTime = (comp.asInstanceOf[{ def remainingTime: Long }].remainingTime - 16L).max(0L)
-            if newTime > 0 then
-              world.addComponent(head, recreate(newTime, comp))
-            else
-              world.removeComponent[C](head)
-          }
-          updateList(tail)
-    updateList(world.getEntitiesWithComponent[C].toList)
+          val updatedWorld = world.getComponent[C](head) match
+            case Some(comp) =>
+              val newTime = (comp.asInstanceOf[{ def remainingTime: Long }].remainingTime - 16L).max(0L)
+              if newTime > 0 then
+                currentWorld.addComponent(head, recreate(newTime, comp))
+              else
+                currentWorld.removeComponent[C](head)
+            case None => currentWorld
+          updateList(tail, updatedWorld)
+    updateList(world.getEntitiesWithComponent[C].toList, world)
     
