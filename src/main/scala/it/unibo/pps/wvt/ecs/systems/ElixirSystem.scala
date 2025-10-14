@@ -12,11 +12,11 @@ case class ElixirSystem(
                          activationTime: Long = 0L
                        ) extends System:
 
-  override def update(world: World): System =
+  override def update(world: World): (World, System) =
     Option.when(firstWizardPlaced):
-      updatePeriodicElixirGeneration()
-        .updateGeneratorWizardElixir(world)
-    .getOrElse(this)
+      val periodicSystem = updatePeriodicElixirGeneration()
+      periodicSystem.updateGeneratorWizardElixir(world)
+    .getOrElse((world, this))
 
   private def updatePeriodicElixirGeneration(): ElixirSystem =
     val currentTime = System.currentTimeMillis()
@@ -39,25 +39,27 @@ case class ElixirSystem(
       addElixir(PERIODIC_ELIXIR)
         .copy(lastPeriodicGeneration = currentTime)
 
-  private def updateGeneratorWizardElixir(world: World): ElixirSystem =
+  private def updateGeneratorWizardElixir(world: World): (World, ElixirSystem) =
     val currentTime = System.currentTimeMillis()
     val generatorEntities = world.getEntitiesWithTwoComponents[WizardTypeComponent, ElixirGeneratorComponent].toList
-    generatorEntities.foldLeft(this): (system, entityId) =>
-      processGeneratorEntity(world, entityId, currentTime, system)
+
+    generatorEntities.foldLeft((world, this)): (acc, entityId) =>
+      val (currentWorld, currentSystem) = acc
+      processGeneratorEntity(currentWorld, entityId, currentTime, currentSystem)
 
   private def processGeneratorEntity(
                                       world: World,
                                       entityId: EntityId,
                                       currentTime: Long,
                                       system: ElixirSystem
-                                    ): ElixirSystem =
+                                    ): (World, ElixirSystem) =
     (for
       wizardType <- world.getComponent[WizardTypeComponent](entityId)
       _ <- Option.when(wizardType.wizardType == WizardType.Generator)(())
       elixirGenerator <- world.getComponent[ElixirGeneratorComponent](entityId)
     yield
       processGeneratorCooldown(world, entityId, currentTime, elixirGenerator, system)
-      ).getOrElse(system)
+      ).getOrElse((world, system))
 
   private def processGeneratorCooldown(
                                         world: World,
@@ -65,13 +67,13 @@ case class ElixirSystem(
                                         currentTime: Long,
                                         elixirGenerator: ElixirGeneratorComponent,
                                         system: ElixirSystem
-                                      ): ElixirSystem =
+                                      ): (World, ElixirSystem) =
     world.getComponent[CooldownComponent](entityId)
       .map: cooldown =>
         handleCooldownState(world, entityId, currentTime, elixirGenerator, cooldown, system)
       .getOrElse:
-        setCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
-        system
+        val updatedWorld = setCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
+        (updatedWorld, system)
 
   private def handleCooldownState(
                                    world: World,
@@ -80,22 +82,22 @@ case class ElixirSystem(
                                    elixirGenerator: ElixirGeneratorComponent,
                                    cooldown: CooldownComponent,
                                    system: ElixirSystem
-                                 ): ElixirSystem =
+                                 ): (World, ElixirSystem) =
     cooldown.remainingTime match
       case 0L =>
-        setCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
-        system
+        val updatedWorld = setCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
+        (updatedWorld, system)
       case time if time <= currentTime =>
-        setCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
-        system.addElixir(elixirGenerator.elixirPerSecond)
+        val updatedWorld = setCooldown(world, entityId, currentTime + elixirGenerator.cooldown)
+        (updatedWorld, system.addElixir(elixirGenerator.elixirPerSecond))
       case _ =>
-        system
+        (world, system)
 
-  private def setCooldown(world: World, entityId: EntityId, newTime: Long): Unit =
-    world.getComponent[CooldownComponent](entityId) match
+  private def setCooldown(world: World, entityId: EntityId, newTime: Long): World =
+    val worldWithoutCooldown = world.getComponent[CooldownComponent](entityId) match
       case Some(_) => world.removeComponent[CooldownComponent](entityId)
-      case None => ()
-    world.addComponent(entityId, CooldownComponent(newTime))
+      case None => world
+    worldWithoutCooldown.addComponent(entityId, CooldownComponent(newTime))
 
   def spendElixir(amount: Int): (ElixirSystem, Boolean) =
     Option.when(totalElixir >= amount):

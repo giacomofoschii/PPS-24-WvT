@@ -18,7 +18,8 @@ case class RenderSystem(
     val healthBarSystemTyped = updatedHealthBars.asInstanceOf[HealthBarRenderSystem]
     
     val entities = collectEntitiesWithImages(world1)
-    val healthBars = updatedHealthBars.getHealthBarsToRender
+    val healthBars = healthBarSystemTyped.getHealthBarsToRender
+
 
     val currentState = generateStateHash(entities, healthBars)
     if shouldRender(currentState) then

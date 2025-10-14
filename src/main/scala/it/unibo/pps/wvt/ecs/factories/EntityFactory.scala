@@ -79,7 +79,6 @@ object EntityBuilder:
         )
       )
 
-
 object EntityFactory:
 
   private val projectileConfigs: Map[ProjectileType, ProjectileConfig] = Map(
@@ -196,56 +195,61 @@ object EntityFactory:
     )
   )
 
+  /**
+   * Creates an entity with components, returning the updated World and entity ID.
+   */
   private def createEntity[T: EntityBuilder](
                                               world: World,
                                               position: Position,
                                               config: T
-                                            ): EntityId =
-    val entity = world.createEntity()
+                                            ): (World, EntityId) =
+    val (world1, entity) = world.createEntity()
     val builder = summon[EntityBuilder[T]]
     val components = builder.buildComponents(config, position)
-    components.foreach(component => world.addComponent(entity, component))
-    entity
 
+    val finalWorld = components.foldLeft(world1): (w, component) =>
+      w.addComponent(entity, component)
 
-  def createProjectile(world: World, position: Position, projectileType: ProjectileType): EntityId =
+    (finalWorld, entity)
+
+  def createProjectile(world: World, position: Position, projectileType: ProjectileType): (World, EntityId) =
     projectileConfigs.get(projectileType) match
       case Some(config) => createEntity(world, position, config)
       case None => throw IllegalArgumentException(s"Unknown projectile type: $projectileType")
 
-  private def createWizard(world: World, position: Position, wizardType: WizardType): EntityId =
+  private def createWizard(world: World, position: Position, wizardType: WizardType): (World, EntityId) =
     wizardConfigs.get(wizardType) match
       case Some(config) => createEntity(world, position, config)
       case None => throw IllegalArgumentException(s"Unknown wizard type: $wizardType")
 
-  private def createTroll(world: World, position: Position, trollType: TrollType): EntityId =
+  private def createTroll(world: World, position: Position, trollType: TrollType): (World, EntityId) =
     trollConfigs.get(trollType) match
       case Some(config) => createEntity(world, position, config)
       case None => throw IllegalArgumentException(s"Unknown troll type: $trollType")
 
-  def createGeneratorWizard(world: World, position: Position): EntityId =
+  def createGeneratorWizard(world: World, position: Position): (World, EntityId) =
     createWizard(world, position, WizardType.Generator)
 
-  def createWindWizard(world: World, position: Position): EntityId =
+  def createWindWizard(world: World, position: Position): (World, EntityId) =
     createWizard(world, position, WizardType.Wind)
 
-  def createBarrierWizard(world: World, position: Position): EntityId =
+  def createBarrierWizard(world: World, position: Position): (World, EntityId) =
     createWizard(world, position, WizardType.Barrier)
 
-  def createFireWizard(world: World, position: Position): EntityId =
+  def createFireWizard(world: World, position: Position): (World, EntityId) =
     createWizard(world, position, WizardType.Fire)
 
-  def createIceWizard(world: World, position: Position): EntityId =
+  def createIceWizard(world: World, position: Position): (World, EntityId) =
     createWizard(world, position, WizardType.Ice)
 
-  def createBaseTroll(world: World, pos: Position): EntityId =
+  def createBaseTroll(world: World, pos: Position): (World, EntityId) =
     createTroll(world, pos, TrollType.Base)
 
-  def createWarriorTroll(world: World, pos: Position): EntityId =
+  def createWarriorTroll(world: World, pos: Position): (World, EntityId) =
     createTroll(world, pos, TrollType.Warrior)
 
-  def createAssassinTroll(world: World, pos: Position): EntityId =
+  def createAssassinTroll(world: World, pos: Position): (World, EntityId) =
     createTroll(world, pos, TrollType.Assassin)
 
-  def createThrowerTroll(world: World, pos: Position): EntityId =
+  def createThrowerTroll(world: World, pos: Position): (World, EntityId) =
     createTroll(world, pos, TrollType.Thrower)
