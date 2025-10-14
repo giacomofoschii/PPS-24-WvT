@@ -2,6 +2,7 @@ package it.unibo.pps.wvt.controller
 
 import it.unibo.pps.wvt.controller.GameEvent.*
 import it.unibo.pps.wvt.engine.*
+import it.unibo.pps.wvt.engine.GamePhase.{Paused, Playing}
 import it.unibo.pps.wvt.input.InputSystem
 import it.unibo.pps.wvt.view.{ShopPanel, ViewController, WavePanel}
 import it.unibo.pps.wvt.ecs.core.*
@@ -9,7 +10,6 @@ import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.components.WizardType.*
 import it.unibo.pps.wvt.ecs.factories.EntityFactory
 import it.unibo.pps.wvt.ecs.systems.*
-import it.unibo.pps.wvt.engine.GamePhase.{Paused, Playing}
 import it.unibo.pps.wvt.utilities.ViewConstants.*
 import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 import scalafx.application.Platform
@@ -17,8 +17,7 @@ import scalafx.application.Platform
 import java.util.concurrent.ConcurrentLinkedQueue
 import scala.annotation.tailrec
 
-
-class GameController(world: World):
+class GameController(private var world: World):
 
   private type StateTransformation = GameSystemsState => GameSystemsState
 
@@ -40,7 +39,7 @@ class GameController(world: World):
     handler
 
   def initialize(): Unit =
-    world.clear()
+    world = World.empty
     state = GameSystemsState.initial()
     pendingActions.clear()
 
@@ -66,7 +65,10 @@ class GameController(world: World):
       processPendingActions()
 
       val oldWave = state.getCurrentWave
-      state = state.updateAll(world)
+      val (newWorld, newState) = state.updateAll(world)
+
+      world = newWorld
+      state = newState
 
       state.selectedWizardType.foreach(_ => repaintGrid())
 
@@ -104,14 +106,16 @@ class GameController(world: World):
       case None =>
         ViewController.showError("No wizard selected for placement, please select one from the shop first.")
         ViewController.hidePlacementGrid()
-    
+
   def placeWizard(wizardType: WizardType, position: Position): Unit =
     val cost = ShopPanel.getWizardCost(wizardType)
     val canPlace = Option.when(!world.hasWizardAt(position) && state.canAfford(cost))(())
-  
+
     canPlace match
       case Some(_) =>
-        createWizardEntity(wizardType, position)
+        val (newWorld, _) = createWizardEntity(wizardType, position)
+        world = newWorld
+
         val isFirstWizard = !state.elixir.firstWizardPlaced
         val transformation: StateTransformation = currentState =>
           currentState.spendElixir(cost).map { stateAfterSpending =>
@@ -159,8 +163,7 @@ class GameController(world: World):
         )
       .toSeq
 
-
-  private def createWizardEntity(wizardType: WizardType, position: Position): EntityId =
+  private def createWizardEntity(wizardType: WizardType, position: Position): (World, EntityId) =
     wizardType match
       case Generator => EntityFactory.createGeneratorWizard(world, position)
       case Barrier => EntityFactory.createBarrierWizard(world, position)
@@ -169,13 +172,13 @@ class GameController(world: World):
       case Ice => EntityFactory.createIceWizard(world, position)
 
   def handleContinueBattle(): Unit =
-    world.clear()
+    world = World.empty
     state = state.handleVictory()
     ViewController.hidePlacementGrid()
     ViewController.render()
 
   def handleNewGame(): Unit =
-    world.clear()
+    world = World.empty
     state = state.reset()
     notifyWaveChange(state.getCurrentWave)
     ViewController.hidePlacementGrid()

@@ -7,7 +7,6 @@ import it.unibo.pps.wvt.ecs.systems.{CollisionSystem, CombatSystem, ElixirSystem
 import it.unibo.pps.wvt.utilities.GridMapper
 import it.unibo.pps.wvt.view.ViewController
 
-
 private[controller] case class GameSystemsState(
                                                  movement: MovementSystem,
                                                  collision: CollisionSystem,
@@ -19,38 +18,42 @@ private[controller] case class GameSystemsState(
                                                  selectedWizardType: Option[WizardType] = None,
                                                  currentWave: Int = 1
                                                ):
+  
+  def updateAll(world: World): (World, GameSystemsState) =
+    val (world1, updatedElixir) = elixir.update(world)
+    val (world2, updatedMovement) = movement.update(world1)
+    val (world3, updatedCombat) = combat.update(world2)
+    val (world4, updatedCollision) = collision.update(world3)
 
-  def updateAll(world: World): GameSystemsState =
-    val updatedElixir = elixir.update(world).asInstanceOf[ElixirSystem]
-    val updatedMovement = movement.update(world).asInstanceOf[MovementSystem]
-    val updatedCombat = combat.update(world).asInstanceOf[CombatSystem]
-    val updatedCollision = collision.update(world).asInstanceOf[CollisionSystem]
-    val updatedHealth = health
-      .copy(elixirSystem = updatedElixir)
-      .update(world)
-      .asInstanceOf[HealthSystem]
-    val finalElixir = updatedHealth.elixirSystem
+    val healthWithElixir = health.copy(elixirSystem = updatedElixir.asInstanceOf[ElixirSystem])
+    val (world5, updatedHealth) = healthWithElixir.update(world4)
+
+    val finalElixir = updatedHealth.asInstanceOf[HealthSystem].elixirSystem
+
     val syncedSpawn = spawn.copy(currentWave = currentWave)
-    val updatedSpawn = syncedSpawn.update(world).asInstanceOf[SpawnSystem]
-    val updatedRender = render.update(world).asInstanceOf[RenderSystem]
+    val (world6, updatedSpawn) = syncedSpawn.update(world5)
+
+    val (world7, updatedRender) = render.update(world6)
+
     val newState = copy(
-      movement = updatedMovement,
-      collision = updatedCollision,
-      combat = updatedCombat,
+      movement = updatedMovement.asInstanceOf[MovementSystem],
+      collision = updatedCollision.asInstanceOf[CollisionSystem],
+      combat = updatedCombat.asInstanceOf[CombatSystem],
       elixir = finalElixir,
-      health = updatedHealth,
-      spawn = updatedSpawn,
-      render = updatedRender
+      health = updatedHealth.asInstanceOf[HealthSystem],
+      spawn = updatedSpawn.asInstanceOf[SpawnSystem],
+      render = updatedRender.asInstanceOf[RenderSystem]
     )
-    checkGameConditions(world)
+
+    checkGameConditions(world7)
       .foreach(event => ViewController.getController.foreach(_.postEvent(event)))
 
-    newState
-
+    (world7, newState)
+  
   private def checkGameConditions(world: World): Option[GameEvent] =
     checkWinCondition(world)
       .orElse(checkLoseCondition(world))
-
+  
   private def checkWinCondition(world: World): Option[GameEvent] =
     Option.when(
       spawn.hasSpawnedAtLeastOnce &&
@@ -58,13 +61,13 @@ private[controller] case class GameSystemsState(
         world.getEntitiesByType("troll").isEmpty &&
         spawn.getPendingSpawnsCount == 0
     )(GameWon)
-
+  
   private def checkLoseCondition(world: World): Option[GameEvent] =
     LazyList.from(world.getEntitiesByType("troll"))
       .flatMap(entity => world.getComponent[PositionComponent](entity))
-      .find(pos => pos.position.x <= GridMapper.getCellBounds(0,0)._1 + 1e-3)
+      .find(pos => pos.position.x <= GridMapper.getCellBounds(0, 0)._1 + 1e-3)
       .map(_ => GameLost)
-
+  
   def spendElixir(amount: Int): Option[GameSystemsState] =
     elixir.spendElixir(amount) match
       case (newElixirSystem, true) =>
@@ -73,13 +76,13 @@ private[controller] case class GameSystemsState(
           health = health.copy(elixirSystem = newElixirSystem)
         ))
       case _ => None
-
+  
   def selectWizard(wizardType: WizardType): GameSystemsState =
     copy(selectedWizardType = Some(wizardType))
-
+  
   def clearWizardSelection: GameSystemsState =
     copy(selectedWizardType = None)
-
+  
   def handleVictory(): GameSystemsState =
     val nextWave = currentWave + 1
     val freshElixir = ElixirSystem()
@@ -94,10 +97,10 @@ private[controller] case class GameSystemsState(
       render = RenderSystem(),
       currentWave = nextWave
     )
-
+  
   def handleDefeat(): GameSystemsState =
     GameSystemsState.initial()
-
+  
   def reset(): GameSystemsState =
     GameSystemsState.initial()
 
