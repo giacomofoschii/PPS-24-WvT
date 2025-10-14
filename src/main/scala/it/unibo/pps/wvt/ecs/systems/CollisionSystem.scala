@@ -8,44 +8,27 @@ import scala.annotation.tailrec
 import scala.util.Random
 
 case class CollisionSystem(
-                          private val random: Random = Random()
+                            private val random: Random = Random()
                           ) extends System:
-  
+
   override def update(world: World): (World, System) =
     val world1 = processProjectileCollisions(world)
     val world2 = processMeleeCollisions(world1)
-    val world3 = processBlockedTrolls(world2)
-    (world3, this)
-    
-  private def processBlockedTrolls(world: World): World =
-    val blockedTrolls = world.getEntitiesWithComponent[BlockedComponent].toList
-    
-    @tailrec
-    def processBlocked(remaining: List[EntityId], currentWorld: World): World = 
-      remaining match
-        case Nil => currentWorld
-        case troll :: tail =>
-          val updatedWorld = world.getComponent[BlockedComponent](troll) match
-            case Some(blocked) if !currentWorld.getAllEntities.contains(blocked.blockedBy) =>
-              currentWorld.removeComponent[BlockedComponent](troll)
-            case _ => currentWorld
-          processBlocked(tail, updatedWorld)
-        
-    processBlocked(blockedTrolls, world)
-    
+    (world2, this)
+
   private def processProjectileCollisions(world: World): World =
     val projectiles = world.getEntitiesByType("projectile").toList
-    
+
     @tailrec
-    def processProjectileList(remaining: List[EntityId], currentWorld: World): World = 
+    def processProjectileList(remaining: List[EntityId], currentWorld: World): World =
       remaining match
         case Nil => currentWorld
         case projectile :: tail =>
           val updatedWorld = processProjectileCollision(projectile, currentWorld)
           processProjectileList(tail, updatedWorld)
-        
+
     processProjectileList(projectiles, world)
-    
+
   private def processProjectileCollision(projectile: EntityId, world: World): World =
     (for
       projPos <- world.getComponent[PositionComponent](projectile)
@@ -56,7 +39,7 @@ case class CollisionSystem(
       findCollidingEntity(projPos.position, targets, world) match
         case Some(target) =>
           var updatedWorld = world
-          
+
           if projType.projectileType == ProjectileType.Ice then
             updatedWorld = world.getComponent[FreezedComponent](target) match
               case Some(freezed) =>
@@ -64,14 +47,14 @@ case class CollisionSystem(
                 world.addComponent(target, FreezedComponent(newDuration, freezed.speedModifier))
               case None =>
                 world.addComponent(target, FreezedComponent(4000, 0.5))
-          
+
           updatedWorld
             .addComponent(target, CollisionComponent(damage.amount))
             .destroyEntity(projectile)
         case None => world
-        
+
       ).getOrElse(world)
-        
+
   private def getValidTargets(projType: ProjectileType, world: World): List[EntityId] =
     projType match
       case ProjectileType.Troll => world.getEntitiesByType("wizard").toList
@@ -79,9 +62,9 @@ case class CollisionSystem(
 
   private def findCollidingEntity(position: Position, targets: List[EntityId], world: World): Option[EntityId] =
     val currentGrid = GridMapper.physicalToLogical(position)
-    
+
     @tailrec
-    def findCollision(remaining: List[EntityId]): Option[EntityId] = 
+    def findCollision(remaining: List[EntityId]): Option[EntityId] =
       remaining match
         case Nil => None
         case head :: tail =>
@@ -90,12 +73,12 @@ case class CollisionSystem(
               val targetGrid = GridMapper.physicalToLogical(target.position)
               if currentGrid == targetGrid then Some(head) else findCollision(tail)
             case None => findCollision(tail)
-    
+
     currentGrid.flatMap(_ => findCollision(targets))
-      
+
   private def processMeleeCollisions(world: World): World =
     val meleeTrolls = world.getEntitiesByType("troll").toList
-    
+
     @tailrec
     def processMeleeList(remaining: List[EntityId], currentWorld: World): World =
       remaining match
@@ -103,9 +86,9 @@ case class CollisionSystem(
         case troll :: tail =>
           val updatedWorld = processMeleeCollision(troll, currentWorld)
           processMeleeList(tail, updatedWorld)
-        
+
     processMeleeList(meleeTrolls, world)
-    
+
   private def processMeleeCollision(troll: EntityId, world: World): World =
     (for
       trollPos <- world.getComponent[PositionComponent](troll)
@@ -115,25 +98,20 @@ case class CollisionSystem(
       val wizards = world.getEntitiesByType("wizard").toList
       findCollidingEntity(trollPos.position, wizards, world) match
         case Some(wizard) =>
-          var updatedWorld = world
-          
-          if world.getComponent[BlockedComponent](troll).exists(_.blockedBy != wizard) then
-            updatedWorld = world.removeComponent[BlockedComponent](troll)
-            updatedWorld = updatedWorld.addComponent(troll, BlockedComponent(wizard))
-          else if !world.hasComponent[BlockedComponent](troll) then
-            updatedWorld = world.addComponent(troll, BlockedComponent(wizard))
-            
+          var updatedWorld = world.removeComponent[BlockedComponent](troll)
+          updatedWorld = updatedWorld.addComponent(troll, BlockedComponent(wizard))
+
           if trollType.trollType != TrollType.Thrower && !isOnCooldown(troll, world) then
             val damage = calculateMeleeDamage(trollType.trollType, attack.damage)
-            
+
             updatedWorld = updatedWorld
               .addComponent(wizard, CollisionComponent(damage))
               .addComponent(troll, CooldownComponent(attack.cooldown))
-            
+
           updatedWorld
         case None => world
       ).getOrElse(world)
-      
+
   private def calculateMeleeDamage(trollType: TrollType, baseDamage: Int): Int =
     trollType match
       case TrollType.Assassin if random.nextDouble < 0.05 => baseDamage * 2
