@@ -15,12 +15,11 @@ case class HealthBarRenderSystem(
                                   private val healthBarCache: Map[EntityId, RenderableHealthBar] = Map.empty
                                 ) extends System:
 
-  override def update(world: World): (World, System) =
+  override def update(world: World): System =
     collectHealthBarData(world)
       .map(calculateHealthBarRendering)
       .map(filterVisibleBars)
-      .fold((world, this)): renderBars =>
-        (world, copy(healthBarCache = renderBars))
+      .fold(this)(renderBars => copy(healthBarCache = renderBars))
 
   private def collectHealthBarData(world: World): Option[List[HealthBarData]] =
     @tailrec
@@ -50,7 +49,7 @@ case class HealthBarRenderSystem(
 
   private def calculateHealthBarRendering(data: List[HealthBarData]): Map[EntityId, RenderableHealthBar] =
     @tailrec
-    def buildMap(remaining: List[HealthBarData],
+    def buildMap(remaining: List[HealthBarData], 
                  acc: Map[EntityId, RenderableHealthBar]): Map[EntityId, RenderableHealthBar] =
       remaining match
         case Nil => acc
