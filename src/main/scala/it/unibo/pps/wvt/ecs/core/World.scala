@@ -11,7 +11,7 @@ case class World(
                 private val entitiesByType: Map[String, Set[EntityId]] = Map.empty
                 ):
 
-  def createentity(): (World, EntityId) =
+  def createEntity(): (World, EntityId) =
     val entity = EntityId.generate()
     (copy(entities = entities + entity), entity)
 
@@ -62,7 +62,7 @@ case class World(
   def getEntitiesWithComponent[T <: Component](using ct: reflect.ClassTag[T]): Set[EntityId] =
     components.get(ct.runtimeClass).map(_.keySet).getOrElse(Set.empty)
 
-  def getEntititesWithTwoComponents[A <: Component, B <: Component]
+  def getEntitiesWithTwoComponents[A <: Component, B <: Component]
   (using ctA: reflect.ClassTag[A], ctB: reflect.ClassTag[B]): Set[EntityId] =
     val entitiesA = getEntitiesWithComponent[A]
     val entitiesB = getEntitiesWithComponent[B]
@@ -119,13 +119,13 @@ case class World(
   private def updateEntityTypeMapping(entity: EntityId, component: Component): Map[String, Set[EntityId]] =
     component match
       case _: WizardTypeComponent =>
-        entitiesByType.updatedWith("Wizard"): opt =>
+        entitiesByType.updatedWith("wizard"): opt =>
           Some(opt.getOrElse(Set.empty) + entity)
       case _: TrollTypeComponent =>
-        entitiesByType.updatedWith("Troll"): opt =>
+        entitiesByType.updatedWith("troll"): opt =>
           Some(opt.getOrElse(Set.empty) + entity)
       case _: ProjectileTypeComponent =>
-        entitiesByType.updatedWith("Projectile"): opt =>
+        entitiesByType.updatedWith("projectile"): opt =>
           Some(opt.getOrElse(Set.empty) + entity)
       case _ => entitiesByType
 
