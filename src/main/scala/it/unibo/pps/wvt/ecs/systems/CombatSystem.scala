@@ -20,7 +20,7 @@ case class CombatSystem() extends System:
     val world2 = updateComponentTimer(world1, classOf[CooldownComponent], (t, _) => CooldownComponent(t))
     val world3 = updateComponentTimer(world2, classOf[FreezedComponent], (t, c) => FreezedComponent(t, c.speedModifier))
     (world3, this)
-  
+
   private def processRangedAttacks(world: World): World =
     val world1 = processWizardProjectiles(world)
     val world2= processThrowerProjectiles(world1)
@@ -46,7 +46,7 @@ case class CombatSystem() extends System:
       if wizardType.wizardType != WizardType.Generator && wizardType.wizardType != WizardType.Barrier
       pos <- world.getComponent[PositionComponent](entity)
       attack <- world.getComponent[AttackComponent](entity)
-      if hasTargetsInRange(pos.position, attack.range, "troll", world, false)
+      if findClosestTarget(pos.position, attack.range, "troll", world, attacksLeft = false).isDefined
       if !isOnCooldown(entity, world)
     yield (entity, wizardType.wizardType, pos.position, attack)).toList
 
@@ -58,7 +58,12 @@ case class CombatSystem() extends System:
       throwers match
         case Nil => currentWorld
         case (entity, pos, attack) :: tail =>
-          val updatedWorld = spawnProjectileAndSetCooldown(world, entity, pos, ProjectileType.Troll, attack.cooldown)
+          val worldWithBlock = findClosestTarget(pos, attack.range, "wizard", world, attacksLeft = true)
+            .map(target => addBlocker(currentWorld, entity, target))
+            .getOrElse(currentWorld)
+
+          val updatedWorld = spawnProjectileAndSetCooldown(worldWithBlock, entity, pos,
+            ProjectileType.Troll, attack.cooldown)
           processThrowerList(tail, updatedWorld)
 
     val throwers = (for
@@ -67,29 +72,31 @@ case class CombatSystem() extends System:
       if trollType.trollType == Thrower
       pos <- world.getComponent[PositionComponent](entity)
       attack <- world.getComponent[AttackComponent](entity)
-      if hasTargetsInRange(pos.position, attack.range, "wizard", world, true)
+      if findClosestTarget(pos.position, attack.range, "wizard", world, attacksLeft = true).isDefined
       if !isOnCooldown(entity, world)
     yield (entity, pos.position, attack)).toList
 
     processThrowerList(throwers, world)
 
-  private def hasTargetsInRange(attackerPos: Position, range: Double,
-                                targetType: String, world: World, attacksLeft: Boolean): Boolean =
-    @tailrec
-    def checkTargets(targets: List[EntityId]): Boolean =
-      targets match
-        case Nil => false
-        case head :: tail =>
-          world.getComponent[PositionComponent](head) match
-            case Some(targetPos) =>
-              val distance = calculateDistance(attackerPos, targetPos.position)
-              val correctDirection = if attacksLeft then distance <= 0 else distance >= 0
-              val inRange = math.abs(distance) <= range
-              if inRange && correctDirection then true
-              else checkTargets(tail)
-            case None => checkTargets(tail)
+  private def addBlocker(world: World, troll: EntityId, wizard: EntityId): World =
+    world.getComponent[BlockedComponent](troll) match
+      case Some(blocked) if blocked.blockedBy == wizard => world
+      case _ =>
+        world.removeComponent[BlockedComponent](troll)
+          .addComponent(troll, BlockedComponent(wizard))
 
-    checkTargets(world.getEntitiesByType(targetType).toList)
+  private def findClosestTarget(attackerPos: Position, range: Double,
+                                targetType: String, world: World, attacksLeft: Boolean): Option[EntityId] =
+    world.getEntitiesByType(targetType)
+      .flatMap(target => world.getComponent[PositionComponent](target).map(pos => (target, pos.position)))
+      .filter { case (_, targetPos) =>
+        val distance = calculateDistance(attackerPos, targetPos)
+        val correctDirection = if attacksLeft then distance <= 0 else distance >= 0
+        val inRange = math.abs(distance) <= range
+        inRange && correctDirection
+      }
+      .minByOption { case (_, targetPos) => math.abs(calculateDistance(attackerPos, targetPos)) }
+      .map(_._1)
 
   private def calculateDistance(pos1: Position, pos2: Position): Double =
     (GridMapper.physicalToLogical(pos1), GridMapper.physicalToLogical(pos2)) match
@@ -126,4 +133,3 @@ case class CombatSystem() extends System:
             case None => currentWorld
           updateList(tail, updatedWorld)
     updateList(world.getEntitiesWithComponent[C].toList, world)
-    

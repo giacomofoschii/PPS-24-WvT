@@ -81,11 +81,17 @@ case class HealthSystem(
     else copy(entitiesToRemove = entitiesToRemove + entityId)
 
   private def removeDeadEntities(world: World): (World, HealthSystem) =
-    val updatedWorld = entitiesToRemove
-      .filter(world.getAllEntities.contains)
-      .foldLeft(world)((w, entity) => w.destroyEntity(entity))
+    val worldWithCascadingRemovals = entitiesToRemove.foldLeft(world)(removeBlockedComponents)
+
+    val updatedWorld = entitiesToRemove.intersect(worldWithCascadingRemovals.getAllEntities)
+      .foldLeft(worldWithCascadingRemovals)((w, entity) => w.destroyEntity(entity))
 
     (updatedWorld, copy(entitiesToRemove = Set.empty))
+
+  private def removeBlockedComponents(world: World, deadEntityId: EntityId): World =
+    world.getEntitiesWithComponent[BlockedComponent]
+      .filter(entity => world.getComponent[BlockedComponent](entity).exists(_.blockedBy == deadEntityId))
+      .foldLeft(world)((w, entity) => w.removeComponent[BlockedComponent](entity))
 
   def isAlive(world: World, entityId: EntityId): Boolean =
     world.getComponent[HealthComponent](entityId).exists(_.isAlive)
