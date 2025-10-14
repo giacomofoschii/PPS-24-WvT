@@ -5,6 +5,7 @@ import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.components.TrollType.*
 import it.unibo.pps.wvt.ecs.factories.EntityFactory
 import it.unibo.pps.wvt.ecs.config.WaveLevel
+import it.unibo.pps.wvt.engine.GameEngine
 import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 import it.unibo.pps.wvt.utilities.ViewConstants.*
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
@@ -25,7 +26,8 @@ case class SpawnSystem(
                         private[systems] val firstWizardRow: Option[Int] = None,
                         hasSpawnedAtLeastOnce: Boolean = false,
                         private[systems] val trollsSpawnedThisWave: Int = 0,
-                        private[systems] val currentWave: Int = 1
+                        private[systems] val currentWave: Int = 1,
+                        private[systems] val pausedAt: Option[Long] = None
                       ) extends System:
 
   private type TrollSelector = (Random, Int) => TrollType
@@ -33,27 +35,43 @@ case class SpawnSystem(
 
   override def update(world: World): (World, System) =
     val currentTime = System.currentTimeMillis()
-
-    val (world1, updatedSystem) =
-      if !isActive && hasWizardBeenPlaced(world) then
+    val systemAfterPauseHandling = handlePauseResume(currentTime)
+  
+    val (world1, updatedSystem) = 
+      Option.when(!systemAfterPauseHandling.isActive && hasWizardBeenPlaced(world)):
         val wizardRow = getFirstWizardRow(world)
-        (world, copy(isActive = true, firstWizardRow = wizardRow, lastSpawnTime = currentTime))
-      else
-        (world, this)
-
-    if updatedSystem.isActive then
-      val (world2, afterSpawn) = updatedSystem
-        .processScheduledSpawns(world1, currentTime)
-
+        (world, copy(
+          isActive = true,
+          firstWizardRow = wizardRow,
+          lastSpawnTime = currentTime))
+      .getOrElse((world, systemAfterPauseHandling))
+  
+    Option.when(updatedSystem.isActive):
+      val (world2, afterSpawn) = updatedSystem.processScheduledSpawns(world1, currentTime)
       val (world3, afterGenerate) = afterSpawn.generateNewSpawnsIfNeeded(world2, currentTime)
-
       val maxTrolls = WaveLevel.maxTrollsPerWave(afterGenerate.currentWave)
       if afterGenerate.trollsSpawnedThisWave >= maxTrolls && afterGenerate.pendingSpawns.isEmpty then
         (world3, afterGenerate.copy(isActive = false))
       else
         (world3, afterGenerate)
-    else
-      (world1, updatedSystem)
+    .getOrElse((world1, updatedSystem))
+      
+  private def handlePauseResume(currentTime: Long): SpawnSystem =
+    val isPaused = GameEngine.getInstance.exists(_.isPaused)
+
+    (isPaused, pausedAt) match
+      case (true, None) =>
+        copy(pausedAt = Some(currentTime))
+      case (false, Some(pauseTime)) =>
+        val pauseDuration = currentTime - pauseTime
+        copy(
+          lastSpawnTime = lastSpawnTime + pauseDuration,
+          pendingSpawns = pendingSpawns.map(event =>
+            event.copy(scheduledTime = event.scheduledTime + pauseDuration)
+          ),
+          pausedAt = None
+        )
+      case _ => this
 
   private def hasWizardBeenPlaced(world: World): Boolean =
     world.getEntitiesByType("wizard").nonEmpty
@@ -65,28 +83,35 @@ case class SpawnSystem(
       .flatMap(p => GridMapper.physicalToLogical(p.position).map(_._1))
 
   private def processScheduledSpawns(world: World, currentTime: Long): (World, SpawnSystem) =
-      val (toSpawn, remaining) = pendingSpawns.partition(_.scheduledTime <= currentTime)
-      val finalWorld = toSpawn.foldLeft(world): (currentWorld, event) =>
-        val (updatedWorld, _) = spawnTroll(event, currentWorld)
-        updatedWorld
-
-      (finalWorld, copy(pendingSpawns = remaining))
+    pausedAt
+      .map(_ => (world, this))
+      .getOrElse:
+        val (toSpawn, remaining) = pendingSpawns.partition(_.scheduledTime <= currentTime)
+        val finalWorld = toSpawn.foldLeft(world): (currentWorld, event) =>
+          val (updatedWorld, _) = spawnTroll(event, currentWorld)
+          updatedWorld
+        
+        (finalWorld, copy(pendingSpawns = remaining))
 
   private def generateNewSpawnsIfNeeded(world: World, currentTime: Long): (World, SpawnSystem) =
-    val maxTrolls = WaveLevel.maxTrollsPerWave(currentWave)
-    if shouldGenerateNewSpawn(currentTime) && trollsSpawnedThisWave < maxTrolls then
-      val remainingTrolls = maxTrolls - trollsSpawnedThisWave
-      val numOfSpawns = Math.min(rng.nextInt(3) + 1, remainingTrolls)
-      val newSpawns = generateSpawnBatch(currentTime, firstWizardRow, numOfSpawns)
-
-      (world, copy(
-        pendingSpawns = pendingSpawns ++ newSpawns,
-        lastSpawnTime = currentTime,
-        hasSpawnedAtLeastOnce = true,
-        trollsSpawnedThisWave = trollsSpawnedThisWave + numOfSpawns
-      ))
-    else
-      (world, this)
+    pausedAt
+      .map(_ => (world, this))
+      .getOrElse:
+        val maxTrolls = WaveLevel.maxTrollsPerWave(currentWave)
+        Option.when(shouldGenerateNewSpawn(currentTime) && trollsSpawnedThisWave < maxTrolls):
+          val remainingTrolls = maxTrolls - trollsSpawnedThisWave
+          val numOfSpawns = Math.min(
+            rng.nextInt(MAX_BATCH_SIZE - BASE_BATCH_SIZE + 1) + BASE_BATCH_SIZE,
+            remainingTrolls
+          )
+          val newSpawns = generateSpawnBatch(currentTime, firstWizardRow, numOfSpawns)
+          (world, copy(
+            pendingSpawns = pendingSpawns ++ newSpawns,
+            lastSpawnTime = currentTime,
+            hasSpawnedAtLeastOnce = true,
+            trollsSpawnedThisWave = trollsSpawnedThisWave + numOfSpawns
+          ))
+        .getOrElse((world, this))
 
   private def shouldGenerateNewSpawn(currentTime: Long): Boolean =
     val interval = if !hasSpawnedAtLeastOnce then
