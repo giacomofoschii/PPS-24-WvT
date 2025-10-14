@@ -1,7 +1,7 @@
 package it.unibo.pps.wvt.utilities
 
 object GameConstants:
-  val TARGET_FPS: Int = 60
+  private val TARGET_FPS: Int = 60
   val FRAME_TIME_NANOS: Long = 1_000_000_000L / TARGET_FPS
   val FRAME_TIME_MILLIS: Long = 1000L / TARGET_FPS
 
@@ -22,12 +22,12 @@ object GamePlayConstants:
   val BATCH_INTERVAL = 1500L
 
   val BASE_BATCH_SIZE = 1 // It starts with 1 troll per batch
-  val MAX_BATCH_SIZE = 2 // Maximum 2 trolls per batch
+  val MAX_BATCH_SIZE = 3 // Maximum 3 trolls per batch
 
   // Multipliers per wave
-  val HEALTH_INCREASE_PER_WAVE = 0.07
-  val SPEED_INCREASE_PER_WAVE = 0.05
-  val DAMAGE_INCREASE_PER_WAVE = 0.06
+  val HEALTH_INCREASE_PER_WAVE = 0.10
+  val SPEED_INCREASE_PER_WAVE = 0.08
+  val DAMAGE_INCREASE_PER_WAVE = 0.11
 
   // Troll parameters
   val BASE_TROLL_HEALTH: Int = 100
@@ -73,17 +73,17 @@ object GamePlayConstants:
   val BARRIER_WIZARD_HEALTH: Int = 300
   val BARRIER_WIZARD_COST: Int = 200
 
-  val FIRE_WIZARD_HEALTH: Int = 80
-  val FIRE_WIZARD_COST: Int = 200
+  val FIRE_WIZARD_HEALTH: Int = 100
+  val FIRE_WIZARD_COST: Int = 250
   val FIRE_WIZARD_ATTACK_DAMAGE: Int = 50
   val FIRE_WIZARD_RANGE: Double = 2.0
   val FIRE_WIZARD_COOLDOWN: Long = 2500L
 
-  val ICE_WIZARD_HEALTH: Int = 100
-  val ICE_WIZARD_COST: Int = 250
+  val ICE_WIZARD_HEALTH: Int = 150
+  val ICE_WIZARD_COST: Int = 200
   val ICE_WIZARD_ATTACK_DAMAGE: Int = 25
   val ICE_WIZARD_RANGE: Double = 2.5
-  val ICE_WIZARD_COOLDOWN: Long = 5000L
+  val ICE_WIZARD_COOLDOWN: Long = 4000L
 
   val PROJECTILE_SPEED: Double = 0.5
 
