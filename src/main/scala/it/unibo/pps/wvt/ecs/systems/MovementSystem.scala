@@ -7,7 +7,6 @@ import it.unibo.pps.wvt.ecs.core.*
 import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 import it.unibo.pps.wvt.utilities.ViewConstants.*
 
-import scala.annotation.tailrec
 import scala.util.Random
 
 case class MovementSystem(
@@ -17,47 +16,82 @@ case class MovementSystem(
 
   private type MovementStrategy = (Position, MovementComponent, EntityId, World, Double) => Position
 
-  override def update(world: World): System =
-    val movableEntities = world.getEntitiesWithTwoComponents[PositionComponent, MovementComponent]
+  override def update(world: World): (World, System) =
+      val movableEntities = world.getEntitiesWithTwoComponents[PositionComponent, MovementComponent]
 
-    @tailrec
-    def processMovements(entities: List[EntityId]): Unit =
-      entities match
-        case Nil => ()
-        case head :: tail =>
-          calculateNewPosition(head, world).foreach: newPos =>
-            world.addComponent(head, PositionComponent(newPos))
-          processMovements(tail)
+      val worldAfterMovement = movableEntities.toList.foldLeft(world): (currentWorld, entity) =>
+        val (_, worldAfterZigzag) = calculateNewPosition(entity, currentWorld) match
+          case Some(newPos) =>
+            val w1 = currentWorld.addComponent(entity, PositionComponent(newPos))
+            val w2 = updateZigzagStateIfNeeded(entity, w1)
+            (w1, w2)
+          case None =>
+            (currentWorld, currentWorld)
+        worldAfterZigzag
 
-    processMovements(movableEntities.toList)
-    removeOutOfBoundsProjectiles(world)
-    this
+      val worldAfterInit = initializeZigzagForNewAssassins(worldAfterMovement)
+      val worldAfterCleanup = removeOutOfBoundsProjectiles(worldAfterInit)
 
-  private def removeOutOfBoundsProjectiles(world: World): Unit =
-    @tailrec
-    def checkAndRemove(projectiles: List[EntityId]): Unit =
-      projectiles match
-        case Nil => ()
-        case head :: tail =>
-          world.getComponent[PositionComponent](head).foreach: posComp =>
-            val pos = posComp.position
-            val isTrollProjectile = world.getComponent[ProjectileTypeComponent](head)
-              .exists(_.projectileType == ProjectileType.Troll)
+      (worldAfterCleanup, this)
 
-            val shouldRemove = if isTrollProjectile then
+  private def updateZigzagStateIfNeeded(entity: EntityId, world: World): World =
+    world.getComponent[ZigZagStateComponent](entity) match
+      case Some(state) =>
+        val currentTime = System.currentTimeMillis()
+        if shouldChangePhase(currentTime, state.phaseStartTime) then
+          val newPhase = state.currentPhase match
+            case OnSpawnRow => OnAlternateRow
+            case OnAlternateRow => OnSpawnRow
+
+          val newState = state.copy(
+            currentPhase = newPhase,
+            phaseStartTime = currentTime
+          )
+          world.updateComponent[ZigZagStateComponent](entity, _ => newState)
+        else
+          world
+      case None => world
+
+  private def initializeZigzagForNewAssassins(world: World): World =
+    val assassins = world.getEntitiesByType("troll").filter: entity =>
+      world.getComponent[TrollTypeComponent](entity)
+        .exists(_.trollType == TrollType.Assassin) &&
+        !world.hasComponent[ZigZagStateComponent](entity)
+
+    assassins.foldLeft(world): (w, entity) =>
+      w.getComponent[PositionComponent](entity) match
+        case Some(posComp) =>
+          GridMapper.physicalToLogical(posComp.position) match
+            case Some((row, _)) =>
+              val alternateRow = calculateAlternateRow(row)
+              val zigzagState = ZigZagStateComponent(
+                spawnRow = row,
+                currentPhase = OnSpawnRow,
+                phaseStartTime = System.currentTimeMillis(),
+                alternateRow = alternateRow
+              )
+              w.addComponent(entity, zigzagState)
+            case None => w
+        case None => w
+
+  private def removeOutOfBoundsProjectiles(world: World): World =
+    val projectiles = world.getEntitiesByType("projectile").toList
+    projectiles.foldLeft(world): (currentWorld, entity) =>
+      currentWorld.getComponent[PositionComponent](entity) match
+        case Some(posComp) =>
+          val pos = posComp.position
+          val isTrollProjectile = currentWorld.getComponent[ProjectileTypeComponent](entity)
+            .exists(_.projectileType == ProjectileType.Troll)
+          val shouldRemove =
+            if isTrollProjectile then
               val minX = GRID_OFFSET_X
               pos.x < minX
             else
               val maxX = GRID_OFFSET_X + GRID_COLS * CELL_WIDTH
               pos.x > maxX
+          if shouldRemove then currentWorld.destroyEntity(entity) else currentWorld
+        case None => currentWorld
 
-            if shouldRemove then
-              world.destroyEntity(head)
-
-          checkAndRemove(tail)
-
-    val projectiles = world.getEntitiesByType("projectile").toList
-    checkAndRemove(projectiles)
 
   private def calculateNewPosition(entity: EntityId, world: World): Option[Position] =
     for
@@ -72,18 +106,19 @@ case class MovementSystem(
     yield newPos
 
   private def selectMovementStrategy(entity: EntityId, world: World): MovementStrategy =
-    if world.getEntitiesByType("troll").contains(entity) then
-      world.getComponent[TrollTypeComponent](entity)
-        .map(trollMovementStrategy)
-        .getOrElse(defaultMovementStrategy)
-    else if world.getEntitiesByType("projectile").contains(entity) then
-      world.getComponent[ProjectileTypeComponent](entity)
-        .map(proj => if proj.projectileType == ProjectileType.Troll
-        then linearLeftMovement
-        else projectileRightMovement)
-        .getOrElse(defaultMovementStrategy)
-    else
-      defaultMovementStrategy
+    val strategies: List[PartialFunction[(EntityId, World), MovementStrategy]] = List(
+      { case (e, w) if w.getEntitiesByType("troll").contains(e) =>
+        w.getComponent[TrollTypeComponent](e).map(trollMovementStrategy).getOrElse(defaultMovementStrategy)
+      },
+      { case (e, w) if w.getEntitiesByType("projectile").contains(e) =>
+        w.getComponent[ProjectileTypeComponent](e)
+          .map(proj => if proj.projectileType == ProjectileType.Troll then linearLeftMovement else projectileRightMovement)
+          .getOrElse(defaultMovementStrategy)
+      }
+    )
+    
+    strategies.collectFirst { case pf if pf.isDefinedAt((entity, world)) => pf((entity, world)) }
+      .getOrElse(defaultMovementStrategy)
 
   private val trollMovementStrategy: TrollTypeComponent => MovementStrategy = trollType =>
     trollType.trollType match
@@ -114,12 +149,8 @@ case class MovementSystem(
         val currentTime = System.currentTimeMillis()
         val updatedPos = calculateZigZagPosition(pos, movement.speed, dt, state, currentTime)
 
-        if shouldChangePhase(currentTime, state.phaseStartTime) then
-          updatedZigZagPhase(entity, state, world)
-
         updatedPos
       case None =>
-        initializeZigzagComponent(entity, pos, world)
         pos
 
   private val defaultMovementStrategy: MovementStrategy = (pos, _, _, _, _) => pos
@@ -165,37 +196,6 @@ case class MovementSystem(
   private def shouldChangePhase(currentTime: Long, phaseStartTime: Long): Boolean =
     currentTime - phaseStartTime >= zigZagPhaseDuration
 
-  private def updatedZigZagPhase(entity: EntityId,
-                                 currentState: ZigZagStateComponent,
-                                 world: World
-                                ): Unit =
-    val newPhase = currentState.currentPhase match
-      case OnSpawnRow => OnAlternateRow
-      case OnAlternateRow => OnSpawnRow
-
-    val newState = currentState.copy(
-      currentPhase = newPhase,
-      phaseStartTime = System.currentTimeMillis()
-    )
-
-    world.updateComponent[ZigZagStateComponent](entity, _ => newState)
-
-  private def initializeZigzagComponent(entity: EntityId,
-                                        pos: Position,
-                                        world: World
-                                       ): Unit =
-    for
-      (row, _) <- GridMapper.physicalToLogical(pos)
-      alternateRow = calculateAlternateRow(row)
-    do
-      val zigzagState = ZigZagStateComponent(
-        spawnRow = row,
-        currentPhase = OnSpawnRow,
-        phaseStartTime = System.currentTimeMillis(),
-        alternateRow = alternateRow
-      )
-      world.addComponent(entity, zigzagState)
-
   private def calculateAlternateRow(spawnRow: Int): Int =
     spawnRow match
       case 0 => 1
@@ -203,16 +203,12 @@ case class MovementSystem(
       case r => if Random.nextBoolean() then r + 1 else r - 1
 
   private def canMoveToPosition(pos: Position, entity: EntityId, world: World): Boolean =
-    if !pos.isValid then false
-    else
-      world.getEntityAt(pos) match
-        case None => true
-        case Some(other) if other == entity => true
-        case Some(other) =>
-          canEntitiesOverlap(
-            world.getEntityType(entity),
-            world.getEntityType(other)
-          )
+    pos.isValid && world.getEntityAt(pos).forall: other =>
+      other == entity ||
+      canEntitiesOverlap(
+        world.getEntityType(entity),
+        world.getEntityType(other)
+      )
 
   private def canEntitiesOverlap(type1: Option[EntityTypeComponent], type2: Option[EntityTypeComponent]): Boolean =
     (type1, type2) match
