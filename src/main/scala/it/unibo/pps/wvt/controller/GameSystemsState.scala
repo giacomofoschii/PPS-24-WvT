@@ -82,7 +82,7 @@ private[controller] case class GameSystemsState(
   
   def clearWizardSelection: GameSystemsState =
     copy(selectedWizardType = None)
-  
+
   def handleVictory(): GameSystemsState =
     val nextWave = currentWave + 1
     val freshElixir = ElixirSystem()
@@ -100,9 +100,18 @@ private[controller] case class GameSystemsState(
   
   def handleDefeat(): GameSystemsState =
     GameSystemsState.initial()
-  
+
   def reset(): GameSystemsState =
-    GameSystemsState.initial()
+    val freshElixir = ElixirSystem()
+    GameSystemsState(
+      movement = MovementSystem(),
+      collision = CollisionSystem(),
+      combat = CombatSystem(),
+      elixir = freshElixir,
+      health = HealthSystem(freshElixir, Set.empty),
+      spawn = SpawnSystem(),
+      render = RenderSystem()
+    )
 
   // Accessors
   def getTrollsSpawned: Int = spawn.getTrollsSpawned
