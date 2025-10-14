@@ -46,8 +46,8 @@ case class CombatSystem() extends System:
       if wizardType.wizardType != WizardType.Generator && wizardType.wizardType != WizardType.Barrier
       pos <- world.getComponent[PositionComponent](entity)
       attack <- world.getComponent[AttackComponent](entity)
-      if !isOnCooldown(entity, world)
       if hasTargetsInRange(pos.position, attack.range, "troll", world, false)
+      if !isOnCooldown(entity, world)
     yield (entity, wizardType.wizardType, pos.position, attack)).toList
 
     processWizardList(wizards, world)
@@ -67,8 +67,8 @@ case class CombatSystem() extends System:
       if trollType.trollType == Thrower
       pos <- world.getComponent[PositionComponent](entity)
       attack <- world.getComponent[AttackComponent](entity)
-      if !isOnCooldown(entity, world)
       if hasTargetsInRange(pos.position, attack.range, "wizard", world, true)
+      if !isOnCooldown(entity, world)
     yield (entity, pos.position, attack)).toList
 
     processThrowerList(throwers, world)

@@ -111,13 +111,19 @@ case class CollisionSystem(
       trollPos <- world.getComponent[PositionComponent](troll)
       trollType <- world.getComponent[TrollTypeComponent](troll)
       attack <- world.getComponent[AttackComponent](troll)
-      if !isOnCooldown(troll, world)
     yield
       val wizards = world.getEntitiesByType("wizard").toList
       findCollidingEntity(trollPos.position, wizards, world) match
         case Some(wizard) =>
-          var updatedWorld = world.addComponent(troll, BlockedComponent(wizard))
-          if trollType.trollType != TrollType.Thrower then
+          var updatedWorld = world
+          
+          if world.getComponent[BlockedComponent](troll).exists(_.blockedBy != wizard) then
+            updatedWorld = world.removeComponent[BlockedComponent](troll)
+            updatedWorld = updatedWorld.addComponent(troll, BlockedComponent(wizard))
+          else if !world.hasComponent[BlockedComponent](troll) then
+            updatedWorld = world.addComponent(troll, BlockedComponent(wizard))
+            
+          if trollType.trollType != TrollType.Thrower && !isOnCooldown(troll, world) then
             val damage = calculateMeleeDamage(trollType.trollType, attack.damage)
             
             updatedWorld = updatedWorld
@@ -125,10 +131,7 @@ case class CollisionSystem(
               .addComponent(troll, CooldownComponent(attack.cooldown))
             
           updatedWorld
-        case None =>
-          if world.hasComponent[BlockedComponent](troll) then
-            world.removeComponent[BlockedComponent](troll)
-          else world
+        case None => world
       ).getOrElse(world)
       
   private def calculateMeleeDamage(trollType: TrollType, baseDamage: Int): Int =
