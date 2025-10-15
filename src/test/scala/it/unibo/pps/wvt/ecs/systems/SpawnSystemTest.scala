@@ -73,7 +73,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     system.currentWave shouldBe TEST_WAVE_1
 
   it should "not activate or spawn when no wizard is placed" in:
-    val world = World()
+    val world  = World()
     val system = SpawnSystem()
 
     val updatedSystem = system.updateAndWait(world, MEDIUM_DELAY)
@@ -83,7 +83,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     world.trollCount shouldBe 0
 
   it should "activate and capture wizard row when first wizard is placed" in:
-    val world = World()
+    val world  = World()
     val system = SpawnSystem()
 
     val physicalPos = GridMapper.logicalToPhysical(TEST_WIZARD_ROW, TEST_WIZARD_COL).get
@@ -94,24 +94,24 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     updatedSystem.firstWizardRow shouldBe Some(TEST_WIZARD_ROW)
 
   it should "work with multiple wizards using first wizard's row" in:
-      val world = World()
-      val system = SpawnSystem()
+    val world  = World()
+    val system = SpawnSystem()
 
-      val physicalPos1 = GridMapper.logicalToPhysical(TEST_WIZARD_ROW, TEST_WIZARD_COL).get
-      val physicalPos2 = GridMapper.logicalToPhysical(TEST_WIZARD_ROW + 1, TEST_WIZARD_COL).get
+    val physicalPos1 = GridMapper.logicalToPhysical(TEST_WIZARD_ROW, TEST_WIZARD_COL).get
+    val physicalPos2 = GridMapper.logicalToPhysical(TEST_WIZARD_ROW + 1, TEST_WIZARD_COL).get
 
-      world.withWizardAt(physicalPos1)
-      EntityFactory.createFireWizard(world, physicalPos2)
+    world.withWizardAt(physicalPos1)
+    EntityFactory.createFireWizard(world, physicalPos2)
 
-      val updatedSystem = system.activateWith(world)
+    val updatedSystem = system.activateWith(world)
 
-      updatedSystem.isActive shouldBe true
-      updatedSystem.firstWizardRow shouldBe Some(TEST_WIZARD_ROW)
+    updatedSystem.isActive shouldBe true
+    updatedSystem.firstWizardRow shouldBe Some(TEST_WIZARD_ROW)
 
   behavior of "SpawnSystem - Spawn Mechanics"
 
   it should "schedule and spawn trolls after activation" in:
-    val world = World()
+    val world  = World()
     val system = SpawnSystem()
 
     world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
@@ -125,24 +125,24 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     spawnedSystem.hasSpawnedAtLeastOnce shouldBe true
 
   it should "spawn trolls at rightmost column" in:
-      val world = World()
-      val system = SpawnSystem()
+    val world  = World()
+    val system = SpawnSystem()
 
-      val physicalPos = GridMapper.logicalToPhysical(TEST_WIZARD_ROW, TEST_WIZARD_COL).get
-      world.withWizardAt(physicalPos)
-      val activeSystem = system.activateWith(world)
+    val physicalPos = GridMapper.logicalToPhysical(TEST_WIZARD_ROW, TEST_WIZARD_COL).get
+    world.withWizardAt(physicalPos)
+    val activeSystem = system.activateWith(world)
 
-      val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
-      Thread.sleep(spawnInterval + LONG_DELAY)
-      activeSystem.updateMultipleTimes(world, TEST_MULTIPLE_UPDATES, MEDIUM_DELAY)
+    val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
+    Thread.sleep(spawnInterval + LONG_DELAY)
+    activeSystem.updateMultipleTimes(world, TEST_MULTIPLE_UPDATES, MEDIUM_DELAY)
 
-      val positions = world.getTrollPositions
-      positions.foreach: pos =>
-        val logicalCol = GridMapper.physicalToLogical(pos).map(_._2)
-        logicalCol shouldBe Some(TEST_SPAWN_COLUMN)
+    val positions = world.getTrollPositions
+    positions.foreach: pos =>
+      val logicalCol = GridMapper.physicalToLogical(pos).map(_._2)
+      logicalCol shouldBe Some(TEST_SPAWN_COLUMN)
 
   it should "spawn multiple trolls per batch" in:
-    val world = World()
+    val world  = World()
     val system = SpawnSystem(rng = Random(TEST_SEED))
 
     world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
@@ -156,7 +156,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     spawnedSystem.getPendingSpawnsCount should be <= 3
 
   it should "process scheduled spawns and reduce pending count" in:
-    val world = World()
+    val world  = World()
     val system = SpawnSystem()
 
     val physicalPos = GridMapper.logicalToPhysical(TEST_WIZARD_ROW, TEST_WIZARD_COL).get
@@ -165,7 +165,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
     val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
     Thread.sleep(spawnInterval + MEDIUM_DELAY)
-    val withSpawns = activeSystem.update(world).asInstanceOf[SpawnSystem]
+    val withSpawns    = activeSystem.update(world).asInstanceOf[SpawnSystem]
     val pendingBefore = withSpawns.getPendingSpawnsCount
 
     pendingBefore should be > 0
@@ -179,7 +179,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     hasSpawned shouldBe true
 
   it should "spawn different troll types over multiple updates" in:
-    val world = World()
+    val world  = World()
     val system = SpawnSystem()
 
     world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
@@ -196,7 +196,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
   behavior of "SpawnSystem - Wave Scaling and Limits"
 
   it should "apply wave scaling to troll stats" in:
-    val world = World()
+    val world  = World()
     val system = SpawnSystem()
 
     world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
@@ -216,11 +216,11 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
       world.getComponent[AttackComponent](firstTroll) shouldBe defined
 
   it should "respect wave max troll limit" in:
-    val world = World()
+    val world  = World()
     val system = SpawnSystem()
 
     world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    val maxTrolls = WaveLevel.maxTrollsPerWave(TEST_WAVE_1)
+    val maxTrolls     = WaveLevel.maxTrollsPerWave(TEST_WAVE_1)
     val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
 
     var currentSystem = system.activateWith(world)
@@ -231,9 +231,9 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     currentSystem.getTrollsSpawned should be <= maxTrolls
 
   it should "not generate spawns when max trolls reached" in:
-    val world = World()
+    val world     = World()
     val maxTrolls = WaveLevel.maxTrollsPerWave(TEST_WAVE_1)
-    val system = SpawnSystem(trollsSpawnedThisWave = maxTrolls)
+    val system    = SpawnSystem(trollsSpawnedThisWave = maxTrolls)
 
     world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
     val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
@@ -247,7 +247,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
   behavior of "SpawnSystem - State Management"
 
   it should "track trolls spawned and provide correct state info" in:
-    val world = World()
+    val world  = World()
     val system = SpawnSystem()
 
     system.getNextSpawnTime shouldBe None
@@ -266,12 +266,12 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
       currentSystem.getNextSpawnTime shouldBe defined
 
   it should "maintain and update last spawn time" in:
-    val world = World()
+    val world  = World()
     val system = SpawnSystem()
 
     world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
     val activeSystem = system.activateWith(world)
-    val initialTime = activeSystem.lastSpawnTime
+    val initialTime  = activeSystem.lastSpawnTime
 
     val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
     Thread.sleep(spawnInterval + MEDIUM_DELAY)
@@ -282,7 +282,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
   behavior of "SpawnSystem - Spawn Intervals"
 
   it should "respect spawn interval and not spawn too early" in:
-    val world = World()
+    val world  = World()
     val system = SpawnSystem()
 
     world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
@@ -299,7 +299,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     currentSystem.lastSpawnTime shouldBe timeAfterFirstSpawn
 
   it should "generate new spawns after interval expires" in:
-    val world = World()
+    val world  = World()
     val system = SpawnSystem()
 
     world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
@@ -320,8 +320,8 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
   behavior of "SpawnSystem - Random Seed and Factory"
 
   it should "produce deterministic results with fixed seed" in:
-    val world1 = World()
-    val world2 = World()
+    val world1  = World()
+    val world2  = World()
     val system1 = SpawnSystem(rng = Random(TEST_SEED))
     val system2 = SpawnSystem(rng = Random(TEST_SEED))
 
@@ -349,13 +349,13 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
   behavior of "SpawnSystem - Edge Cases and Robustness"
 
   it should "handle empty world without crashing" in:
-    val world = World()
+    val world  = World()
     val system = SpawnSystem()
 
     noException should be thrownBy system.update(world)
 
   it should "handle rapid consecutive updates" in:
-    val world = World()
+    val world  = World()
     val system = SpawnSystem()
 
     world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
@@ -367,7 +367,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     }
 
   it should "return correct system instance after update" in:
-    val world = World()
+    val world  = World()
     val system = SpawnSystem()
 
     val returnedSystem = system.update(world)
@@ -375,7 +375,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     returnedSystem shouldBe a[SpawnSystem]
 
   it should "maintain valid troll positions within grid bounds" in:
-    val world = World()
+    val world  = World()
     val system = SpawnSystem()
 
     world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))

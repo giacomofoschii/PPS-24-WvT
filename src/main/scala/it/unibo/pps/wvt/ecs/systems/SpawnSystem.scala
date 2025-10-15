@@ -13,49 +13,53 @@ import it.unibo.pps.wvt.utilities.GamePlayConstants.*
 import scala.util.Random
 
 case class SpawnEvent(
-                       trollType: TrollType,
-                       position: Position,
-                       scheduledTime: Long
-                     )
+    trollType: TrollType,
+    position: Position,
+    scheduledTime: Long
+)
 
 case class SpawnSystem(
-                        private[systems] val lastSpawnTime: Long = System.currentTimeMillis(),
-                        private[systems] val pendingSpawns: List[SpawnEvent] = List.empty,
-                        private[systems] val rng: Random = Random(),
-                        isActive: Boolean = false,
-                        private[systems] val firstWizardRow: Option[Int] = None,
-                        hasSpawnedAtLeastOnce: Boolean = false,
-                        private[systems] val trollsSpawnedThisWave: Int = 0,
-                        private[systems] val currentWave: Int = 1,
-                        private[systems] val pausedAt: Option[Long] = None
-                      ) extends System:
+    private[systems] val lastSpawnTime: Long = System.currentTimeMillis(),
+    private[systems] val pendingSpawns: List[SpawnEvent] = List.empty,
+    private[systems] val rng: Random = Random(),
+    isActive: Boolean = false,
+    private[systems] val firstWizardRow: Option[Int] = None,
+    hasSpawnedAtLeastOnce: Boolean = false,
+    private[systems] val trollsSpawnedThisWave: Int = 0,
+    private[systems] val currentWave: Int = 1,
+    private[systems] val pausedAt: Option[Long] = None
+) extends System:
 
-  private type TrollSelector = (Random, Int) => TrollType
+  private type TrollSelector     = (Random, Int) => TrollType
   private type PositionGenerator = (Random, Option[Int]) => Position
 
   override def update(world: World): (World, System) =
-    val currentTime = System.currentTimeMillis()
+    val currentTime              = System.currentTimeMillis()
     val systemAfterPauseHandling = handlePauseResume(currentTime)
-  
-    val (world1, updatedSystem) = 
+
+    val (world1, updatedSystem) =
       Option.when(!systemAfterPauseHandling.isActive && hasWizardBeenPlaced(world)):
         val wizardRow = getFirstWizardRow(world)
-        (world, copy(
-          isActive = true,
-          firstWizardRow = wizardRow,
-          lastSpawnTime = currentTime))
+        (
+          world,
+          copy(
+            isActive = true,
+            firstWizardRow = wizardRow,
+            lastSpawnTime = currentTime
+          )
+        )
       .getOrElse((world, systemAfterPauseHandling))
-  
+
     Option.when(updatedSystem.isActive):
-      val (world2, afterSpawn) = updatedSystem.processScheduledSpawns(world1, currentTime)
+      val (world2, afterSpawn)    = updatedSystem.processScheduledSpawns(world1, currentTime)
       val (world3, afterGenerate) = afterSpawn.generateNewSpawnsIfNeeded(world2, currentTime)
-      val maxTrolls = WaveLevel.maxTrollsPerWave(afterGenerate.currentWave)
+      val maxTrolls               = WaveLevel.maxTrollsPerWave(afterGenerate.currentWave)
       if afterGenerate.trollsSpawnedThisWave >= maxTrolls && afterGenerate.pendingSpawns.isEmpty then
         (world3, afterGenerate.copy(isActive = false))
       else
         (world3, afterGenerate)
     .getOrElse((world1, updatedSystem))
-      
+
   private def handlePauseResume(currentTime: Long): SpawnSystem =
     val isPaused = GameEngine.getInstance.exists(_.isPaused)
 
@@ -90,7 +94,7 @@ case class SpawnSystem(
         val finalWorld = toSpawn.foldLeft(world): (currentWorld, event) =>
           val (updatedWorld, _) = spawnTroll(event, currentWorld)
           updatedWorld
-        
+
         (finalWorld, copy(pendingSpawns = remaining))
 
   private def generateNewSpawnsIfNeeded(world: World, currentTime: Long): (World, SpawnSystem) =
@@ -105,12 +109,15 @@ case class SpawnSystem(
             remainingTrolls
           )
           val newSpawns = generateSpawnBatch(currentTime, firstWizardRow, numOfSpawns)
-          (world, copy(
-            pendingSpawns = pendingSpawns ++ newSpawns,
-            lastSpawnTime = currentTime,
-            hasSpawnedAtLeastOnce = true,
-            trollsSpawnedThisWave = trollsSpawnedThisWave + numOfSpawns
-          ))
+          (
+            world,
+            copy(
+              pendingSpawns = pendingSpawns ++ newSpawns,
+              lastSpawnTime = currentTime,
+              hasSpawnedAtLeastOnce = true,
+              trollsSpawnedThisWave = trollsSpawnedThisWave + numOfSpawns
+            )
+          )
         .getOrElse((world, this))
 
   private def shouldGenerateNewSpawn(currentTime: Long): Boolean =
@@ -143,19 +150,20 @@ case class SpawnSystem(
 
   private def spawnTroll(event: SpawnEvent, world: World): (World, EntityId) =
     val (world1, entity) = createTrollEntity(event, world)
-    val world2 = applyWaveScaling(world1, entity, event.trollType)
+    val world2           = applyWaveScaling(world1, entity, event.trollType)
     (world2, entity)
 
   private def createTrollEntity(event: SpawnEvent, world: World): (World, EntityId) =
     event.trollType match
-      case Base => EntityFactory.createBaseTroll(world, event.position)
-      case Warrior => EntityFactory.createWarriorTroll(world, event.position)
+      case Base     => EntityFactory.createBaseTroll(world, event.position)
+      case Warrior  => EntityFactory.createWarriorTroll(world, event.position)
       case Assassin => EntityFactory.createAssassinTroll(world, event.position)
-      case Thrower => EntityFactory.createThrowerTroll(world, event.position)
+      case Thrower  => EntityFactory.createThrowerTroll(world, event.position)
 
   private def applyWaveScaling(world: World, entity: EntityId, trollType: TrollType): World =
     val (baseHealth, baseSpeed, baseDamage) = getBaseStats(trollType)
-    val (scaledHealth, scaledSpeed, scaledDamage) = WaveLevel.applyMultipliers(baseHealth, baseSpeed, baseDamage, currentWave)
+    val (scaledHealth, scaledSpeed, scaledDamage) =
+      WaveLevel.applyMultipliers(baseHealth, baseSpeed, baseDamage, currentWave)
 
     val world1 = updateHealth(world, entity, scaledHealth)
     val world2 = updateMovement(world1, entity, scaledSpeed)
@@ -164,10 +172,10 @@ case class SpawnSystem(
 
   private def getBaseStats(trollType: TrollType): (Int, Double, Int) =
     trollType match
-      case Base => (BASE_TROLL_HEALTH, BASE_TROLL_SPEED, BASE_TROLL_DAMAGE)
-      case Warrior => (WARRIOR_TROLL_HEALTH, WARRIOR_TROLL_SPEED, WARRIOR_TROLL_DAMAGE)
+      case Base     => (BASE_TROLL_HEALTH, BASE_TROLL_SPEED, BASE_TROLL_DAMAGE)
+      case Warrior  => (WARRIOR_TROLL_HEALTH, WARRIOR_TROLL_SPEED, WARRIOR_TROLL_DAMAGE)
       case Assassin => (ASSASSIN_TROLL_HEALTH, ASSASSIN_TROLL_SPEED, ASSASSIN_TROLL_DAMAGE)
-      case Thrower => (THROWER_TROLL_HEALTH, THROWER_TROLL_SPEED, THROWER_TROLL_DAMAGE)
+      case Thrower  => (THROWER_TROLL_HEALTH, THROWER_TROLL_SPEED, THROWER_TROLL_DAMAGE)
 
   private def updateHealth(world: World, entity: EntityId, health: Int): World =
     world.getComponent[HealthComponent](entity) match

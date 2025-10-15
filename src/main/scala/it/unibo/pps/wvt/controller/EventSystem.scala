@@ -53,9 +53,9 @@ object GameEvent:
     override def priority: Int = 3
 
 case class EventQueue(
-                       private val queue: Queue[GameEvent] = Queue.empty,
-                       private val maxQueueSize: Int = 1000
-                     ):
+    private val queue: Queue[GameEvent] = Queue.empty,
+    private val maxQueueSize: Int = 1000
+):
   def enqueue(event: GameEvent): EventQueue =
     Option.when(queue.size < maxQueueSize)(
       copy(queue = queue.enqueue(event))
@@ -67,13 +67,13 @@ case class EventQueue(
   def dequeue(): (EventQueue, Option[GameEvent]) =
     queue.dequeueOption match
       case Some((event, newQueue)) => (copy(queue = newQueue), Some(event))
-      case None => (this, None)
+      case None                    => (this, None)
 
   def dequeueAll(): (EventQueue, List[GameEvent]) =
     (copy(queue = Queue.empty), queue.toList)
 
-  def isEmpty: Boolean = queue.isEmpty
-  def size: Int = queue.size
+  def isEmpty: Boolean            = queue.isEmpty
+  def size: Int                   = queue.size
   def peekNext: Option[GameEvent] = queue.headOption
 
   def filter(predicate: GameEvent => Boolean): EventQueue =
@@ -102,4 +102,4 @@ object EventQueue:
     LazyList.unfold(queue): q =>
       q.dequeue() match
         case (newQueue, Some(event)) => Some((event, newQueue))
-        case _ => None
+        case _                       => None

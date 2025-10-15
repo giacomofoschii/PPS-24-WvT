@@ -9,7 +9,7 @@ import org.scalatest.BeforeAndAfterEach
 class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
 
   private var engine: TestGameEngine = _
-  private var gameLoop: GameLoop = _
+  private var gameLoop: GameLoop     = _
 
   override def beforeEach(): Unit =
     engine = new TestGameEngine()
@@ -123,24 +123,24 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
 
   it should "create loop via factory" in:
     val testEngine = new TestGameEngine()
-    val loop = GameLoop.create(testEngine)
+    val loop       = GameLoop.create(testEngine)
 
     loop shouldBe a[GameLoopImpl]
     loop.isRunning shouldBe false
 
 // Test helper engine
 class TestGameEngine extends GameEngine:
-  private var _isRunning: Boolean = true
-  private var _isPaused: Boolean = false
+  private var _isRunning: Boolean   = true
+  private var _isPaused: Boolean    = false
   private var _gameState: GameState = GameState.initial()
-  var updateCount: Int = 0
-  var shouldThrow: Boolean = false
+  var updateCount: Int              = 0
+  var shouldThrow: Boolean          = false
 
   override def initialize(controller: it.unibo.pps.wvt.controller.GameController): Unit = {}
 
   override def start(): Unit = _isRunning = true
-  override def stop(): Unit = _isRunning = false
-  def stopEngine(): Unit = _isRunning = false
+  override def stop(): Unit  = _isRunning = false
+  def stopEngine(): Unit     = _isRunning = false
 
   override def pause(): Unit =
     _isPaused = true
@@ -154,14 +154,12 @@ class TestGameEngine extends GameEngine:
     if shouldThrow then
       throw new RuntimeException("Test exception")
 
-
     if _isRunning then
       updateCount += 1
       _gameState = _gameState.copy(elapsedTime = _gameState.elapsedTime + deltaTime)
 
-
-  override def isRunning: Boolean = _isRunning
-  override def isPaused: Boolean = _isPaused
+  override def isRunning: Boolean      = _isRunning
+  override def isPaused: Boolean       = _isPaused
   override def currentState: GameState = _gameState
   override def updatePhase(phase: GamePhase): Unit =
     _gameState = _gameState.copy(phase = phase)

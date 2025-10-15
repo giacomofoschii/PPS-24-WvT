@@ -6,7 +6,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterEach
 
-
 class EventQueueTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
 
   var queue: EventQueue = _
@@ -47,7 +46,7 @@ class EventQueueTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
 
     queue.enqueue(event)
     queue.peekNext shouldBe Some(event)
-    queue.size shouldBe 1 // Still in queue
+    queue.size shouldBe 1               // Still in queue
     queue.peekNext shouldBe Some(event) // Still there
 
   it should "dequeue all events at once" in:
@@ -93,7 +92,7 @@ class EventQueueTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
     // Keep only menu events
     queue.filterQueue:
       case GameEvent.ShowMainMenu | GameEvent.ShowGameView | GameEvent.ShowInfoMenu => true
-      case _ => false
+      case _                                                                        => false
 
     queue.size shouldBe 2
     val remaining = queue.dequeueAll()
@@ -101,18 +100,18 @@ class EventQueueTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
     remaining should contain(GameEvent.ShowGameView)
 
   it should "prioritize events correctly" in:
-    queue.enqueue(GameEvent.Start)           // priority 3
-    queue.enqueue(GameEvent.Stop)            // priority 0
-    queue.enqueue(GameEvent.ShowMainMenu)    // priority 2
-    queue.enqueue(GameEvent.Pause)           // priority 1
+    queue.enqueue(GameEvent.Start)        // priority 3
+    queue.enqueue(GameEvent.Stop)         // priority 0
+    queue.enqueue(GameEvent.ShowMainMenu) // priority 2
+    queue.enqueue(GameEvent.Pause)        // priority 1
 
     queue.prioritize()
 
     val events = queue.dequeueAll()
-    events.head shouldBe GameEvent.Stop          // priority 0 first
-    events(1) shouldBe GameEvent.Pause           // priority 1
-    events(2) shouldBe GameEvent.ShowMainMenu    // priority 2
-    events.last shouldBe GameEvent.Start         // priority 3 last
+    events.head shouldBe GameEvent.Stop       // priority 0 first
+    events(1) shouldBe GameEvent.Pause        // priority 1
+    events(2) shouldBe GameEvent.ShowMainMenu // priority 2
+    events.last shouldBe GameEvent.Start      // priority 3 last
 
   it should "handle GridClicked events" in:
     val gridEvent = GameEvent.GridClicked((2, 3), 100, 200)
@@ -127,7 +126,7 @@ class EventQueueTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
     queue.dequeue() shouldBe Some(keyEvent)
 
   "GameEvent" should "have correct timestamps" in:
-    val event = GameEvent.ShowMainMenu
+    val event     = GameEvent.ShowMainMenu
     val timestamp = event.timestamp
 
     timestamp should be > 0L

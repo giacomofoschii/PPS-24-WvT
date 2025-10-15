@@ -8,12 +8,12 @@ import scalafx.scene.paint.Color
 
 import scala.annotation.tailrec
 
-type HealthBarData = (EntityId, Position, Double, Color, HealthBarComponent)
+type HealthBarData       = (EntityId, Position, Double, Color, HealthBarComponent)
 type RenderableHealthBar = (Position, Double, Color, Double, Double, Double)
 
 case class HealthBarRenderSystem(
-                                  private val healthBarCache: Map[EntityId, RenderableHealthBar] = Map.empty
-                                ) extends System:
+    private val healthBarCache: Map[EntityId, RenderableHealthBar] = Map.empty
+) extends System:
 
   override def update(world: World): (World, System) =
     collectHealthBarData(world)
@@ -28,13 +28,15 @@ case class HealthBarRenderSystem(
       entities match
         case Nil => acc.reverse
         case head :: tail =>
-          val barData = for
-            health <- world.getComponent[HealthComponent](head)
-            pos <- world.getComponent[PositionComponent](head)
-            healthBar <- world.getComponent[HealthBarComponent](head).orElse(Some(createDefaultHealthBar(head, world)))
-            percentage = health.currentHealth.toDouble / health.maxHealth.toDouble
-            updatedBar = healthBar.updateColorByHealthPercentage(percentage)
-          yield (head, pos.position, percentage, updatedBar.barColor, updatedBar)
+          val barData =
+            for
+              health <- world.getComponent[HealthComponent](head)
+              pos    <- world.getComponent[PositionComponent](head)
+              healthBar <-
+                world.getComponent[HealthBarComponent](head).orElse(Some(createDefaultHealthBar(head, world)))
+              percentage = health.currentHealth.toDouble / health.maxHealth.toDouble
+              updatedBar = healthBar.updateColorByHealthPercentage(percentage)
+            yield (head, pos.position, percentage, updatedBar.barColor, updatedBar)
 
           collectBars(tail, barData.fold(acc)(acc :+ _))
 
@@ -50,8 +52,10 @@ case class HealthBarRenderSystem(
 
   private def calculateHealthBarRendering(data: List[HealthBarData]): Map[EntityId, RenderableHealthBar] =
     @tailrec
-    def buildMap(remaining: List[HealthBarData],
-                 acc: Map[EntityId, RenderableHealthBar]): Map[EntityId, RenderableHealthBar] =
+    def buildMap(
+        remaining: List[HealthBarData],
+        acc: Map[EntityId, RenderableHealthBar]
+    ): Map[EntityId, RenderableHealthBar] =
       remaining match
         case Nil => acc
         case (entityId, position, percentage, color, barComponent) :: tail =>
@@ -77,14 +81,14 @@ case class HealthBarRenderSystem(
   def getAverageHealth(world: World, entityType: String): Option[Double] =
     val healthPercentages = entityType match
       case "wizard" => getHealthPercentagesForType[WizardTypeComponent](world)
-      case "troll" => getHealthPercentagesForType[TrollTypeComponent](world)
-      case _ => Seq.empty
+      case "troll"  => getHealthPercentagesForType[TrollTypeComponent](world)
+      case _        => Seq.empty
 
     if healthPercentages.nonEmpty then
       Some(healthPercentages.foldLeft(0.0)(_ + _) / healthPercentages.length)
     else None
 
-  private def getHealthPercentagesForType[T <: EntityTypeComponent : scala.reflect.ClassTag](world: World): Seq[Double] =
+  private def getHealthPercentagesForType[T <: EntityTypeComponent: scala.reflect.ClassTag](world: World): Seq[Double] =
     @tailrec
     def collectPercentages(entities: List[EntityId], acc: List[Double]): List[Double] =
       entities match

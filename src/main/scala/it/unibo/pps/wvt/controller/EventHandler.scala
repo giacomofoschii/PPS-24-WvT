@@ -10,10 +10,10 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.util.{Failure, Success, Try}
 
 case class EventHandlerState(
-                              eventQueue: EventQueue = EventQueue.empty,
-                              eventHandlers: Map[Class[_], GameEvent => Unit] = Map.empty,
-                              currentPhase: GamePhase = GamePhase.MainMenu
-                            )
+    eventQueue: EventQueue = EventQueue.empty,
+    eventHandlers: Map[Class[_], GameEvent => Unit] = Map.empty,
+    currentPhase: GamePhase = GamePhase.MainMenu
+)
 
 trait EventHandler:
   def postEvent(event: GameEvent): Unit
@@ -30,7 +30,7 @@ class EventHandlerImpl(private val engine: GameEngine) extends EventHandler:
     updateState(_.copy(eventQueue = stateRef.get().eventQueue.enqueue(event)))
 
   override def processEvents(): List[GameEvent] =
-    val currentState = stateRef.get()
+    val currentState       = stateRef.get()
     val (newQueue, events) = currentState.eventQueue.dequeueAll()
     events.foreach(processEvent)
     updateState(_.copy(eventQueue = newQueue))
@@ -51,12 +51,12 @@ class EventHandlerImpl(private val engine: GameEngine) extends EventHandler:
     var updated = false
     while !updated do
       val currentState = stateRef.get()
-      val newState = f(currentState)
+      val newState     = f(currentState)
       updated = stateRef.compareAndSet(currentState, newState)
 
   private def processEvent(event: GameEvent): Unit =
     Try(handleEvent(event)) match
-      case Success(_) => ()
+      case Success(_)         => ()
       case Failure(exception) => exception.printStackTrace()
 
   private def handleEvent(event: GameEvent): Unit =
@@ -126,7 +126,7 @@ class EventHandlerImpl(private val engine: GameEngine) extends EventHandler:
   private def isGameActive: Boolean =
     stateRef.get().currentPhase match
       case Paused | Playing => true
-      case _ => false
+      case _                => false
 
   private def startEngine(): Unit = engine.start()
 

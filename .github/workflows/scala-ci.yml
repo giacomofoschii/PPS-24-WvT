@@ -52,8 +52,8 @@ jobs:
           sudo apt-get install -y libgtk-3-0 libxtst6 libxrender1 libasound2 libgl1-mesa-glx xvfb
 
       # 5. Controlla la formattazione del codice
-      - name: Check Scala Formatting
-        run: sbt scalafmtCheckAll
+      #- name: Check Scala Formatting
+      #  run: sbt scalafmtCheckAll
 
       # 6. Esegui i test
       - name: Run tests

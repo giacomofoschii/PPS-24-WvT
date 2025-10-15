@@ -21,13 +21,13 @@ class GameController(private var world: World):
 
   private type StateTransformation = GameSystemsState => GameSystemsState
 
-  private val gameEngine: GameEngine = new GameEngineImpl()
-  private val eventHandler: EventHandler = createAndSetupEventHandler()
-  private val inputSystem: InputSystem = InputSystem()
+  private val gameEngine: GameEngine                                     = new GameEngineImpl()
+  private val eventHandler: EventHandler                                 = createAndSetupEventHandler()
+  private val inputSystem: InputSystem                                   = InputSystem()
   private val pendingActions: ConcurrentLinkedQueue[StateTransformation] = new ConcurrentLinkedQueue()
 
   private var state: GameSystemsState = GameSystemsState.initial()
-  private var isInitialized: Boolean = false
+  private var isInitialized: Boolean  = false
 
   private def createAndSetupEventHandler(): EventHandler =
     val handler = EventHandler.create(gameEngine)
@@ -65,7 +65,7 @@ class GameController(private var world: World):
       ):
         processPendingActions()
 
-        val oldWave = state.getCurrentWave
+        val oldWave              = state.getCurrentWave
         val (newWorld, newState) = state.updateAll(world)
 
         world = newWorld
@@ -91,10 +91,11 @@ class GameController(private var world: World):
   def handleMouseClick(x: Double, y: Double): Unit =
     inputSystem.handleMouseClick(x, y) match
       case result if result.isValid =>
-        val processedPos = for
-          logical <- GridMapper.physicalToLogical(result.pos)
-          physical <- GridMapper.logicalToPhysical(logical)
-        yield physical
+        val processedPos =
+          for
+            logical  <- GridMapper.physicalToLogical(result.pos)
+            physical <- GridMapper.logicalToPhysical(logical)
+          yield physical
 
         processedPos.foreach(handleGridClick)
         ViewController.render()
@@ -109,7 +110,7 @@ class GameController(private var world: World):
         ViewController.hidePlacementGrid()
 
   def placeWizard(wizardType: WizardType, position: Position): Unit =
-    val cost = ShopPanel.getWizardCost(wizardType)
+    val cost     = ShopPanel.getWizardCost(wizardType)
     val canPlace = Option.when(!world.hasWizardAt(position) && state.canAfford(cost))(())
 
     canPlace match
@@ -149,14 +150,14 @@ class GameController(private var world: World):
 
   private def repaintGrid(): Unit =
     val occupiedCells = calculateOccupiedCells()
-    val freeCells = GridMapper.allCells.diff(occupiedCells)
+    val freeCells     = GridMapper.allCells.diff(occupiedCells)
     ViewController.drawPlacementGrid(freeCells, occupiedCells)
 
   private def calculateOccupiedCells(): Seq[Position] =
     world.getEntitiesByType("wizard")
       .flatMap: entity =>
         for
-          posComp <- world.getComponent[PositionComponent](entity)
+          posComp       <- world.getComponent[PositionComponent](entity)
           logicalCoords <- GridMapper.physicalToLogical(posComp.position)
         yield Position(
           GRID_OFFSET_X + logicalCoords._2 * CELL_WIDTH,
@@ -167,10 +168,10 @@ class GameController(private var world: World):
   private def createWizardEntity(wizardType: WizardType, position: Position): (World, EntityId) =
     wizardType match
       case Generator => EntityFactory.createGeneratorWizard(world, position)
-      case Barrier => EntityFactory.createBarrierWizard(world, position)
-      case Wind => EntityFactory.createWindWizard(world, position)
-      case Fire => EntityFactory.createFireWizard(world, position)
-      case Ice => EntityFactory.createIceWizard(world, position)
+      case Barrier   => EntityFactory.createBarrierWizard(world, position)
+      case Wind      => EntityFactory.createWindWizard(world, position)
+      case Fire      => EntityFactory.createFireWizard(world, position)
+      case Ice       => EntityFactory.createIceWizard(world, position)
 
   def handleContinueBattle(): Unit =
     Option.when(gameEngine.isRunning):
@@ -213,17 +214,17 @@ class GameController(private var world: World):
     phase.isMenu || phase == Paused
 
   // Accessors
-  def getCurrentElixir: Int = state.getCurrentElixir
+  def getCurrentElixir: Int         = state.getCurrentElixir
   def getRenderSystem: RenderSystem = state.render
   def getCurrentWaveInfo: (Int, Int, Int) =
     (state.getCurrentWave, state.getTrollsSpawned, state.getMaxTrolls)
 
-  def start(): Unit = gameEngine.start()
-  def stop(): Unit = gameEngine.stop()
-  def pause(): Unit = gameEngine.pause()
+  def start(): Unit  = gameEngine.start()
+  def stop(): Unit   = gameEngine.stop()
+  def pause(): Unit  = gameEngine.pause()
   def resume(): Unit = gameEngine.resume()
 
-  def getEngine: GameEngine = gameEngine
-  def getInputSystem: InputSystem = inputSystem
+  def getEngine: GameEngine         = gameEngine
+  def getInputSystem: InputSystem   = inputSystem
   def getEventHandler: EventHandler = eventHandler
-  def getWorld: World = world
+  def getWorld: World               = world

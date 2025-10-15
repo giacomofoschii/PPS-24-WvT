@@ -17,15 +17,14 @@ object GameResultPanel:
     def continueAction: ButtonAction
 
   case object Victory extends ResultType:
-    val titleImagePath = "/victory.png"
-    val continueButtonText = "Next wave"
+    val titleImagePath               = "/victory.png"
+    val continueButtonText           = "Next wave"
     val continueAction: ButtonAction = ContinueBattle
 
   case object Defeat extends ResultType:
-    val titleImagePath = "/defeat.png"
-    val continueButtonText = "New game"
+    val titleImagePath               = "/defeat.png"
+    val continueButtonText           = "New game"
     val continueAction: ButtonAction = NewGame
-
 
   def apply(resultType: ResultType): Parent =
     createPanel(resultType)

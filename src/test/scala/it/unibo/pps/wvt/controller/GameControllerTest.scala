@@ -10,7 +10,7 @@ import org.scalatest.BeforeAndAfterEach
 
 class GameControllerTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
 
-  var world: World = _
+  var world: World               = _
   var controller: GameController = _
 
   override def beforeEach(): Unit =
@@ -55,7 +55,7 @@ class GameControllerTest extends AnyFlatSpec with Matchers with BeforeAndAfterEa
 
   it should "post events correctly" in:
     val eventHandler = controller.getEventHandler
-    val phaseBefore = eventHandler.getCurrentPhase
+    val phaseBefore  = eventHandler.getCurrentPhase
 
     controller.postEvent(GameEvent.ShowGameView)
 

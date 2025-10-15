@@ -9,7 +9,7 @@ import org.scalatest.BeforeAndAfterEach
 
 class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
 
-  private var engine: GameEngine = _
+  private var engine: GameEngine         = _
   private var controller: GameController = _
 
   override def beforeEach(): Unit =
@@ -81,7 +81,6 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
     engine.pause()
     engine.isPaused shouldBe false
     engine.currentState.isPaused shouldBe false
-
 
   it should "not resume when not paused" in:
     engine.start()

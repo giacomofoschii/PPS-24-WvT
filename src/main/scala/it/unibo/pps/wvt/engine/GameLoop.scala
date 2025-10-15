@@ -11,27 +11,27 @@ import scala.util.Try
 sealed trait LoopStatus:
   def isRunning: Boolean = this match
     case Running => true
-    case _ => false
+    case _       => false
 
 object LoopStatus:
   private case object Idle extends LoopStatus
-  case object Running extends LoopStatus
-  case object Stopping extends LoopStatus
+  case object Running      extends LoopStatus
+  case object Stopping     extends LoopStatus
 
   case class LoopState(
-                        status: LoopStatus = Idle,
-                        lastUpdate: Long = 0L,
-                        accumulator: Long = 0L,
-                        frameCount: Int = 0,
-                        fpsTimer: Long = 0L,
-                        currentFps: Int = 0,
-                        isPaused: Boolean = false
-                      ):
+      status: LoopStatus = Idle,
+      lastUpdate: Long = 0L,
+      accumulator: Long = 0L,
+      frameCount: Int = 0,
+      fpsTimer: Long = 0L,
+      currentFps: Int = 0,
+      isPaused: Boolean = false
+  ):
 
     private val maxFrameTime: Long = 33L
 
     def startRunning: LoopState =
-      val currentTime = System.nanoTime()
+      val currentTime   = System.nanoTime()
       val currentTimeMs = System.currentTimeMillis()
       copy(
         status = LoopStatus.Running,
@@ -60,7 +60,7 @@ object LoopStatus:
       )
 
     def updateFrame(currentTime: Long): LoopState =
-      val frameTime = (currentTime - lastUpdate) / 1_000_000L
+      val frameTime        = (currentTime - lastUpdate) / 1_000_000L
       val clampedFrameTime = frameTime.min(maxFrameTime)
       copy(
         lastUpdate = currentTime,
@@ -82,7 +82,7 @@ object LoopStatus:
         )
       .getOrElse(this)
 
-    def isRunning: Boolean = status.isRunning
+    def isRunning: Boolean                          = status.isRunning
     def hasAccumulatedTime(timeStep: Long): Boolean = accumulator >= timeStep
 
 trait GameLoop:
@@ -103,7 +103,7 @@ class GameLoopImpl(engine: GameEngine) extends GameLoop:
   private def updateState(f: StateUpdater): Unit =
     @tailrec
     def loop(): Unit =
-      val current = loopStateRef.get()
+      val current  = loopStateRef.get()
       val newState = f(current)
       if !loopStateRef.compareAndSet(current, newState) then loop()
     loop()

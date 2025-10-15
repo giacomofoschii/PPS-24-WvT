@@ -9,23 +9,23 @@ import scala.annotation.tailrec
 sealed trait EngineStatus:
   def isRunning: Boolean = this match
     case EngineStatus.Running => true
-    case _ => false
+    case _                    => false
 
   def isPaused: Boolean = this match
     case EngineStatus.Paused => true
-    case _ => false
+    case _                   => false
 
 object EngineStatus:
   case object Stopped extends EngineStatus
   case object Running extends EngineStatus
-  case object Paused extends EngineStatus
+  case object Paused  extends EngineStatus
 
 case class EngineState(
-                      status: EngineStatus = EngineStatus.Stopped,
-                      gameState: GameState = GameState.initial(),
-                      controller: Option[GameController] = None,
-                      gameLoop: Option[GameLoop] = None
-                      ):
+    status: EngineStatus = EngineStatus.Stopped,
+    gameState: GameState = GameState.initial(),
+    controller: Option[GameController] = None,
+    gameLoop: Option[GameLoop] = None
+):
   def withStatus(newStatus: EngineStatus): EngineState =
     copy(status = newStatus)
 
@@ -64,12 +64,12 @@ case class EngineState(
     copy(gameState = gameState.transitionTo(newPhase))
 
   def isRunning: Boolean = status.isRunning
-  def isPaused: Boolean = status.isPaused
+  def isPaused: Boolean  = status.isPaused
   def isStopped: Boolean = status == Stopped
 
-  def canStart: Boolean = !isRunning
-  def canStop: Boolean = isRunning
-  def canPause: Boolean = isRunning && !isPaused
+  def canStart: Boolean  = !isRunning
+  def canStop: Boolean   = isRunning
+  def canPause: Boolean  = isRunning && !isPaused
   def canResume: Boolean = isRunning && isPaused
   def canUpdate: Boolean = isRunning && !isPaused
 
@@ -94,7 +94,7 @@ class GameEngineImpl extends GameEngine:
   private def updateState(f: EngineStateUpdater): Unit =
     @tailrec
     def loop(): Unit =
-      val current = EngineStateRef.get()
+      val current  = EngineStateRef.get()
       val newState = f(current)
       if !EngineStateRef.compareAndSet(current, newState) then loop()
     loop()
@@ -148,9 +148,9 @@ class GameEngineImpl extends GameEngine:
   override def updatePhase(newPhase: GamePhase): Unit =
     updateState(_.updatePhase(newPhase))
 
-  override def isRunning: Boolean = readState.isRunning
-  override def isPaused: Boolean = readState.isPaused
-  override def currentState: GameState = readState.gameState
+  override def isRunning: Boolean                    = readState.isRunning
+  override def isPaused: Boolean                     = readState.isPaused
+  override def currentState: GameState               = readState.gameState
   override def getController: Option[GameController] = readState.controller
 
 object GameEngine:

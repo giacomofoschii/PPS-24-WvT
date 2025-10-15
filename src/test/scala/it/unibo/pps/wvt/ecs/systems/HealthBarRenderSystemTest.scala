@@ -21,7 +21,11 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
           world.addComponent(entity, WizardTypeComponent(WizardType.Fire))
         entity
 
-      def createWizardWithHealth(health: Int, maxHealth: Int, position: Position = Position(TEST_HEALTH_BAR_X, TEST_HEALTH_BAR_Y)): EntityId =
+      def createWizardWithHealth(
+          health: Int,
+          maxHealth: Int,
+          position: Position = Position(TEST_HEALTH_BAR_X, TEST_HEALTH_BAR_Y)
+      ): EntityId =
         val entity = world.createEntity()
         world.addComponent(entity, PositionComponent(position))
         world.addComponent(entity, HealthComponent(health, maxHealth))
@@ -58,7 +62,7 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
     system.getHealthBarsToRender shouldBe empty
 
   it should "render health bar for entity with partial health" in:
-    val world = World()
+    val world  = World()
     val system = HealthBarRenderSystem()
 
     world.createEntityWithHealth(TEST_HEALTH_BAR_HALF_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
@@ -67,7 +71,7 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
     bars should have size TEST_ONE_BAR
 
   it should "not render health bar for entity at full health" in:
-    val world = World()
+    val world  = World()
     val system = HealthBarRenderSystem()
 
     world.createEntityWithHealth(TEST_HEALTH_BAR_MAX_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
@@ -76,7 +80,7 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
     bars shouldBe empty
 
   it should "not render health bar for dead entity" in:
-    val world = World()
+    val world  = World()
     val system = HealthBarRenderSystem()
 
     world.createEntityWithHealth(TEST_ENTITY_DEAD_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
@@ -87,7 +91,7 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
   behavior of "HealthBarRenderSystem - Color Updates"
 
   it should "use green color for high health percentage" in:
-    val world = World()
+    val world  = World()
     val system = HealthBarRenderSystem()
 
     world.createEntityWithHealth(TEST_HEALTH_BAR_HIGH_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
@@ -99,7 +103,7 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
     color shouldBe Color.Green
 
   it should "use yellow color for medium health percentage" in:
-    val world = World()
+    val world  = World()
     val system = HealthBarRenderSystem()
 
     world.createEntityWithHealth(TEST_HEALTH_BAR_MEDIUM_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
@@ -112,7 +116,7 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
     color shouldBe Color.Yellow
 
   it should "use red color for low health percentage" in:
-    val world = World()
+    val world  = World()
     val system = HealthBarRenderSystem()
 
     world.createEntityWithHealth(TEST_HEALTH_BAR_LOW_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
@@ -126,7 +130,7 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
   behavior of "HealthBarRenderSystem - Multiple Entities"
 
   it should "render health bars for multiple damaged entities" in:
-    val world = World()
+    val world  = World()
     val system = HealthBarRenderSystem()
 
     world.createEntityWithHealth(TEST_HEALTH_BAR_HALF_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
@@ -137,7 +141,7 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
     bars should have size TEST_THREE_BARS
 
   it should "filter out full health entities from multiple entities" in:
-    val world = World()
+    val world  = World()
     val system = HealthBarRenderSystem()
 
     world.createEntityWithHealth(TEST_HEALTH_BAR_MAX_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
@@ -151,37 +155,37 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
   behavior of "HealthBarRenderSystem - Average Health Calculation"
 
   it should "calculate average health for wizards correctly" in:
-    val world = World()
+    val world  = World()
     val system = HealthBarRenderSystem()
 
     world.createWizardWithHealth(TEST_HEALTH_BAR_HALF_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
     world.createWizardWithHealth(TEST_HEALTH_BAR_MAX_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
 
-    val updated = system.update(world).asInstanceOf[HealthBarRenderSystem]
+    val updated   = system.update(world).asInstanceOf[HealthBarRenderSystem]
     val avgHealth = updated.getAverageHealth(world, "wizard")
 
     avgHealth shouldBe defined
     avgHealth.get shouldBe TEST_HEALTH_BAR_AVG_WIZARD_HEALTH +- TEST_HEALTH_BAR_TOLERANCE
 
   it should "calculate average health for trolls correctly" in:
-    val world = World()
+    val world  = World()
     val system = HealthBarRenderSystem()
 
     world.createTrollWithHealth(TEST_HEALTH_BAR_LOW_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
     world.createTrollWithHealth(TEST_HEALTH_BAR_MEDIUM_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
     world.createTrollWithHealth(TEST_HEALTH_BAR_HIGH_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
 
-    val updated = system.update(world).asInstanceOf[HealthBarRenderSystem]
+    val updated   = system.update(world).asInstanceOf[HealthBarRenderSystem]
     val avgHealth = updated.getAverageHealth(world, "troll")
 
     avgHealth shouldBe defined
     avgHealth.get shouldBe TEST_HEALTH_BAR_AVG_TROLL_HEALTH +- TEST_HEALTH_BAR_TOLERANCE
 
   it should "return None for average health when no entities exist" in:
-    val world = World()
+    val world  = World()
     val system = HealthBarRenderSystem()
 
-    val updated = system.update(world).asInstanceOf[HealthBarRenderSystem]
+    val updated   = system.update(world).asInstanceOf[HealthBarRenderSystem]
     val avgHealth = updated.getAverageHealth(world, "wizard")
 
     avgHealth shouldBe None
@@ -189,7 +193,7 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
   behavior of "HealthBarRenderSystem - Edge Cases"
 
   it should "handle entity without health component" in:
-    val world = World()
+    val world  = World()
     val system = HealthBarRenderSystem()
 
     val entity = world.createEntity()
@@ -199,7 +203,7 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
     bars shouldBe empty
 
   it should "handle entity without position component" in:
-    val world = World()
+    val world  = World()
     val system = HealthBarRenderSystem()
 
     val entity = world.createEntity()
@@ -209,7 +213,7 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
     bars shouldBe empty
 
   it should "handle empty world without errors" in:
-    val world = World()
+    val world  = World()
     val system = HealthBarRenderSystem()
 
     noException should be thrownBy system.update(world)
@@ -218,7 +222,7 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
   behavior of "HealthBarRenderSystem - Health Bar Properties"
 
   it should "calculate correct health percentage" in:
-    val world = World()
+    val world  = World()
     val system = HealthBarRenderSystem()
 
     world.createEntityWithHealth(TEST_HEALTH_BAR_QUARTER_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
@@ -229,8 +233,8 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
     percentage shouldBe TEST_HEALTH_BAR_QUARTER_PERCENTAGE +- TEST_HEALTH_BAR_TOLERANCE
 
   it should "maintain correct position for health bar" in:
-    val world = World()
-    val system = HealthBarRenderSystem()
+    val world   = World()
+    val system  = HealthBarRenderSystem()
     val testPos = Position(TEST_HEALTH_BAR_CUSTOM_X, TEST_HEALTH_BAR_CUSTOM_Y)
 
     world.createWizardWithHealth(TEST_HEALTH_BAR_HALF_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH, testPos)
@@ -243,7 +247,7 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
   behavior of "HealthBarRenderSystem - Dynamic Health Changes"
 
   it should "update health bar when entity takes damage" in:
-    val world = World()
+    val world  = World()
     val system = HealthBarRenderSystem()
 
     val entity = world.createEntityWithHealth(TEST_HEALTH_BAR_MAX_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
@@ -258,7 +262,7 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
     system.getBarCount(world) shouldBe TEST_ONE_BAR
 
   it should "remove health bar when entity reaches full health" in:
-    val world = World()
+    val world  = World()
     val system = HealthBarRenderSystem()
 
     val entity = world.createEntityWithHealth(TEST_HEALTH_BAR_HALF_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
