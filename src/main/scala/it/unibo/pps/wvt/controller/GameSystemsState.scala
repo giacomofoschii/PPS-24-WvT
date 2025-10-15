@@ -15,6 +15,7 @@ import it.unibo.pps.wvt.ecs.systems.{
 import it.unibo.pps.wvt.utilities.GridMapper
 import it.unibo.pps.wvt.view.ViewController
 
+/** Represents the state of all game systems and provides methods to update and interact with them. */
 private[controller] case class GameSystemsState(
     movement: MovementSystem,
     collision: CollisionSystem,
@@ -27,6 +28,12 @@ private[controller] case class GameSystemsState(
     currentWave: Int = 1
 ):
 
+  /** Updates all game systems in a specific order to ensure correct interactions between them.
+    * The order of updates is crucial for maintaining game logic integrity.
+    *
+    * @param world The current state of the game world.
+    * @return A tuple containing the updated world and the new state of all game systems.
+    */
   def updateAll(world: World): (World, GameSystemsState) =
     val (world1, updatedElixir)    = elixir.update(world)
     val (world2, updatedMovement)  = movement.update(world1)
@@ -58,10 +65,25 @@ private[controller] case class GameSystemsState(
 
     (world7, newState)
 
+  /** Checks for win or lose conditions in the game.
+    *
+    * @param world The current state of the game world.
+    * @return An optional GameEvent indicating a win or loss, if any condition is met.
+    */
   private def checkGameConditions(world: World): Option[GameEvent] =
     checkWinCondition(world)
       .orElse(checkLoseCondition(world))
 
+  /** Checks if the win condition is met.
+    * The win condition is satisfied if:
+    * - At least one spawn has occurred.
+    * - The spawn system is no longer active (no more spawns are pending).
+    * - There are no remaining "troll" entities in the world.
+    * - There are no pending spawns left in the spawn system.
+    *
+    * @param world The current state of the game world.
+    * @return An optional GameEvent indicating a win if the condition is met.
+    */
   private def checkWinCondition(world: World): Option[GameEvent] =
     Option.when(
       spawn.hasSpawnedAtLeastOnce &&
@@ -70,12 +92,26 @@ private[controller] case class GameSystemsState(
         spawn.getPendingSpawnsCount == 0
     )(GameWon)
 
+  /** Checks if the lose condition is met.
+    * The lose condition is satisfied if any "troll" entity has reached the leftmost
+    * boundary of the game grid (x <= 0).
+    *
+    * @param world The current state of the game world.
+    * @return An optional GameEvent indicating a loss if the condition is met.
+    */
   private def checkLoseCondition(world: World): Option[GameEvent] =
     LazyList.from(world.getEntitiesByType("troll"))
       .flatMap(entity => world.getComponent[PositionComponent](entity))
       .find(pos => pos.position.x <= GridMapper.getCellBounds(0, 0)._1 + 1e-3)
       .map(_ => GameLost)
 
+  /** Attempts to spend a specified amount of elixir.
+    * If the elixir system has enough resources, it deducts the amount and updates
+    * the health system accordingly.
+    *
+    * @param amount The amount of elixir to spend.
+    * @return An Option containing the updated GameSystemsState if the spend was successful, or None if not enough elixir.
+    */
   def spendElixir(amount: Int): Option[GameSystemsState] =
     elixir.spendElixir(amount) match
       case (newElixirSystem, true) =>
@@ -85,12 +121,26 @@ private[controller] case class GameSystemsState(
         ))
       case _ => None
 
+  /** Selects a wizard type for placement in the game.
+    *
+    * @param wizardType The type of wizard to select.
+    * @return A new GameSystemsState with the selected wizard type.
+    */
   def selectWizard(wizardType: WizardType): GameSystemsState =
     copy(selectedWizardType = Some(wizardType))
 
+  /** Clears the currently selected wizard type.
+    *
+    * @return A new GameSystemsState with no wizard type selected.
+    */
   def clearWizardSelection: GameSystemsState =
     copy(selectedWizardType = None)
 
+  /** Handles the victory condition by preparing the game state for the next wave.
+    * This involves resetting various systems and incrementing the current wave counter.
+    *
+    * @return A new GameSystemsState ready for the next wave.
+    */
   def handleVictory(): GameSystemsState =
     val nextWave    = currentWave + 1
     val freshElixir = ElixirSystem()
@@ -106,9 +156,17 @@ private[controller] case class GameSystemsState(
       currentWave = nextWave
     )
 
+  /** Handles the defeat condition by resetting the game state to its initial configuration.
+    *
+    * @return A new GameSystemsState representing the initial game state.
+    */
   def handleDefeat(): GameSystemsState =
     GameSystemsState.initial()
 
+  /** Resets the game systems to their initial state without changing the current wave.
+    *
+    * @return A new GameSystemsState with all systems reset.
+    */
   def reset(): GameSystemsState =
     val freshElixir = ElixirSystem()
     GameSystemsState(
@@ -128,7 +186,14 @@ private[controller] case class GameSystemsState(
   def canAfford(cost: Int): Boolean = elixir.canAfford(cost)
   def getCurrentWave: Int           = currentWave
 
+/** Companion object for GameSystemsState providing an initial state factory method. */
 private[controller] object GameSystemsState:
+
+  /** Creates an initial GameSystemsState with all systems set to their default configurations.
+    *
+    * @param wave The starting wave number, defaulting to 1.
+    * @return A new GameSystemsState representing the initial game state.
+    */
   def initial(wave: Int = 1): GameSystemsState =
     val elixir = ElixirSystem()
     GameSystemsState(
