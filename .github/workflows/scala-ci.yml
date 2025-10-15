@@ -1,4 +1,4 @@
-name: Scala CI & Test
+name: Build, Test & Format
 
 on:
   push:
@@ -8,7 +8,6 @@ on:
 
 jobs:
   build-and-test:
-    # Esegui il job su più sistemi operativi in parallelo
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -16,31 +15,23 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      # 1. Fa il checkout del tuo codice
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Imposta l'ambiente Java 21
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - name: Set up Scala and SBT
+        uses: olafurpg/setup-scala@v14
         with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'sbt'
+          java-version: "adopt@21"
 
-      # 3. [Solo per Linux] Imposta un ambiente grafico virtuale per JavaFX
-      # Questo è FONDAMENTALE per far funzionare i test di ScalaFX su Ubuntu
       - name: Set up headless GUI for Linux
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-0 libxtst6 libxrender1 libasound2 libgl1-mesa-glx xvfb
 
-      # 4. Controlla la formattazione del codice con scalafmt
       #- name: Check Scala Formatting
-       # run: sbt scalafmtCheckAll
+      #  run: sbt scalafmtCheckAll
 
-      # 5. Esegui i test (con il server grafico virtuale su Linux)
       - name: Run tests
         run: |
           if [ "${{ runner.os }}" == "Linux" ]; then

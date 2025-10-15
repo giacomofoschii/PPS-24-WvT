@@ -1,0 +1,14 @@
+name: Validate Commit Message
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-commits:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check Conventional Commits
+        uses: webiny/action-conventional-commits@v1.3.0
