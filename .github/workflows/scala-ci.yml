@@ -49,7 +49,7 @@ jobs:
       - name: Set up headless GUI for Linux
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get install -y libgtk-3-0 libxtst6 libxrender1 libasound2 libgl1-mesa-glx xvfb
+          sudo apt-get install -y libgtk-3-0 libxtst6 libxrender1 libasound2t64 libgl1 libglx-mesa0 xvfb
 
       # 5. Controlla la formattazione del codice
       #- name: Check Scala Formatting
