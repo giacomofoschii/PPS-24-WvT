@@ -58,24 +58,25 @@ class GameController(private var world: World):
       case None => ()
 
   def update(): Unit =
-    Option.when(
-      eventHandler.getCurrentPhase == Playing &&
-        !gameEngine.isPaused
-    ):
-      processPendingActions()
+    synchronized:
+      Option.when(
+        eventHandler.getCurrentPhase == Playing &&
+          !gameEngine.isPaused
+      ):
+        processPendingActions()
 
-      val oldWave = state.getCurrentWave
-      val (newWorld, newState) = state.updateAll(world)
+        val oldWave = state.getCurrentWave
+        val (newWorld, newState) = state.updateAll(world)
 
-      world = newWorld
-      state = newState
+        world = newWorld
+        state = newState
 
-      state.selectedWizardType.foreach(_ => repaintGrid())
+        state.selectedWizardType.foreach(_ => repaintGrid())
 
-      Option.when(oldWave != state.getCurrentWave):
-        notifyWaveChange(state.getCurrentWave)
+        Option.when(oldWave != state.getCurrentWave):
+          notifyWaveChange(state.getCurrentWave)
 
-      ViewController.render()
+        ViewController.render()
 
   def postEvent(event: GameEvent): Unit =
     eventHandler.postEvent(event)
@@ -172,14 +173,35 @@ class GameController(private var world: World):
       case Ice => EntityFactory.createIceWizard(world, position)
 
   def handleContinueBattle(): Unit =
-    world = World.empty
-    state = state.handleVictory()
+    Option.when(gameEngine.isRunning):
+      gameEngine.resume()
+
+    Thread.sleep(50)
+
+    synchronized:
+      world = World.empty
+      state = state.handleVictory()
+      pendingActions.clear()
+
     ViewController.hidePlacementGrid()
     ViewController.render()
 
+    Option.when(gameEngine.isRunning):
+      gameEngine.start()
+
   def handleNewGame(): Unit =
-    world = World.empty
-    state = state.reset()
+    Option.when(gameEngine.isRunning):
+      gameEngine.stop()
+
+    Thread.sleep(50)
+
+    synchronized:
+      world = World.empty
+      state = state.reset()
+      pendingActions.clear()
+      isInitialized = false
+
+    initialize()
     notifyWaveChange(state.getCurrentWave)
     ViewController.hidePlacementGrid()
     ViewController.render()

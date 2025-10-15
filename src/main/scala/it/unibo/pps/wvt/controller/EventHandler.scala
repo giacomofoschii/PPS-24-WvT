@@ -87,18 +87,29 @@ class EventHandlerImpl(private val engine: GameEngine) extends EventHandler:
         ViewController.render()
       case GameWon =>
         pauseEngine()
+        Thread.sleep(50)
         handleMenuTransition(Paused, Some(ViewState.Victory))
       case GameLost =>
         pauseEngine()
+        Thread.sleep(50)
         handleMenuTransition(Paused, Some(ViewState.Defeat))
       case ContinueBattle =>
+        if !engine.isPaused then
+          pauseEngine()
+          Thread.sleep(50)
+
         engine.getController.foreach(_.handleContinueBattle())
+
         resumeEngine()
         handleMenuTransition(Playing, Some(ViewState.GameView))
+        ViewController.render()
       case NewGame =>
         stopEngine()
+        Thread.sleep(100)
+
         engine.getController.foreach(_.handleNewGame())
         handleMenuTransition(Playing, Some(ViewState.GameView))
+
         Option.when(!engine.isRunning)(startEngine())
       case SelectWizard(wizardType) =>
         engine.getController.foreach(_.selectWizard(wizardType))
