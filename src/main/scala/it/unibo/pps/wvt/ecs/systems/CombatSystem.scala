@@ -23,28 +23,30 @@ case class CombatSystem() extends System:
 
   private def processRangedAttacks(world: World): World =
     val world1 = processWizardProjectiles(world)
-    val world2= processThrowerProjectiles(world1)
+    val world2 = processThrowerProjectiles(world1)
     world2
 
   private def processWizardProjectiles(world: World): World =
     @tailrec
-    def processWizardList(wizards: List[(EntityId, WizardType, Position, AttackComponent)],
-                          currentWorld: World): World =
+    def processWizardList(
+        wizards: List[(EntityId, WizardType, Position, AttackComponent)],
+        currentWorld: World
+    ): World =
       wizards match
         case Nil => currentWorld
         case (entity, wizardType, pos, attack) :: tail =>
           val projType = wizardType match
             case WizardType.Fire => ProjectileType.Fire
-            case WizardType.Ice => ProjectileType.Ice
-            case _ => ProjectileType.Wind
+            case WizardType.Ice  => ProjectileType.Ice
+            case _               => ProjectileType.Wind
           val updatedWorld = spawnProjectileAndSetCooldown(currentWorld, entity, pos, projType, attack.cooldown)
           processWizardList(tail, updatedWorld)
 
     val wizards = (for
-      entity <- world.getEntitiesByType("wizard")
+      entity     <- world.getEntitiesByType("wizard")
       wizardType <- world.getComponent[WizardTypeComponent](entity)
       if wizardType.wizardType != WizardType.Generator && wizardType.wizardType != WizardType.Barrier
-      pos <- world.getComponent[PositionComponent](entity)
+      pos    <- world.getComponent[PositionComponent](entity)
       attack <- world.getComponent[AttackComponent](entity)
       if findClosestTarget(pos.position, attack.range, "troll", world, attacksLeft = false).isDefined
       if !isOnCooldown(entity, world)
@@ -62,15 +64,15 @@ case class CombatSystem() extends System:
             .map(target => addBlocker(currentWorld, entity, target))
             .getOrElse(currentWorld)
 
-          val updatedWorld = spawnProjectileAndSetCooldown(worldWithBlock, entity, pos,
-            ProjectileType.Troll, attack.cooldown)
+          val updatedWorld =
+            spawnProjectileAndSetCooldown(worldWithBlock, entity, pos, ProjectileType.Troll, attack.cooldown)
           processThrowerList(tail, updatedWorld)
 
     val throwers = (for
-      entity <- world.getEntitiesByType("troll")
+      entity    <- world.getEntitiesByType("troll")
       trollType <- world.getComponent[TrollTypeComponent](entity)
       if trollType.trollType == Thrower
-      pos <- world.getComponent[PositionComponent](entity)
+      pos    <- world.getComponent[PositionComponent](entity)
       attack <- world.getComponent[AttackComponent](entity)
       if findClosestTarget(pos.position, attack.range, "wizard", world, attacksLeft = true).isDefined
       if !isOnCooldown(entity, world)
@@ -85,14 +87,19 @@ case class CombatSystem() extends System:
         world.removeComponent[BlockedComponent](troll)
           .addComponent(troll, BlockedComponent(wizard))
 
-  private def findClosestTarget(attackerPos: Position, range: Double,
-                                targetType: String, world: World, attacksLeft: Boolean): Option[EntityId] =
+  private def findClosestTarget(
+      attackerPos: Position,
+      range: Double,
+      targetType: String,
+      world: World,
+      attacksLeft: Boolean
+  ): Option[EntityId] =
     world.getEntitiesByType(targetType)
       .flatMap(target => world.getComponent[PositionComponent](target).map(pos => (target, pos.position)))
       .filter { case (_, targetPos) =>
-        val distance = calculateDistance(attackerPos, targetPos)
+        val distance         = calculateDistance(attackerPos, targetPos)
         val correctDirection = if attacksLeft then distance <= 0 else distance >= 0
-        val inRange = math.abs(distance) <= range
+        val inRange          = math.abs(distance) <= range
         inRange && correctDirection
       }
       .minByOption { case (_, targetPos) => math.abs(calculateDistance(attackerPos, targetPos)) }
@@ -105,8 +112,13 @@ case class CombatSystem() extends System:
       case _ =>
         Double.MaxValue
 
-  private def spawnProjectileAndSetCooldown(world: World, entity: EntityId, position: Position,
-                                            projectileType: ProjectileType, cooldown: Long): World =
+  private def spawnProjectileAndSetCooldown(
+      world: World,
+      entity: EntityId,
+      position: Position,
+      projectileType: ProjectileType,
+      cooldown: Long
+  ): World =
     val (world1, _) = EntityFactory.createProjectile(world, position, projectileType)
     world1.addComponent(entity, CooldownComponent(cooldown))
 
@@ -114,10 +126,10 @@ case class CombatSystem() extends System:
     world.getComponent[CooldownComponent](entity).exists(_.remainingTime > 0)
 
   private def updateComponentTimer[C <: Component](
-                                                    world: World,
-                                                    componentClass: Class[C],
-                                                    recreate: (Long, C) => C
-                                                  )(using ct: ClassTag[C]): World =
+      world: World,
+      componentClass: Class[C],
+      recreate: (Long, C) => C
+  )(using ct: ClassTag[C]): World =
     @tailrec
     def updateList(entities: List[EntityId], currentWorld: World): World =
       entities match

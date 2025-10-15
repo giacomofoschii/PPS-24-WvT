@@ -5,13 +5,12 @@ import it.unibo.pps.wvt.utilities.ViewConstants.*
 object GridMapper:
 
   type LogicalCoords = (Int, Int)
-  
+
   lazy val allCells: Seq[Position] =
-    for  
+    for
       row <- 0 until GRID_ROWS
       col <- 0 until GRID_COLS
-    yield
-      Position(col * CELL_WIDTH + GRID_OFFSET_X, row * CELL_HEIGHT + GRID_OFFSET_Y)
+    yield Position(col * CELL_WIDTH + GRID_OFFSET_X, row * CELL_HEIGHT + GRID_OFFSET_Y)
 
   def isValidPosition(pos: Position): Boolean =
     pos.x <= GRID_OFFSET_X + GRID_COLS * CELL_WIDTH &&
@@ -39,8 +38,8 @@ object GridMapper:
     else None
 
   def getCellBounds(row: Int, col: Int): (Double, Double, Double, Double) =
-    val left = GRID_OFFSET_X + col * CELL_WIDTH
-    val top = GRID_OFFSET_Y + row * CELL_HEIGHT
-    val right = left + CELL_WIDTH
+    val left   = GRID_OFFSET_X + col * CELL_WIDTH
+    val top    = GRID_OFFSET_Y + row * CELL_HEIGHT
+    val right  = left + CELL_WIDTH
     val bottom = top + CELL_HEIGHT
     (left, top, right, bottom)

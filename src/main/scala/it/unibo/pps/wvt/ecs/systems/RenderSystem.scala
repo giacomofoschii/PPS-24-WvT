@@ -9,26 +9,28 @@ import scalafx.scene.paint.Color
 import scala.annotation.tailrec
 
 case class RenderSystem(
-                         private val healthBarSystem: HealthBarRenderSystem = HealthBarRenderSystem(),
-                         private val lastRenderedState: Option[String] = None
-                       ) extends System:
+    private val healthBarSystem: HealthBarRenderSystem = HealthBarRenderSystem(),
+    private val lastRenderedState: Option[String] = None
+) extends System:
 
   override def update(world: World): (World, System) =
     val (world1, updatedHealthBars) = healthBarSystem.update(world)
-    val healthBarSystemTyped = updatedHealthBars.asInstanceOf[HealthBarRenderSystem]
-    
-    val entities = collectEntitiesWithImages(world1)
-    val healthBars = healthBarSystemTyped.getHealthBarsToRender
+    val healthBarSystemTyped        = updatedHealthBars.asInstanceOf[HealthBarRenderSystem]
 
+    val entities   = collectEntitiesWithImages(world1)
+    val healthBars = healthBarSystemTyped.getHealthBarsToRender
 
     val currentState = generateStateHash(entities, healthBars)
     if shouldRender(currentState) then
       GameView.renderEntities(entities)
       GameView.renderHealthBars(healthBars)
-      (world1, copy(
-        healthBarSystem = healthBarSystemTyped,
-        lastRenderedState = Some(currentState)
-      ))
+      (
+        world1,
+        copy(
+          healthBarSystem = healthBarSystemTyped,
+          lastRenderedState = Some(currentState)
+        )
+      )
     else
       (world1, copy(healthBarSystem = healthBarSystemTyped))
 
@@ -36,11 +38,11 @@ case class RenderSystem(
     !lastRenderedState.contains(currentState)
 
   private def generateStateHash(
-                                 entities: Seq[(Position, String)],
-                                 healthBars: Seq[(Position, Double, Color, Double, Double, Double)]
-                               ): String =
+      entities: Seq[(Position, String)],
+      healthBars: Seq[(Position, Double, Color, Double, Double, Double)]
+  ): String =
     val entitiesHash = entities.map { case (Position(x, y), path) => s"$x,$y,$path" }.mkString(";")
-    val healthHash = healthBars.map { case (Position(x, y), p, _, _, _, _) => s"$x,$y,$p" }.mkString(";")
+    val healthHash   = healthBars.map { case (Position(x, y), p, _, _, _, _) => s"$x,$y,$p" }.mkString(";")
     s"$entitiesHash|$healthHash"
 
   private def collectEntitiesWithImages(world: World): Seq[(Position, String)] =
@@ -49,12 +51,12 @@ case class RenderSystem(
       entities match
         case Nil => acc.reverse
         case head :: tail =>
-          val entityData = for
-            pos <- world.getComponent[PositionComponent](head)
-            img <- world.getComponent[ImageComponent](head)
-            prefix = if world.hasComponent[FreezedComponent](head) then "/freezed" else ""
-          yield
-            (pos.position, prefix + img.imagePath)
+          val entityData =
+            for
+              pos <- world.getComponent[PositionComponent](head)
+              img <- world.getComponent[ImageComponent](head)
+              prefix = if world.hasComponent[FreezedComponent](head) then "/freezed" else ""
+            yield (pos.position, prefix + img.imagePath)
 
           collectEntities(tail, entityData.fold(acc)(acc :+ _))
 

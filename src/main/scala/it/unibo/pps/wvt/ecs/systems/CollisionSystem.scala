@@ -8,8 +8,8 @@ import scala.annotation.tailrec
 import scala.util.Random
 
 case class CollisionSystem(
-                            private val random: Random = Random()
-                          ) extends System:
+    private val random: Random = Random()
+) extends System:
 
   override def update(world: World): (World, System) =
     val world1 = processProjectileCollisions(world)
@@ -31,9 +31,9 @@ case class CollisionSystem(
 
   private def processProjectileCollision(projectile: EntityId, world: World): World =
     (for
-      projPos <- world.getComponent[PositionComponent](projectile)
+      projPos  <- world.getComponent[PositionComponent](projectile)
       projType <- world.getComponent[ProjectileTypeComponent](projectile)
-      damage <- world.getComponent[DamageComponent](projectile)
+      damage   <- world.getComponent[DamageComponent](projectile)
     yield
       val targets = getValidTargets(projType.projectileType, world)
       findCollidingEntity(projPos.position, targets, world) match
@@ -52,13 +52,12 @@ case class CollisionSystem(
             .addComponent(target, CollisionComponent(damage.amount))
             .destroyEntity(projectile)
         case None => world
-
-      ).getOrElse(world)
+    ).getOrElse(world)
 
   private def getValidTargets(projType: ProjectileType, world: World): List[EntityId] =
     projType match
       case ProjectileType.Troll => world.getEntitiesByType("wizard").toList
-      case _ => world.getEntitiesByType("troll").toList
+      case _                    => world.getEntitiesByType("troll").toList
 
   private def findCollidingEntity(position: Position, targets: List[EntityId], world: World): Option[EntityId] =
     val currentGrid = GridMapper.physicalToLogical(position)
@@ -91,9 +90,9 @@ case class CollisionSystem(
 
   private def processMeleeCollision(troll: EntityId, world: World): World =
     (for
-      trollPos <- world.getComponent[PositionComponent](troll)
+      trollPos  <- world.getComponent[PositionComponent](troll)
       trollType <- world.getComponent[TrollTypeComponent](troll)
-      attack <- world.getComponent[AttackComponent](troll)
+      attack    <- world.getComponent[AttackComponent](troll)
     yield
       val wizards = world.getEntitiesByType("wizard").toList
       findCollidingEntity(trollPos.position, wizards, world) match
@@ -110,12 +109,12 @@ case class CollisionSystem(
 
           updatedWorld
         case None => world
-      ).getOrElse(world)
+    ).getOrElse(world)
 
   private def calculateMeleeDamage(trollType: TrollType, baseDamage: Int): Int =
     trollType match
       case TrollType.Assassin if random.nextDouble < 0.05 => baseDamage * 2
-      case _ => baseDamage
+      case _                                              => baseDamage
 
   private def isOnCooldown(entity: EntityId, world: World): Boolean =
     world.getComponent[CooldownComponent](entity).exists(_.remainingTime > 0)

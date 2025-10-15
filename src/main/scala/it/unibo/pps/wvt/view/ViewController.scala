@@ -13,19 +13,19 @@ import scalafx.scene.image.Image
 
 sealed trait ViewState
 object ViewState:
-  case object MainMenu extends ViewState
-  case object GameView extends ViewState
-  case object InfoMenu extends ViewState
+  case object MainMenu  extends ViewState
+  case object GameView  extends ViewState
+  case object InfoMenu  extends ViewState
   case object PauseMenu extends ViewState
-  case object Victory extends ViewState
-  case object Defeat extends ViewState
+  case object Victory   extends ViewState
+  case object Defeat    extends ViewState
 
 case class ViewControllerState(
-                              gameController: Option[GameController] = None,
-                              currentViewState: ViewState = ViewState.MainMenu,
-                              gameViewRoot: Option[Parent] = None,
-                              primaryStage: Option[PrimaryStage] = None
-                              )
+    gameController: Option[GameController] = None,
+    currentViewState: ViewState = ViewState.MainMenu,
+    gameViewRoot: Option[Parent] = None,
+    primaryStage: Option[PrimaryStage] = None
+)
 
 object ViewController extends JFXApp3:
   private var vcState: ViewControllerState = ViewControllerState()
@@ -40,7 +40,7 @@ object ViewController extends JFXApp3:
     super.stopApp()
 
   private def initializeController(state: ViewControllerState): ViewControllerState =
-    val world = new World()
+    val world          = new World()
     val gameController = GameController(world)
     gameController.initialize()
     state.copy(gameController = Some(gameController))
@@ -49,17 +49,20 @@ object ViewController extends JFXApp3:
     (previousState, newState) match
       case (prev, ViewState.GameView) =>
         prev match
-          case ViewState.MainMenu => true
+          case ViewState.MainMenu                                         => true
           case ViewState.PauseMenu | ViewState.Victory | ViewState.Defeat => false
-          case _ => true
-      case _  => false
+          case _                                                          => true
+      case _ => false
 
   private def shouldCleanup(previousState: ViewState, newState: ViewState): Boolean =
     (previousState, newState) match
-      case (ViewState.PauseMenu | ViewState.GameView |
-            ViewState.Victory | ViewState.Defeat, ViewState.MainMenu) => true
+      case (
+            ViewState.PauseMenu | ViewState.GameView |
+            ViewState.Victory | ViewState.Defeat,
+            ViewState.MainMenu
+          ) => true
       case (ViewState.MainMenu, ViewState.GameView) => true
-      case _ => false
+      case _                                        => false
 
   def updateView(viewState: ViewState): Unit =
     val previousState = vcState.currentViewState
@@ -69,13 +72,14 @@ object ViewController extends JFXApp3:
 
     val (newRoot, updatedState) = createViewForState(viewState, previousState, vcState)
     vcState = updatedState
-    
+
     updateStage(newRoot, viewState)
 
-  private def createViewForState(viewState: ViewState,
-                                 previousState: ViewState,
-                                 state: ViewControllerState
-                                ): (Parent, ViewControllerState) =
+  private def createViewForState(
+      viewState: ViewState,
+      previousState: ViewState,
+      state: ViewControllerState
+  ): (Parent, ViewControllerState) =
     viewState match
       case ViewState.MainMenu =>
         (MainMenu(), state.copy(gameViewRoot = None))
@@ -95,9 +99,7 @@ object ViewController extends JFXApp3:
       case ViewState.Defeat =>
         (GameResultPanel(GameResultPanel.Defeat), state)
 
-  private def createGameView(previousState: ViewState, 
-                             state: ViewControllerState
-                            ): (Parent, ViewControllerState) =
+  private def createGameView(previousState: ViewState, state: ViewControllerState): (Parent, ViewControllerState) =
     (previousState, state.gameViewRoot) match
       case (ViewState.PauseMenu, Some(existingView)) =>
         (existingView, state)
@@ -113,7 +115,7 @@ object ViewController extends JFXApp3:
         state.gameController.foreach: controller =>
           controller.stop()
           controller.initialize()
-        
+
         val view = GameView()
         render()
         (view, state.copy(gameViewRoot = Some(view)))
@@ -174,20 +176,20 @@ object ViewController extends JFXApp3:
         for
           logical <- GridMapper.physicalToLogical(Position(x, y))
         yield controller.postEvent(GameEvent.GridClicked(logical, x.toInt, y.toInt))
-    
+
   def getController: Option[GameController] = vcState.gameController
-  
+
   def render(): Unit =
     vcState.gameController.foreach: controller =>
       controller.getRenderSystem.update(controller.getWorld)
       updateShopAndWavePanel()
-  
+
   def drawPlacementGrid(green: Seq[Position], red: Seq[Position]): Unit =
     GameView.drawGrid(green, red)
 
   def hidePlacementGrid(): Unit =
     GameView.clearGrid()
-  
+
   def showError(message: String): Unit =
     GameView.showError(message)
 
@@ -203,7 +205,7 @@ object ViewController extends JFXApp3:
     vcState.gameController.foreach: controller =>
       controller.stop()
       controller.getWorld.clear()
-    
+
     GameView.cleanup()
     vcState = vcState.copy(gameViewRoot = None)
     ImageFactory.clearCache()

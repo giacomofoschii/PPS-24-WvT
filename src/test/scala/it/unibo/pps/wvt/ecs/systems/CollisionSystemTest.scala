@@ -2,14 +2,14 @@ package it.unibo.pps.wvt.ecs.systems
 
 import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.core.{EntityId, World}
-import it.unibo.pps.wvt.utilities.{Position, GridMapper}
+import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfter
 
 class CollisionSystemTest extends AnyFunSuite with Matchers with BeforeAndAfter:
-  var world: World = _
+  var world: World                     = _
   var collisionSystem: CollisionSystem = _
 
   before:
@@ -17,11 +17,11 @@ class CollisionSystemTest extends AnyFunSuite with Matchers with BeforeAndAfter:
     collisionSystem = CollisionSystem()
 
   test("should detect collision between projectile and troll"):
-    val world = World()
+    val world  = World()
     val system = CollisionSystem()
 
     val projectilePos = GridMapper.logicalToPhysical((2, 2)).get
-    val projectile = world.createEntity()
+    val projectile    = world.createEntity()
     world.addComponent(projectile, ProjectileTypeComponent(ProjectileType.Wind))
     world.addComponent(projectile, PositionComponent(projectilePos))
     world.addComponent(projectile, DamageComponent(25, ProjectileType.Wind))
@@ -38,7 +38,7 @@ class CollisionSystemTest extends AnyFunSuite with Matchers with BeforeAndAfter:
     trollHealth.get.currentHealth should be < 100
 
   test("should not detect collision in different cells"):
-    val world = World()
+    val world  = World()
     val system = CollisionSystem()
 
     val projectile = world.createEntity()
@@ -57,10 +57,10 @@ class CollisionSystemTest extends AnyFunSuite with Matchers with BeforeAndAfter:
     world.getAllEntities should contain(troll)
 
   test("should process melee collision between troll and wizard"):
-    val world = World()
+    val world  = World()
     val system = CollisionSystem()
 
-    val pos = GridMapper.logicalToPhysical((2, 2)).get
+    val pos   = GridMapper.logicalToPhysical((2, 2)).get
     val troll = world.createEntity()
     world.addComponent(troll, TrollTypeComponent(TrollType.Base))
     world.addComponent(troll, PositionComponent(pos))
@@ -77,10 +77,10 @@ class CollisionSystemTest extends AnyFunSuite with Matchers with BeforeAndAfter:
     world.getComponent[BlockedComponent](troll) shouldBe defined
 
   test("should apply ice freeze effect"):
-    val world = World()
+    val world  = World()
     val system = CollisionSystem()
 
-    val pos = GridMapper.logicalToPhysical((3, 3)).get
+    val pos        = GridMapper.logicalToPhysical((3, 3)).get
     val projectile = world.createEntity()
     world.addComponent(projectile, ProjectileTypeComponent(ProjectileType.Ice))
     world.addComponent(projectile, PositionComponent(pos))
@@ -96,7 +96,7 @@ class CollisionSystemTest extends AnyFunSuite with Matchers with BeforeAndAfter:
     world.getComponent[FreezedComponent](troll) shouldBe defined
 
   test("should remove BlockedComponent when blocker is gone"):
-    val world = World()
+    val world  = World()
     val system = CollisionSystem()
 
     val troll = world.createEntity()

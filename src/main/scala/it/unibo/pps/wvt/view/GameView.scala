@@ -16,19 +16,19 @@ import scalafx.application.Platform
 import scala.annotation.tailrec
 
 case class GameViewState(
-                        entities: Seq[(Position, String)] = Seq.empty,
-                        healthBars: Seq[(Position, Double, Color, Double, Double, Double)] = Seq.empty,
-                        gridCells: (Seq[Position], Seq[Position]) = (Seq.empty, Seq.empty)
-                        )
+    entities: Seq[(Position, String)] = Seq.empty,
+    healthBars: Seq[(Position, Double, Color, Double, Double, Double)] = Seq.empty,
+    gridCells: (Seq[Position], Seq[Position]) = (Seq.empty, Seq.empty)
+)
 
 private case class RenderablePanes(
-                                  grid: Pane,
-                                  entities: Pane,
-                                  projectiles: Pane,
-                                  healthBars: Pane,
-                                  ui: Pane,
-                                  stack: StackPane
-                                  )
+    grid: Pane,
+    entities: Pane,
+    projectiles: Pane,
+    healthBars: Pane,
+    ui: Pane,
+    stack: StackPane
+)
 
 object GameView:
   private var panes: Option[RenderablePanes] = None
@@ -82,12 +82,11 @@ object GameView:
         p.healthBars.children.clear()
         healthBars.foreach(renderSingleHealthBar(p.healthBars))
 
-
   def drawGrid(greenCells: Seq[Position], redCells: Seq[Position]): Unit =
     Platform.runLater:
       panes.foreach: p =>
         p.grid.children.clear()
-  
+
         @tailrec
         def drawCells(cells: List[Position], color: Color): Unit =
           cells match
@@ -95,16 +94,15 @@ object GameView:
             case Position(x, y) :: tail =>
               p.grid.children.add(createStatusCell(x, y, color))
               drawCells(tail, color)
-  
+
         drawCells(greenCells.toList, Color.Green)
         drawCells(redCells.toList, Color.Red)
-
 
   def clearGrid(): Unit =
     Platform.runLater:
       panes.foreach(_.grid.children.clear())
 
-  def showError(message: String) : Unit =
+  def showError(message: String): Unit =
     Platform.runLater:
       val alert = new Alert(AlertType.Error):
         title = "Error"
@@ -170,11 +168,11 @@ object GameView:
 
   private def createUIOverlay: Pane =
     import ButtonFactory.Presets._
-    
+
     val pauseButton = createStyledButton(shopButtonPreset("Pause"))(handleAction(PauseGame))
-    val shopPanel = ShopPanel.createShopPanel()
-    val shopButton = ShopPanel.createShopButton()
-    val wavePanel = WavePanel.createWavePanel()
+    val shopPanel   = ShopPanel.createShopPanel()
+    val shopButton  = ShopPanel.createShopButton()
+    val wavePanel   = WavePanel.createWavePanel()
     val overlayPane = new Pane {
       children = Seq(shopPanel, pauseButton, shopButton, wavePanel)
     }

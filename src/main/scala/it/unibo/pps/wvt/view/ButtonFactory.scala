@@ -21,15 +21,15 @@ case class ButtonConfig(text: String, width: Int, height: Int, fontSize: Int, fo
 
 sealed trait ButtonAction
 object ButtonAction:
-  case object StartGame extends ButtonAction
-  case object ShowInfo extends ButtonAction
-  case object BackToMenu extends ButtonAction
-  case object ContinueBattle extends ButtonAction
-  case object NewGame extends ButtonAction
+  case object StartGame                            extends ButtonAction
+  case object ShowInfo                             extends ButtonAction
+  case object BackToMenu                           extends ButtonAction
+  case object ContinueBattle                       extends ButtonAction
+  case object NewGame                              extends ButtonAction
   case class PlacingWizard(wizardType: WizardType) extends ButtonAction
-  case object PauseGame extends ButtonAction
-  case object ResumeGame extends ButtonAction
-  case object ExitGame extends ButtonAction
+  case object PauseGame                            extends ButtonAction
+  case object ResumeGame                           extends ButtonAction
+  case object ExitGame                             extends ButtonAction
 
 object ButtonFactory:
   export ButtonAction.*
@@ -38,21 +38,21 @@ object ButtonFactory:
     createButton(config).withAction(action).withOverEffect().build()
 
   def createCustomButton(config: ButtonConfig, customStyle: Button => Unit)(action: => Unit): Button =
-    val button= createButton(config).build()
+    val button = createButton(config).build()
     customStyle(button)
     button.onAction = _ => action
     button
 
   def handleAction(action: ButtonAction): Unit = action match
-    case StartGame => ViewController.requestGameView()
-    case ShowInfo => ViewController.requestInfoMenu()
-    case BackToMenu => ViewController.requestMainMenu()
+    case StartGame                 => ViewController.requestGameView()
+    case ShowInfo                  => ViewController.requestInfoMenu()
+    case BackToMenu                => ViewController.requestMainMenu()
     case PlacingWizard(wizardType) => ViewController.requestPlaceWizard(wizardType)
-    case PauseGame => ViewController.requestPauseGame()
-    case ResumeGame => ViewController.requestResumeGame()
-    case ExitGame => ViewController.requestExitGame()
-    case ContinueBattle => ViewController.requestContinueBattle()
-    case NewGame => ViewController.requestNewGame()
+    case PauseGame                 => ViewController.requestPauseGame()
+    case ResumeGame                => ViewController.requestResumeGame()
+    case ExitGame                  => ViewController.requestExitGame()
+    case ContinueBattle            => ViewController.requestContinueBattle()
+    case NewGame                   => ViewController.requestNewGame()
 
   private case class ButtonBuilder(button: Button):
     def withAction(action: => Unit): ButtonBuilder =
@@ -96,6 +96,6 @@ object ButtonFactory:
 
     def shopButtonPreset(text: String): ButtonConfig =
       ButtonConfig(text, 200, 100, 20, "Times New Roman")
-      
+
     def navButtonPreset(text: String): ButtonConfig =
       ButtonConfig(text, 140, 60, 16, "Times New Roman")

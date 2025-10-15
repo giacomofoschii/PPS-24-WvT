@@ -6,10 +6,10 @@ import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 import scala.annotation.tailrec
 
 case class World(
-                private val entities: Set[EntityId] = Set.empty,
-                private val components: Map[Class[_], Map[EntityId, Component]] = Map.empty,
-                private val entitiesByType: Map[String, Set[EntityId]] = Map.empty
-                ):
+    private val entities: Set[EntityId] = Set.empty,
+    private val components: Map[Class[_], Map[EntityId, Component]] = Map.empty,
+    private val entitiesByType: Map[String, Set[EntityId]] = Map.empty
+):
 
   def createEntity(): (World, EntityId) =
     val entity = EntityId.generate()
@@ -62,8 +62,10 @@ case class World(
   def getEntitiesWithComponent[T <: Component](using ct: reflect.ClassTag[T]): Set[EntityId] =
     components.get(ct.runtimeClass).map(_.keySet).getOrElse(Set.empty)
 
-  def getEntitiesWithTwoComponents[A <: Component, B <: Component]
-  (using ctA: reflect.ClassTag[A], ctB: reflect.ClassTag[B]): Set[EntityId] =
+  def getEntitiesWithTwoComponents[A <: Component, B <: Component](using
+      ctA: reflect.ClassTag[A],
+      ctB: reflect.ClassTag[B]
+  ): Set[EntityId] =
     val entitiesA = getEntitiesWithComponent[A]
     val entitiesB = getEntitiesWithComponent[B]
     entitiesA.intersect(entitiesB)
@@ -95,8 +97,8 @@ case class World(
   private def getEntitiesAt(position: Position): Seq[EntityId] =
     for
       targetGrid <- GridMapper.physicalToLogical(position).toSeq
-      entity <- getEntitiesWithComponent[PositionComponent].toSeq
-      posComp <- getComponent[PositionComponent](entity)
+      entity     <- getEntitiesWithComponent[PositionComponent].toSeq
+      posComp    <- getComponent[PositionComponent](entity)
       entityGrid <- GridMapper.physicalToLogical(posComp.position)
       if entityGrid == targetGrid
     yield entity
