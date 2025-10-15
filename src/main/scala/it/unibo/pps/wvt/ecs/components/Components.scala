@@ -63,7 +63,7 @@ case class TrollTypeComponent(trollType: TrollType)                extends Entit
 case class ProjectileTypeComponent(projectileType: ProjectileType) extends EntityTypeComponent
 
 enum WizardType:
-  case Generator, Wind, Barrier, Fire, Ice
+  case Generator, Wind, Barrier, Ice, Fire
 
 enum TrollType:
   case Base, Warrior, Assassin, Thrower
