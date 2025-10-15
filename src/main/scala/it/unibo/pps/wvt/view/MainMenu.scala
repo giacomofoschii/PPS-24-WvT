@@ -10,12 +10,10 @@ import it.unibo.pps.wvt.view.ButtonFactory._
 import it.unibo.pps.wvt.view.ButtonFactory.Presets.{mainMenuButtonPreset, smallButtonPreset}
 import it.unibo.pps.wvt.view.ImageFactory._
 
-
-/**
- * Object representing the main menu of the application.
- * It creates a layout with a background image, logo, and buttons for starting the game,
- * viewing game information, and exiting the game.
- */
+/** Object representing the main menu of the application.
+  * It creates a layout with a background image, logo, and buttons for starting the game,
+  * viewing game information, and exiting the game.
+  */
 object MainMenu:
   def apply(): Parent =
     lazy val backgroundImage = createBackgroundView("/main_menu.jpg", MENU_SCALE_FACTOR).getOrElse(new ImageView())

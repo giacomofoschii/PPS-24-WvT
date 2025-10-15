@@ -8,12 +8,11 @@ import scalafx.scene.paint.Color
 
 import scala.annotation.tailrec
 
-/**
- * System responsible for rendering entities with images and health bars.
- * 
- * @param healthBarSystem the health bar rendering system
- * @param lastRenderedState the last rendered state hash to avoid redundant rendering
- */
+/** System responsible for rendering entities with images and health bars.
+  *
+  * @param healthBarSystem the health bar rendering system
+  * @param lastRenderedState the last rendered state hash to avoid redundant rendering
+  */
 case class RenderSystem(
     private val healthBarSystem: HealthBarRenderSystem = HealthBarRenderSystem(),
     private val lastRenderedState: Option[String] = None

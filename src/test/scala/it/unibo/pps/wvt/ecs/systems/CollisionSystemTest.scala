@@ -9,7 +9,7 @@ import org.scalatest.BeforeAndAfter
 
 class CollisionSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
-  var world: World = _
+  var world: World                     = _
   var collisionSystem: CollisionSystem = _
 
   before:
@@ -19,7 +19,7 @@ class CollisionSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
   behavior of "CollisionSystem"
 
   it should "detect collision between a projectile and a troll in the same cell" in:
-    val projectilePos = GridMapper.logicalToPhysical((2, 2)).get
+    val projectilePos        = GridMapper.logicalToPhysical((2, 2)).get
     val (world1, projectile) = world.createEntity()
     var w = world1.addComponent(projectile, ProjectileTypeComponent(ProjectileType.Wind))
       .addComponent(projectile, PositionComponent(projectilePos))
@@ -53,7 +53,7 @@ class CollisionSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     finalWorld.getComponent[HealthComponent](troll).get.currentHealth shouldBe 100
 
   it should "process melee collision between a troll and a wizard" in:
-    val pos = GridMapper.logicalToPhysical((2, 2)).get
+    val pos             = GridMapper.logicalToPhysical((2, 2)).get
     val (world1, troll) = world.createEntity()
     var w = world1.addComponent(troll, TrollTypeComponent(TrollType.Base))
       .addComponent(troll, PositionComponent(pos))
@@ -70,7 +70,7 @@ class CollisionSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     finalWorld.getComponent[BlockedComponent](troll) shouldBe defined
 
   it should "apply ice freeze effect on collision" in:
-    val pos = GridMapper.logicalToPhysical((3, 3)).get
+    val pos                  = GridMapper.logicalToPhysical((3, 3)).get
     val (world1, projectile) = world.createEntity()
     var w = world1.addComponent(projectile, ProjectileTypeComponent(ProjectileType.Ice))
       .addComponent(projectile, PositionComponent(pos))

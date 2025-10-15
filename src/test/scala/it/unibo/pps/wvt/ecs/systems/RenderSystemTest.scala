@@ -23,7 +23,7 @@ class RenderSystemTest extends AnyFlatSpec with Matchers:
   behavior of "RenderSystem"
 
   it should "collect all entities that have both PositionComponent and ImageComponent" in:
-    var world = World()
+    var world         = World()
     val (w1, entity1) = world.createEntity()
     world = w1.addComponent(entity1, PositionComponent(Position(10, 10)))
       .addComponent(entity1, ImageComponent("/test.png"))
@@ -32,20 +32,20 @@ class RenderSystemTest extends AnyFlatSpec with Matchers:
     world = w2.addComponent(entity2, PositionComponent(Position(20, 20)))
     // entity2 non ha ImageComponent
 
-    val renderSystem = RenderSystem()
+    val renderSystem      = RenderSystem()
     val collectedEntities = renderSystem.collectEntitiesWithImages(world)
 
     collectedEntities should have size 1
     collectedEntities.head shouldBe (Position(10, 10), "/test.png")
 
   it should "use a different image path for freezed entities" in:
-    var world = World()
+    var world        = World()
     val (w1, entity) = world.createEntity()
     world = w1.addComponent(entity, PositionComponent(Position(10, 10)))
       .addComponent(entity, ImageComponent("/troll/BaseTroll.png"))
       .addComponent(entity, FreezedComponent(1000, 0.5))
 
-    val renderSystem = RenderSystem()
+    val renderSystem      = RenderSystem()
     val collectedEntities = renderSystem.collectEntitiesWithImages(world)
 
     collectedEntities.head._2 shouldBe "/freezed/troll/BaseTroll.png"
@@ -55,7 +55,7 @@ class RenderSystemTest extends AnyFlatSpec with Matchers:
     renderSystem.shouldRender("any_state_hash") shouldBe true
 
   it should "not render if the state hash is unchanged" in:
-    val stateHash = "identical_hash"
+    val stateHash    = "identical_hash"
     val renderSystem = RenderSystem(lastRenderedState = Some(stateHash))
 
     renderSystem.shouldRender(stateHash) shouldBe false

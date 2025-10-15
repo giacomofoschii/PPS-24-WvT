@@ -4,9 +4,7 @@ import scalafx.scene.image.{Image, ImageView}
 import scala.collection.mutable
 import java.io.InputStream
 
-/**
- * Factory object for creating and caching images and image views.
- */
+/** Factory object for creating and caching images and image views. */
 object ImageFactory:
 
   private val imageCache: mutable.Map[String, Image] = mutable.Map.empty
@@ -50,11 +48,10 @@ object ImageFactory:
       fitWidth = width
       preserveRatio = true
 
-  /**
-   * Object to provide statistics about the image cache.
-   * Includes methods to get the number of cached images, check if an image is cached,
-   * list cached image paths, and estimate memory usage.
-   */
+  /** Object to provide statistics about the image cache.
+    * Includes methods to get the number of cached images, check if an image is cached,
+    * list cached image paths, and estimate memory usage.
+    */
   object CacheStats:
     def size: Int = imageCache.size
 

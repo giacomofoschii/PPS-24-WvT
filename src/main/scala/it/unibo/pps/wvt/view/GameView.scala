@@ -15,29 +15,27 @@ import scalafx.application.Platform
 
 import scala.annotation.tailrec
 
-/**
- * Represents the state of the game view, including entities, health bars, and grid cells.
- * 
- * @param entities a sequence of tuples containing the position and image path of each entity
- * @param healthBars a sequence of tuples containing the statistics of each health bar
- * @param gridCells a tuple containing two sequences of positions for green and red grid cells to draw
- */
+/** Represents the state of the game view, including entities, health bars, and grid cells.
+  *
+  * @param entities a sequence of tuples containing the position and image path of each entity
+  * @param healthBars a sequence of tuples containing the statistics of each health bar
+  * @param gridCells a tuple containing two sequences of positions for green and red grid cells to draw
+  */
 case class GameViewState(
     entities: Seq[(Position, String)] = Seq.empty,
     healthBars: Seq[(Position, Double, Color, Double, Double, Double)] = Seq.empty,
     gridCells: (Seq[Position], Seq[Position]) = (Seq.empty, Seq.empty)
 )
 
-/**
- * Holds references to the different panes used in the game view.
- * 
- * @param grid the pane for drawing the grid overlay
- * @param entities the pane for rendering entities
- * @param projectiles the pane for rendering projectiles
- * @param healthBars the pane for rendering health bars
- * @param ui the pane for rendering the UI overlay
- * @param stack the main stack pane containing all other panes
- */
+/** Holds references to the different panes used in the game view.
+  *
+  * @param grid the pane for drawing the grid overlay
+  * @param entities the pane for rendering entities
+  * @param projectiles the pane for rendering projectiles
+  * @param healthBars the pane for rendering health bars
+  * @param ui the pane for rendering the UI overlay
+  * @param stack the main stack pane containing all other panes
+  */
 private case class RenderablePanes(
     grid: Pane,
     entities: Pane,
@@ -47,9 +45,7 @@ private case class RenderablePanes(
     stack: StackPane
 )
 
-/**
- * The main game view responsible for rendering the game state, including entities, health bars, and grid cells.
- */
+/** The main game view responsible for rendering the game state, including entities, health bars, and grid cells. */
 object GameView:
   private var panes: Option[RenderablePanes] = None
 

@@ -8,15 +8,14 @@ import scalafx.scene.effect.DropShadow
 import scalafx.scene.paint.Color
 import scalafx.scene.text.{Font, FontWeight}
 
-/**
- * Configuration for creating a styled button.
- * 
- * @param text the button text
- * @param width the button width
- * @param height the button height
- * @param fontSize the font size of the button text
- * @param fontFamily the font family of the button text
- */
+/** Configuration for creating a styled button.
+  *
+  * @param text the button text
+  * @param width the button width
+  * @param height the button height
+  * @param fontSize the font size of the button text
+  * @param fontFamily the font family of the button text
+  */
 case class ButtonConfig(text: String, width: Int, height: Int, fontSize: Int, fontFamily: String):
   def backgroundStyle: String =
     s"""-fx-background-image: url('/button_background.png');
@@ -28,14 +27,10 @@ case class ButtonConfig(text: String, width: Int, height: Int, fontSize: Int, fo
        -fx-padding: 0;
        -fx-text-fill: #DAA520;"""
 
-/**
- * Defines actions associated with buttons in the UI.
- */
+/** Defines actions associated with buttons in the UI. */
 sealed trait ButtonAction
 
-/**
- * Companion object for ButtonAction containing predefined actions.
- */
+/** Companion object for ButtonAction containing predefined actions. */
 object ButtonAction:
   case object StartGame                            extends ButtonAction
   case object ShowInfo                             extends ButtonAction
@@ -47,9 +42,7 @@ object ButtonAction:
   case object ResumeGame                           extends ButtonAction
   case object ExitGame                             extends ButtonAction
 
-/**
- * Factory for creating styled buttons with predefined configurations and actions.
- */
+/** Factory for creating styled buttons with predefined configurations and actions. */
 object ButtonFactory:
   export ButtonAction.*
 
@@ -73,11 +66,10 @@ object ButtonFactory:
     case ContinueBattle            => ViewController.requestContinueBattle()
     case NewGame                   => ViewController.requestNewGame()
 
-  /**
-   * Builder for creating buttons with a fluent interface.
-   * 
-   * @param button the button being built
-   */
+  /** Builder for creating buttons with a fluent interface.
+    *
+    * @param button the button being built
+    */
   private case class ButtonBuilder(button: Button):
     def withAction(action: => Unit): ButtonBuilder =
       button.onAction = _ => action
@@ -108,9 +100,7 @@ object ButtonFactory:
 
     ButtonBuilder(button)
 
-  /**
-   * Predefined button configurations for various UI contexts.
-   */
+  /** Predefined button configurations for various UI contexts. */
   object Presets:
     def mainMenuButtonPreset(text: String): ButtonConfig =
       ButtonConfig(text, 250, 150, 24, "Times New Roman")

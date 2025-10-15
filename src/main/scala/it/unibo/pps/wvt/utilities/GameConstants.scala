@@ -1,16 +1,12 @@
 package it.unibo.pps.wvt.utilities
 
-/**
- * Object containing game frame constants.
- */
+/** Object containing game frame constants. */
 object GameConstants:
   private val TARGET_FPS: Int = 60
   val FRAME_TIME_NANOS: Long  = 1_000_000_000L / TARGET_FPS
   val FRAME_TIME_MILLIS: Long = 1000L / TARGET_FPS
 
-/**
- * Object containing constants related to game play mechanics.
- */
+/** Object containing constants related to game play mechanics. */
 object GamePlayConstants:
   // Elixir generation parameters
   val INITIAL_ELIXIR: Int              = 200
@@ -92,9 +88,7 @@ object GamePlayConstants:
 
   val PROJECTILE_SPEED: Double = 0.5
 
-/**
- * Object containing constants related to the game view and UI.
- */
+/** Object containing constants related to the game view and UI. */
 object ViewConstants:
   val GRID_ROWS: Int = 5
   val GRID_COLS: Int = 9

@@ -1,6 +1,13 @@
 package it.unibo.pps.wvt.ecs.core
 
-import it.unibo.pps.wvt.ecs.components.{HealthComponent, PositionComponent, TrollType, TrollTypeComponent, WizardType, WizardTypeComponent}
+import it.unibo.pps.wvt.ecs.components.{
+  HealthComponent,
+  PositionComponent,
+  TrollType,
+  TrollTypeComponent,
+  WizardType,
+  WizardTypeComponent
+}
 import it.unibo.pps.wvt.utilities.Position
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -25,7 +32,7 @@ class WorldTest extends AnyFlatSpec with Matchers:
 
   it should "allow destroying an entity and its components" in:
     val (worldWithEntity, entity) = World.empty.createEntity()
-    val worldWithComponent = worldWithEntity.addComponent(entity, PositionComponent(Position(0, 0)))
+    val worldWithComponent        = worldWithEntity.addComponent(entity, PositionComponent(Position(0, 0)))
 
     val destroyedWorld = worldWithComponent.destroyEntity(entity)
     destroyedWorld.size shouldBe 0
@@ -33,41 +40,41 @@ class WorldTest extends AnyFlatSpec with Matchers:
     destroyedWorld.getComponent[PositionComponent](entity) shouldBe None
 
   it should "allow adding a component to an entity" in:
-    val (world, entity) = World.empty.createEntity()
-    val position = Position(10, 20)
+    val (world, entity)    = World.empty.createEntity()
+    val position           = Position(10, 20)
     val worldWithComponent = world.addComponent(entity, PositionComponent(position))
 
     worldWithComponent.getComponent[PositionComponent](entity) shouldBe Some(PositionComponent(position))
     worldWithComponent.hasComponent[PositionComponent](entity) shouldBe true
 
   it should "allow removing a component from an entity" in:
-    val (world, entity) = World.empty.createEntity()
-    val worldWithComponent = world.addComponent(entity, PositionComponent(Position(0, 0)))
+    val (world, entity)       = World.empty.createEntity()
+    val worldWithComponent    = world.addComponent(entity, PositionComponent(Position(0, 0)))
     val worldWithoutComponent = worldWithComponent.removeComponent[PositionComponent](entity)
 
     worldWithoutComponent.getComponent[PositionComponent](entity) shouldBe None
     worldWithoutComponent.hasComponent[PositionComponent](entity) shouldBe false
 
   it should "allow updating an existing component" in:
-    val (world, entity) = World.empty.createEntity()
-    val initialPos = Position(0, 0)
-    val updatedPos = Position(10, 10)
+    val (world, entity)    = World.empty.createEntity()
+    val initialPos         = Position(0, 0)
+    val updatedPos         = Position(10, 10)
     val worldWithComponent = world.addComponent(entity, PositionComponent(initialPos))
 
     val updatedWorld = worldWithComponent.updateComponent[PositionComponent](entity, _ => PositionComponent(updatedPos))
     updatedWorld.getComponent[PositionComponent](entity).map(_.position) shouldBe Some(updatedPos)
 
   it should "return all entities that have a specific component" in:
-    val (world, entity1) = World.empty.createEntity()
+    val (world, entity1)  = World.empty.createEntity()
     val (world2, entity2) = world.createEntity()
-    val world3 = world2.addComponent(entity1, PositionComponent(Position(0, 0)))
-    val world4 = world3.addComponent(entity2, HealthComponent(100, 100))
+    val world3            = world2.addComponent(entity1, PositionComponent(Position(0, 0)))
+    val world4            = world3.addComponent(entity2, HealthComponent(100, 100))
 
     world4.getEntitiesWithComponent[PositionComponent] should contain only entity1
     world4.getEntitiesWithComponent[HealthComponent] should contain only entity2
 
   it should "return entities that have two specific components" in:
-    val (world, e1) = World.empty.createEntity()
+    val (world, e1)  = World.empty.createEntity()
     val (world2, e2) = world.createEntity()
     val (world3, e3) = world2.createEntity()
 
@@ -94,7 +101,7 @@ class WorldTest extends AnyFlatSpec with Matchers:
 
   it should "find an entity at a specific grid location" in:
     val (world, entity) = World.empty.createEntity()
-    val position = Position(580, 200) // Approx cell (0, 0)
+    val position        = Position(580, 200) // Approx cell (0, 0)
     val worldWithEntity = world.addComponent(entity, PositionComponent(position))
 
     worldWithEntity.getEntityAt(position) shouldBe Some(entity)
@@ -103,7 +110,7 @@ class WorldTest extends AnyFlatSpec with Matchers:
   it should "confirm if a wizard is at a specific position" in:
     val (world, wizardEntity) = World.empty.createEntity()
     val (world2, trollEntity) = world.createEntity()
-    val position = Position(600, 200)
+    val position              = Position(600, 200)
 
     val finalWorld = world2
       .addComponent(wizardEntity, PositionComponent(position))
@@ -116,7 +123,7 @@ class WorldTest extends AnyFlatSpec with Matchers:
 
   it should "clear all entities and components" in:
     val (world, entity) = World.empty.createEntity()
-    val finalWorld = world.addComponent(entity, PositionComponent(Position(0, 0)))
+    val finalWorld      = world.addComponent(entity, PositionComponent(Position(0, 0)))
 
     val clearedWorld = finalWorld.clear()
     clearedWorld.isEmpty shouldBe true

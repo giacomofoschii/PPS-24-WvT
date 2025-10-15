@@ -11,15 +11,12 @@ import scalafx.application.{JFXApp3, Platform}
 import scalafx.application.JFXApp3.PrimaryStage
 import scalafx.scene.image.Image
 
-/**
- * Enumeration representing the different states of the view.
- * Includes states for the main menu, game view, info menu, pause menu, victory, and defeat screens.
- */
+/** Enumeration representing the different states of the view.
+  * Includes states for the main menu, game view, info menu, pause menu, victory, and defeat screens.
+  */
 sealed trait ViewState
 
-/**
- * Companion object for ViewState, containing the different possible states.
- */
+/** Companion object for ViewState, containing the different possible states. */
 object ViewState:
   case object MainMenu  extends ViewState
   case object GameView  extends ViewState
@@ -28,14 +25,13 @@ object ViewState:
   case object Victory   extends ViewState
   case object Defeat    extends ViewState
 
-/**
- * Case class to hold the state of the ViewController.
- * 
- * @param gameController the current GameController instance, if any
- * @param currentViewState the current state of the view
- * @param gameViewRoot the root node of the game view, if initialized
- * @param primaryStage the primary stage of the application, if initialized
- */
+/** Case class to hold the state of the ViewController.
+  *
+  * @param gameController the current GameController instance, if any
+  * @param currentViewState the current state of the view
+  * @param gameViewRoot the root node of the game view, if initialized
+  * @param primaryStage the primary stage of the application, if initialized
+  */
 case class ViewControllerState(
     gameController: Option[GameController] = None,
     currentViewState: ViewState = ViewState.MainMenu,
@@ -43,10 +39,9 @@ case class ViewControllerState(
     primaryStage: Option[PrimaryStage] = None
 )
 
-/**
- * The main controller for the application's view.
- * Manages transitions between different view states and interacts with the GameController.
- */
+/** The main controller for the application's view.
+  * Manages transitions between different view states and interacts with the GameController.
+  */
 object ViewController extends JFXApp3:
   private var vcState: ViewControllerState = ViewControllerState()
 
