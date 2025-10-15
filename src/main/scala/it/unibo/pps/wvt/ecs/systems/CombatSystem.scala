@@ -10,6 +10,9 @@ import scala.annotation.tailrec
 import scala.language.reflectiveCalls
 import scala.reflect.ClassTag
 
+/**
+ * CombatSystem handles combat-related mechanics in the game, including ranged attacks by wizards and trolls.
+ */
 case class CombatSystem() extends System:
 
   type TargetSelector = (EntityId, World)

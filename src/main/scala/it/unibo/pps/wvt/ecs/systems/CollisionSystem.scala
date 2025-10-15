@@ -7,6 +7,11 @@ import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 import scala.annotation.tailrec
 import scala.util.Random
 
+/**
+ * System that handles collisions between entities, such as projectiles hitting targets and melee attacks.
+ * 
+ * @param random a Random instance for generating random values, used for critical hit calculations.
+ */
 case class CollisionSystem(
     private val random: Random = Random()
 ) extends System:

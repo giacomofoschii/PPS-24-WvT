@@ -5,6 +5,13 @@ import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 
 import scala.annotation.tailrec
 
+/**
+ * Game main container, holds and manage all entities and their components
+ * 
+ * @param entities set of all entities in the world
+ * @param components mapping of component types to their associated entities and components
+ * @param entitiesByType mapping of entity types to their associated entities
+ */
 case class World(
     private val entities: Set[EntityId] = Set.empty,
     private val components: Map[Class[_], Map[EntityId, Component]] = Map.empty,
@@ -131,6 +138,9 @@ case class World(
           Some(opt.getOrElse(Set.empty) + entity)
       case _ => entitiesByType
 
+/**
+ * Companion object for the World class, providing utility methods to create and initialize worlds.
+ */
 object World:
 
   def empty: World = World()

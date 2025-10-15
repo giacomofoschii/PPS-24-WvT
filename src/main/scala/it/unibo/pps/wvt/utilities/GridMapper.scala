@@ -2,6 +2,9 @@ package it.unibo.pps.wvt.utilities
 
 import it.unibo.pps.wvt.utilities.ViewConstants.*
 
+/**
+ * Object that provides utility functions to map between logical grid coordinates and physical pixel positions.
+ */
 object GridMapper:
 
   type LogicalCoords = (Int, Int)
