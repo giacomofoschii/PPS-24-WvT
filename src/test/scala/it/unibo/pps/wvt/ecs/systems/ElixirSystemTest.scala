@@ -9,24 +9,24 @@ import it.unibo.pps.wvt.utilities.TestConstants.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+
 class ElixirSystemTest extends AnyFlatSpec with Matchers:
 
-  "ElixirSystem" should "start with initial elixir amount" in:
+  behavior of "ElixirSystem"
+
+  it should "start with the initial elixir amount" in:
     anElixirSystem
       .shouldHaveElixir(INITIAL_ELIXIR)
+      .andShouldNotHaveFirstWizardPlaced
 
-  it should "not have first wizard placed initially" in:
-    anElixirSystem
-      .shouldNotHaveFirstWizardPlaced
-
-  it should "not generate periodic elixir before first wizard is placed" in:
+  it should "not generate periodic elixir before activation" in:
     givenAnElixirSystem
       .withWorld
       .afterWaiting(ELIXIR_GENERATION_INTERVAL + ELIXIR_WAIT_MARGIN)
       .whenUpdated
       .shouldHaveElixir(INITIAL_ELIXIR)
 
-  it should "activate generation when first wizard is placed" in:
+  it should "activate generation correctly when first wizard is placed" in:
     anElixirSystem
       .whenActivated
       .shouldHaveFirstWizardPlaced
@@ -42,7 +42,7 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       .whenUpdated
       .shouldHaveAtLeast(PERIODIC_ELIXIR).moreElixirThanInitial
 
-  it should "generate elixir from generator wizards after sufficient time" in:
+  it should "generate elixir from generator wizards after cooldown" in:
     givenAnElixirSystem
       .activated
       .withWorld
@@ -52,7 +52,7 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       .whenUpdated
       .shouldHaveAtLeast(PERIODIC_ELIXIR).moreElixirThanInitial
 
-  it should "successfully spend elixir when enough available" in:
+  it should "spend elixir correctly when enough available" in:
     anElixirSystem
       .whenSpending(ELIXIR_SPEND_SMALL)
       .shouldSucceed
@@ -64,18 +64,18 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       .shouldFail
       .andShouldHaveElixir(INITIAL_ELIXIR)
 
-  it should "correctly add elixir" in:
+  it should "add elixir correctly" in:
     anElixirSystem
       .whenAdding(ELIXIR_ADD_AMOUNT)
       .shouldHaveElixir(INITIAL_ELIXIR + ELIXIR_ADD_AMOUNT)
 
-  it should "correctly check if can afford" in:
+  it should "correctly check if it can afford a cost" in:
     anElixirSystem
       .shouldBeAbleToAfford(INITIAL_ELIXIR)
       .andShouldBeAbleToAfford(INITIAL_ELIXIR - 1)
       .andShouldNotBeAbleToAfford(INITIAL_ELIXIR + 1)
 
-  it should "reset to initial state" in:
+  it should "reset to initial state correctly" in:
     anElixirSystem
       .activated
       .withAddedElixir(ELIXIR_ADD_LARGE)
@@ -122,7 +122,7 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       .whenUpdatedAgainImmediately
       .shouldHaveElixirEqualToPrevious
 
-  it should "maintain elixir count after multiple spend operations" in:
+  it should "maintain correct elixir count after multiple spend operations" in:
     anElixirSystem
       .whenSpending(ELIXIR_SPEND_SMALL)
       .shouldSucceed.andShouldHaveElixir(INITIAL_ELIXIR - ELIXIR_SPEND_SMALL)
@@ -131,13 +131,13 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       .whenSpending(INITIAL_ELIXIR)
       .shouldFail.andShouldHaveElixir(INITIAL_ELIXIR - ELIXIR_SPEND_SMALL - ELIXIR_SPEND_MEDIUM)
 
-  it should "handle edge case of spending exact amount available" in:
+  it should "handle spending the exact amount available" in:
     anElixirSystem
       .whenSpending(INITIAL_ELIXIR)
       .shouldSucceed
       .andShouldHaveElixir(0)
 
-  it should "not generate negative elixir" in:
+  it should "not allow negative elixir values" in:
     anElixirSystemWith(0).elixir
       .shouldHaveElixir(0)
       .shouldNotBeAbleToAfford(1)
@@ -153,17 +153,14 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       .shouldSucceed
       .andShouldHaveElixir(INITIAL_ELIXIR + ELIXIR_ADD_LARGE - ELIXIR_SPEND_COMBINED)
 
-  it should "never exceed 1000 elixir when adding" in:
+  it should "cap elixir at 1000 when adding or generating" in:
     anElixirSystemWith(950).elixir
       .whenAdding(100)
       .shouldHaveElixir(1000)
-
-  it should "cap elixir at 1000 when adding excessive amount" in:
-    anElixirSystem
       .whenAdding(2000)
       .shouldHaveElixir(1000)
 
-  it should "not exceed 1000 elixir with periodic generation" in:
+  it should "not exceed 1000 elixir via periodic generation" in:
     anElixirSystemWith(950).elixir
       .activated
       .withWorld
@@ -171,7 +168,7 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       .whenUpdated
       .shouldHaveElixir(1000)
 
-  it should "not exceed 1000 elixir with generator wizards" in:
+  it should "not exceed 1000 elixir via generator wizards" in:
     anElixirSystemWith(990).elixir
       .activated
       .withWorld
@@ -190,13 +187,12 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       .shouldHaveElixir(1000)
       .andLastPeriodicGenerationShouldBeUpdated
 
-  it should "set correct activation time when first wizard is placed" in:
-    val timeBeforeActivation = System.currentTimeMillis()
-    Thread.sleep(10) // Small delay to ensure time difference
-
+  it should "set correct activation time when activated" in:
+    val before = System.currentTimeMillis()
+    Thread.sleep(10)
     anElixirSystem
       .whenActivated
-      .shouldHaveActivationTimeAfter(timeBeforeActivation)
+      .shouldHaveActivationTimeAfter(before)
       .andActivationTimeShouldEqualLastPeriodicGeneration
 
   it should "maintain same activation time across updates" in:
@@ -208,7 +204,7 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       .whenUpdated
       .activationTimeShouldNotChange
 
-  // DSL Implementation
+  // === DSL setup ===
   private def anElixirSystem: ElixirSystemDSL =
     ElixirSystemDSL(ElixirSystem())
 
@@ -218,6 +214,7 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
   private def anElixirSystemWith(amount: Int): ElixirAmountBuilder =
     ElixirAmountBuilder(amount)
 
+  // === DSL Definitions ===
   case class ElixirAmountBuilder(amount: Int):
     def elixir: ElixirSystemDSL =
       ElixirSystemDSL(ElixirSystem(totalElixir = amount))
@@ -232,35 +229,36 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
                               savedActivationTime: Option[Long] = None
                             ):
 
+    // === Setup methods ===
+    def withWorld: ElixirSystemDSL = copy(world = Some(World()))
+
     def activated: ElixirSystemDSL =
       copy(system = system.activateGeneration())
-
-    def withWorld: ElixirSystemDSL =
-      copy(world = Some(World()))
 
     def withAddedElixir(amount: Int): ElixirSystemDSL =
       copy(system = system.addElixir(amount))
 
     def andGeneratorWizardAt(pos: Position): ElixirSystemDSL =
-      world.foreach(w => EntityFactory.createGeneratorWizard(w, pos))
+      world.foreach(EntityFactory.createGeneratorWizard(_, pos))
       this
 
     def andWindWizardAt(pos: Position): ElixirSystemDSL =
-      world.foreach(w => EntityFactory.createWindWizard(w, pos))
+      world.foreach(EntityFactory.createWindWizard(_, pos))
       this
 
     def andFireWizardAt(pos: Position): ElixirSystemDSL =
-      world.foreach(w => EntityFactory.createFireWizard(w, pos))
+      world.foreach(EntityFactory.createFireWizard(_, pos))
       this
 
     def andIceWizardAt(pos: Position): ElixirSystemDSL =
-      world.foreach(w => EntityFactory.createIceWizard(w, pos))
+      world.foreach(EntityFactory.createIceWizard(_, pos))
       this
 
     def andBarrierWizardAt(pos: Position): ElixirSystemDSL =
-      world.foreach(w => EntityFactory.createBarrierWizard(w, pos))
+      world.foreach(EntityFactory.createBarrierWizard(_, pos))
       this
 
+    // === Timing and memory ===
     def rememberingInitialElixir: ElixirSystemDSL =
       copy(initialElixir = Some(system.getCurrentElixir))
 
@@ -274,22 +272,17 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       Thread.sleep(millis)
       this
 
+    // === Actions ===
     def whenUpdated: ElixirSystemDSL =
-      world match
-        case Some(w) => copy(system = system.update(w).asInstanceOf[ElixirSystem])
-        case None => this
+      world.map(w => copy(system = system.update(w)._2.asInstanceOf[ElixirSystem])).getOrElse(this)
 
     def whenUpdatedImmediately: ElixirSystemDSL =
-      copy(
-        system = world.map(w => system.update(w).asInstanceOf[ElixirSystem]).getOrElse(system),
-        previousElixir = Some(system.getCurrentElixir)
-      )
+      copy(system = world.map(w => system.update(w)._2.asInstanceOf[ElixirSystem]).getOrElse(system),
+        previousElixir = Some(system.getCurrentElixir))
 
     def whenUpdatedAgainImmediately: ElixirSystemDSL =
-      copy(
-        system = world.map(w => system.update(w).asInstanceOf[ElixirSystem]).getOrElse(system),
-        previousElixir = Some(system.getCurrentElixir)
-      )
+      copy(system = world.map(w => system.update(w)._2.asInstanceOf[ElixirSystem]).getOrElse(system),
+        previousElixir = Some(system.getCurrentElixir))
 
     def whenActivated: ElixirSystemDSL =
       copy(system = system.activateGeneration())
@@ -302,9 +295,9 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       copy(system = result._1, spendResult = Some(result))
 
     def whenReset: ElixirSystemDSL =
-      copy(system = system.reset())
+      copy(system = ElixirSystem())
 
-    // Assertions
+    // === Assertions ===
     def shouldHaveElixir(expected: Int): ElixirSystemDSL =
       system.getCurrentElixir shouldBe expected
       this
@@ -372,16 +365,15 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       shouldNotBeAbleToAfford(amount)
 
     def shouldHaveElixirEqualToInitial: ElixirSystemDSL =
-      initialElixir.foreach(initial => system.getCurrentElixir shouldBe initial)
+      initialElixir.foreach(i => system.getCurrentElixir shouldBe i)
       this
 
     def shouldHaveElixirEqualToPrevious: ElixirSystemDSL =
-      previousElixir.foreach(prev => system.getCurrentElixir shouldBe prev)
+      previousElixir.foreach(p => system.getCurrentElixir shouldBe p)
       this
 
     def andLastPeriodicGenerationShouldBeUpdated: ElixirSystemDSL =
-      savedLastPeriodicGeneration.foreach: saved =>
-        system.lastPeriodicGeneration should be > saved
+      savedLastPeriodicGeneration.foreach(prev => system.lastPeriodicGeneration should be > prev)
       this
 
     def shouldHaveActivationTimeAfter(time: Long): ElixirSystemDSL =
@@ -393,8 +385,7 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       this
 
     def activationTimeShouldNotChange: ElixirSystemDSL =
-      savedActivationTime.foreach: saved =>
-        system.activationTime shouldBe saved
+      savedActivationTime.foreach(prev => system.activationTime shouldBe prev)
       this
 
   enum ComparisonType:
@@ -403,10 +394,8 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
   case class ElixirAmountComparison(dsl: ElixirSystemDSL, amount: Int, comparisonType: ComparisonType):
     def moreElixirThanInitial: ElixirSystemDSL =
       dsl.initialElixir.foreach: initial =>
-        val current = dsl.system.getCurrentElixir
-        val difference = current - initial
+        val diff = dsl.system.getCurrentElixir - initial
         comparisonType match
-          case ComparisonType.AtLeast => difference should be >= amount
-          case ComparisonType.Exactly => difference shouldBe amount
+          case ComparisonType.AtLeast => diff should be >= amount
+          case ComparisonType.Exactly => diff shouldBe amount
       dsl
-
