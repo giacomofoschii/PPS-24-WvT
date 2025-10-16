@@ -1,3 +1,10 @@
+---
+title: Requisiti
+layout: default
+nav_order: 4
+has_children: false
+---
+
 # Requisiti
 
 L'analisi del problema svolta nella prima fase del progetto ha permesso di evidenziare i requisiti elencati di seguito.
@@ -29,7 +36,7 @@ Unità difensiva posizionabile dal giocatore sulla griglia.
 * Rimane fermo nella posizione in cui è stato piazzato
 * Viene rimosso quando la salute raggiunge zero
 * Esistono cinque tipi di maghi:
-    * **Mago Generatore**: Genera elisir periodicamente invece di attaccare. 
+    * **Mago Generatore**: Genera elisir periodicamente invece di attaccare.
     * **Mago del Vento**: Attacco con statistiche equilibrate tra danno, raggio e tempo di ricarica.
     * **Mago del Fuoco**: Infligge alto danno per singolo colpo, efficace contro nemici con molta salute.
     * **Mago del Ghiaccio**: Rallenta temporaneamente i nemici colpiti, utile per guadagnare tempo.
@@ -195,7 +202,7 @@ Il sistema dovrà occuparsi di:
 
 * **Performance**:
     * Mantenere 60 FPS costanti
-  
+
 
 * **Affidabilità**:
     * Garantire stabilità durante sessioni di gioco di durata indefinita senza crash
@@ -206,7 +213,7 @@ Il sistema dovrà occuparsi di:
 * **Usabilità**:
     * Interfaccia comprensibile senza necessità di tutorial o manuali
     * Icone e simboli intuitivi per rappresentare i maghi e le loro abilità
-    * Feedback visivo immediato per ogni azione utente 
+    * Feedback visivo immediato per ogni azione utente
     * Informazioni sempre visibili: elisir, ondata, salute
     * Messaggi chiari per azioni non valide
 
@@ -237,17 +244,12 @@ Il sistema dovrà occuparsi di:
 
 ## Requisiti di implementazione
 
-* **Metodologia di sviluppo**  
-  Sviluppo con metodologia **SCRUM-inspired**, basata su iterazioni brevi, integrazione continua e revisione periodica dei progressi.
+* **Metodologia di sviluppo** Sviluppo con metodologia **SCRUM-inspired**, basata su iterazioni brevi, integrazione continua e revisione periodica dei progressi.
 
-* **Architettura**  
-  Adozione di un’architettura con **netta separazione tra logica di gioco e interfaccia utente**, per garantire modularità e manutenibilità.
+* **Architettura** Adozione di un’architettura con **netta separazione tra logica di gioco e interfaccia utente**, per garantire modularità e manutenibilità.
 
-* **Tecnologie e linguaggio**  
-  Utilizzo di **Scala 3.x**, sfruttando costrutti e paradigmi di **programmazione funzionale avanzata**.
+* **Tecnologie e linguaggio** Utilizzo di **Scala 3.x**, sfruttando costrutti e paradigmi di **programmazione funzionale avanzata**.
 
-* **Testing**  
-  Sperimentazione dell’approccio **Test-Driven Development (TDD)**.
+* **Testing** Sperimentazione dell’approccio **Test-Driven Development (TDD)**.
 
-* **Versioning e collaborazione**  
-  Gestione del codice tramite **versionamento Git** e workflow collaborativo basato su branch dedicati.
+* **Versioning e collaborazione** Gestione del codice tramite **versionamento Git** e workflow collaborativo basato su branch dedicati.

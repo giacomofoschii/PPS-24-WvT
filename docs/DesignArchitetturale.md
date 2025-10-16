@@ -1,7 +1,8 @@
 ---
-title: Design architetturale
-nav_order: 3
-parent: Report
+title: Design Architetturale
+layout: default
+nav_order: 5
+has_children: false
 ---
 
 # Design architetturale

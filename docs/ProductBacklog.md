@@ -1,3 +1,10 @@
+---
+title: Product Backlog
+layout: default
+nav_order: 1
+parent: Processo di Sviluppo
+---
+
 # Product Backlog
 
 ---
@@ -37,8 +44,7 @@
 - Main Menu UI: schermata principale con bottoni Start/Info/Exit
 - Basic Grid Visualization: rendering base della griglia vuota
 
-**Milestone Sprint 1:**  
-Menu funzionanti, griglia visualizzabile, engine base attivo.
+**Milestone Sprint 1:** Menu funzionanti, griglia visualizzabile, engine base attivo.
 
 ---
 
@@ -77,8 +83,7 @@ Menu funzionanti, griglia visualizzabile, engine base attivo.
 **UI / Rendering**
 - Entity Rendering: visualizzazione di maghi e troll sulla griglia
 
-**Milestone Sprint 2:**  
-Maghi e troll funzionanti, interazioni base, shop UI attivo.
+**Milestone Sprint 2:** Maghi e troll funzionanti, interazioni base, shop UI attivo.
 
 ---
 
@@ -114,8 +119,7 @@ Maghi e troll funzionanti, interazioni base, shop UI attivo.
 **UI / Rendering**
 - Effetto Gelo: visualizzazione grafica del congelamento
 
-**Milestone Sprint 3:**  
-Sistema economico completo, combattimento funzionante.
+**Milestone Sprint 3:** Sistema economico completo, combattimento funzionante.
 
 ---
 
@@ -146,8 +150,7 @@ Sistema economico completo, combattimento funzionante.
 - Testing
 - Relazione finale
 
-**Milestone Sprint 4:**  
-Gioco completo, rifinito e pronto per la consegna.
+**Milestone Sprint 4:** Gioco completo, rifinito e pronto per la consegna.
 
 ---
 

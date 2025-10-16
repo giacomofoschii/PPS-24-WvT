@@ -1,3 +1,10 @@
+---
+title: Retrospettiva
+layout: default
+nav_order: 7
+has_children: false
+---
+
 # Retrospettiva
 
 ## Analisi del processo di sviluppo e dello stato attuale

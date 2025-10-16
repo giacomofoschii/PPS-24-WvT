@@ -1,3 +1,10 @@
+---
+title: Processo di Sviluppo
+layout: default
+nav_order: 3
+has_children: true
+---
+
 # Processo di sviluppo adottato
 
 Il gruppo ha adottato una metodologia **Agile** per lo sviluppo del progetto.
