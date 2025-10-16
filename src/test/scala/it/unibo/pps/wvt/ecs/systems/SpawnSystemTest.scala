@@ -12,7 +12,7 @@ import org.scalatest.BeforeAndAfter
 
 class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
-  var world: World = _
+  var world: World             = _
   var spawnSystem: SpawnSystem = _
 
   before:
@@ -34,7 +34,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     updatedSystem.asInstanceOf[SpawnSystem].isActive shouldBe true
 
   it should "not activate without wizards in world" in:
-    val emptyWorld = World.empty
+    val emptyWorld         = World.empty
     val (_, updatedSystem) = spawnSystem.update(emptyWorld)
     updatedSystem.asInstanceOf[SpawnSystem].isActive shouldBe false
 
@@ -53,7 +53,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
         .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
         .withElixir(ELIXIR_START)
 
-    val initialTime = System.currentTimeMillis()
+    val initialTime       = System.currentTimeMillis()
     val fakeLastSpawnTime = initialTime - INITIAL_SPAWN_DELAY_MS - 10
 
     val spawnSystem = SpawnSystem.withConfig(Some(SPAWN_SEED)).copy(
@@ -66,30 +66,29 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     updatedSystem.asInstanceOf[SpawnSystem].getPendingSpawnsCount should be > 0
 
   it should "spawn trolls at scheduled times" in:
-      val (testWorld, _) = scenario: builder =>
-        builder
-          .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
-          .withElixir(ELIXIR_START)
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
 
-      val (_, system1) = spawnSystem.update(testWorld)
+    val (_, system1) = spawnSystem.update(testWorld)
 
-      Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
+    Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
 
-      var currentWorld = testWorld
-      var currentSystem = system1
-      var spawned = false
-      var attempts = 0
+    var currentWorld  = testWorld
+    var currentSystem = system1
+    var spawned       = false
+    var attempts      = 0
 
-      while (!spawned && attempts < SPAWN_ATTEMPTS)
-        val (nextWorld, nextSystem) = currentSystem.update(currentWorld)
-        currentWorld = nextWorld
-        currentSystem = nextSystem
-        spawned = currentWorld.getEntitiesByType("troll").nonEmpty
-        attempts += 1
-        if (!spawned) Thread.sleep(SHORT_SLEEP_MS)
+    while (!spawned && attempts < SPAWN_ATTEMPTS)
+      val (nextWorld, nextSystem) = currentSystem.update(currentWorld)
+      currentWorld = nextWorld
+      currentSystem = nextSystem
+      spawned = currentWorld.getEntitiesByType("troll").nonEmpty
+      attempts += 1
+      if (!spawned) Thread.sleep(SHORT_SLEEP_MS)
 
-      currentWorld.getEntitiesByType("troll").size should be > 0
-
+    currentWorld.getEntitiesByType("troll").size should be > 0
 
   it should "spawn trolls with correct components" in:
     val (testWorld, _) = scenario: builder =>
@@ -101,9 +100,9 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
 
     val result = Iterator.iterate((testWorld, system1)): (w, s) =>
-        Thread.sleep(DELAY_MEDIUM_MS)
-        s.update(w)
-      .zipWithIndex
+      Thread.sleep(DELAY_MEDIUM_MS)
+      s.update(w)
+    .zipWithIndex
       .take(SPAWN_ATTEMPTS)
       .find:
         case ((w, _), _) =>
@@ -129,9 +128,9 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
         .withElixir(ELIXIR_START)
 
     val (_, system1) = spawnSystem.update(testWorld)
-    val maxTrolls = system1.asInstanceOf[SpawnSystem].getMaxTrolls
+    val maxTrolls    = system1.asInstanceOf[SpawnSystem].getMaxTrolls
 
-    var currentWorld = testWorld
+    var currentWorld  = testWorld
     var currentSystem = system1
 
     // Simulate enough time for all spawns
@@ -153,7 +152,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     val (_, system1) = spawnSystem.update(testWorld)
     system1.asInstanceOf[SpawnSystem].isActive shouldBe true
 
-    var currentWorld = testWorld
+    var currentWorld  = testWorld
     var currentSystem = system1
 
     // Simulate spawning all trolls
@@ -165,9 +164,10 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
         currentSystem = nextSystem
 
       if currentSystem
-        .asInstanceOf[SpawnSystem]
-        .getTrollsSpawned >= currentSystem.asInstanceOf[SpawnSystem].getMaxTrolls &&
-        currentSystem.asInstanceOf[SpawnSystem].getPendingSpawnsCount == 0 then
+          .asInstanceOf[SpawnSystem]
+          .getTrollsSpawned >= currentSystem.asInstanceOf[SpawnSystem].getMaxTrolls &&
+        currentSystem.asInstanceOf[SpawnSystem].getPendingSpawnsCount == 0
+      then
         currentSystem.asInstanceOf[SpawnSystem].isActive shouldBe false
 
   it should "apply wave scaling to spawned trolls" in:
@@ -181,10 +181,10 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     val (_, system1) = spawnSystemWave5.update(testWorld)
     Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
 
-    var currentWorld = testWorld
+    var currentWorld  = testWorld
     var currentSystem = system1
-    var trolls = Seq.empty[EntityId]
-    var attempts = 0
+    var trolls        = Seq.empty[EntityId]
+    var attempts      = 0
 
     while (trolls.isEmpty && attempts < SPAWN_ATTEMPTS) {
       Thread.sleep(DELAY_MEDIUM_MS)
@@ -197,7 +197,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
     trolls.size should be > 0
 
-    val troll = trolls.head
+    val troll  = trolls.head
     val health = currentWorld.getComponent[HealthComponent](troll).get
 
     // Wave 5 trolls should have scaled health
@@ -221,7 +221,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     val (_, system1) = spawnSystem.update(testWorld)
     Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
 
-    var currentWorld = testWorld
+    var currentWorld  = testWorld
     var currentSystem = system1
     (1 to UPDATES_COUNT_SHORT).foreach: _ =>
       val (nextWorld, nextSystem) = currentSystem.update(currentWorld)
@@ -231,8 +231,8 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     val trolls = currentWorld.getEntitiesByType("troll")
     if trolls.nonEmpty then
       val firstTroll = trolls.head
-      val pos = currentWorld.getComponent[PositionComponent](firstTroll).get.position
-      val (row, _) = GridMapper.physicalToLogical(pos).get
+      val pos        = currentWorld.getComponent[PositionComponent](firstTroll).get.position
+      val (row, _)   = GridMapper.physicalToLogical(pos).get
       row shouldBe GRID_ROW_MID
 
   it should "generate spawns in batches" in:
@@ -284,7 +284,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
     Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
 
-    var currentWorld = testWorld
+    var currentWorld  = testWorld
     var currentSystem = system1
     (1 to UPDATES_PER_SECOND).foreach: _ =>
       val (nextWorld, nextSystem) = currentSystem.update(currentWorld)
@@ -304,36 +304,36 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     updatedSystem.asInstanceOf[SpawnSystem].getPendingSpawnsCount shouldBe 0
 
   it should "spawn different troll types based on wave distribution" in:
-      val spawnSystemWave10 = SpawnSystem.withConfig(Some(SPAWN_SEED)).copy(currentWave = WAVE_HIGH)
+    val spawnSystemWave10 = SpawnSystem.withConfig(Some(SPAWN_SEED)).copy(currentWave = WAVE_HIGH)
 
-      val (testWorld, _) = scenario: builder =>
-        builder
-          .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
-          .withElixir(ELIXIR_START)
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
 
-      val (_, system1) = spawnSystemWave10.update(testWorld)
+    val (_, system1) = spawnSystemWave10.update(testWorld)
 
-      Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
+    Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
 
-      var currentWorld = testWorld
-      var currentSystem = system1
+    var currentWorld  = testWorld
+    var currentSystem = system1
 
-      (1 to (UPDATES_COUNT_MEDIUM * 2)).foreach { _ =>
-        Thread.sleep(DELAY_MEDIUM_MS)
-        (1 to (UPDATES_COUNT_SHORT * 2)).foreach { _ =>
-          val (nextWorld, nextSystem) = currentSystem.update(currentWorld)
-          currentWorld = nextWorld
-          currentSystem = nextSystem
-        }
+    (1 to (UPDATES_COUNT_MEDIUM * 2)).foreach { _ =>
+      Thread.sleep(DELAY_MEDIUM_MS)
+      (1 to (UPDATES_COUNT_SHORT * 2)).foreach { _ =>
+        val (nextWorld, nextSystem) = currentSystem.update(currentWorld)
+        currentWorld = nextWorld
+        currentSystem = nextSystem
       }
+    }
 
-      val trolls = currentWorld.getEntitiesByType("troll")
-      trolls.size should be > 1
+    val trolls = currentWorld.getEntitiesByType("troll")
+    trolls.size should be > 1
 
-      val trollTypes = trolls.toSeq.map: troll =>
-        currentWorld.getComponent[TrollTypeComponent](troll).get.trollType
+    val trollTypes = trolls.toSeq.map: troll =>
+      currentWorld.getComponent[TrollTypeComponent](troll).get.trollType
 
-      trollTypes.toSet.size should be > 1
+    trollTypes.toSet.size should be > 1
 
   it should "spawn trolls at rightmost column" in:
     val (testWorld, _) = scenario: builder =>
@@ -344,7 +344,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     val (_, system1) = spawnSystem.update(testWorld)
     Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
 
-    var currentWorld = testWorld
+    var currentWorld  = testWorld
     var currentSystem = system1
     (1 to UPDATES_PER_SECOND).foreach: _ =>
       val (nextWorld, nextSystem) = currentSystem.update(currentWorld)
@@ -353,7 +353,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
     val trolls = currentWorld.getEntitiesByType("troll")
     trolls.foreach: troll =>
-      val pos = currentWorld.getComponent[PositionComponent](troll).get.position
+      val pos      = currentWorld.getComponent[PositionComponent](troll).get.position
       val (_, col) = GridMapper.physicalToLogical(pos).get
       col shouldBe (GRID_COLS_LOGICAL - 1)
 
@@ -364,7 +364,7 @@ class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
         .withElixir(ELIXIR_START)
 
     val (_, system1) = spawnSystem.update(testWorld)
-    val initialTime = system1.asInstanceOf[SpawnSystem].lastSpawnTime
+    val initialTime  = system1.asInstanceOf[SpawnSystem].lastSpawnTime
 
     Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
 

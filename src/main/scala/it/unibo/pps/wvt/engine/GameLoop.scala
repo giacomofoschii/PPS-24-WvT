@@ -23,9 +23,9 @@ sealed trait LoopStatus:
 
 /** Companion object for LoopStatus, containing case objects for each status. */
 object LoopStatus:
-  case object Idle extends LoopStatus
-  case object Running      extends LoopStatus
-  case object Stopping     extends LoopStatus
+  case object Idle     extends LoopStatus
+  case object Running  extends LoopStatus
+  case object Stopping extends LoopStatus
 
   /** Represents the state of the game loop, including timing and frame rate information.
     *

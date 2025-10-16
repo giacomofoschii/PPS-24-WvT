@@ -12,7 +12,7 @@ import scalafx.scene.paint.Color
 
 class EntityFactoryTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
-  var world: World = _
+  var world: World           = _
   val testPosition: Position = GridMapper.logicalToPhysical(GRID_ROW_MID, GRID_COL_MID).get
 
   before:
@@ -258,7 +258,7 @@ class EntityFactoryTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     healthBar.barColor shouldBe Color.Red
 
   it should "create trolls at specified position" in:
-    val customPos = Position(POS_X_MID, POS_Y_MID)
+    val customPos             = Position(POS_X_MID, POS_Y_MID)
     val (updatedWorld, troll) = EntityFactory.createBaseTroll(world, customPos)
 
     val pos = updatedWorld.getComponent[PositionComponent](troll).get
@@ -267,8 +267,8 @@ class EntityFactoryTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
   behavior of "EntityFactory - Entity Builder Pattern"
 
   it should "build projectile entities with all required components" in:
-    val config = ProjectileConfig(ProjectileType.Fire, DAMAGE_NORMAL, "/projectile/fire.png")
-    val builder = summon[EntityBuilder[ProjectileConfig]]
+    val config     = ProjectileConfig(ProjectileType.Fire, DAMAGE_NORMAL, "/projectile/fire.png")
+    val builder    = summon[EntityBuilder[ProjectileConfig]]
     val components = builder.buildComponents(config, testPosition)
 
     components should have size 5
@@ -286,7 +286,7 @@ class EntityFactoryTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
       imagePath = "/wizard/fire.png",
       attack = Some(AttackComponent(DAMAGE_NORMAL, RANGE_MEDIUM, COOLDOWN_NORMAL.toLong))
     )
-    val builder = summon[EntityBuilder[WizardConfig]]
+    val builder    = summon[EntityBuilder[WizardConfig]]
     val components = builder.buildComponents(config, testPosition)
 
     components.exists(_.isInstanceOf[PositionComponent]) shouldBe true
@@ -303,7 +303,7 @@ class EntityFactoryTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
       cost = ELIXIR_LOW,
       imagePath = "/wizard/barrier.png"
     )
-    val builder = summon[EntityBuilder[WizardConfig]]
+    val builder    = summon[EntityBuilder[WizardConfig]]
     val components = builder.buildComponents(config, testPosition)
 
     components.exists(_.isInstanceOf[AttackComponent]) shouldBe false
@@ -319,7 +319,7 @@ class EntityFactoryTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
       cooldown = COOLDOWN_NORMAL.toLong,
       imagePath = "/troll/BaseTroll.png"
     )
-    val builder = summon[EntityBuilder[TrollConfig]]
+    val builder    = summon[EntityBuilder[TrollConfig]]
     val components = builder.buildComponents(config, testPosition)
 
     components should have size 7
@@ -335,42 +335,42 @@ class EntityFactoryTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
   it should "create multiple entities independently" in:
     val (world1, wizard1) = EntityFactory.createFireWizard(world, testPosition)
-    val pos2 = GridMapper.logicalToPhysical(GRID_ROW_END, GRID_COL_END).get
+    val pos2              = GridMapper.logicalToPhysical(GRID_ROW_END, GRID_COL_END).get
     val (world2, wizard2) = EntityFactory.createIceWizard(world1, pos2)
 
     wizard1 should not equal wizard2
-    world2.getAllEntities should contain allOf(wizard1, wizard2)
+    world2.getAllEntities should contain allOf (wizard1, wizard2)
 
   it should "create entities of different types in same world" in:
-    val (world1, wizard) = EntityFactory.createFireWizard(world, testPosition)
-    val pos2 = GridMapper.logicalToPhysical(GRID_ROW_END, GRID_COL_END).get
-    val (world2, troll) = EntityFactory.createBaseTroll(world1, pos2)
-    val pos3 = GridMapper.logicalToPhysical(GRID_ROW_MID, GRID_COL_START).get
+    val (world1, wizard)     = EntityFactory.createFireWizard(world, testPosition)
+    val pos2                 = GridMapper.logicalToPhysical(GRID_ROW_END, GRID_COL_END).get
+    val (world2, troll)      = EntityFactory.createBaseTroll(world1, pos2)
+    val pos3                 = GridMapper.logicalToPhysical(GRID_ROW_MID, GRID_COL_START).get
     val (world3, projectile) = EntityFactory.createProjectile(world2, pos3, ProjectileType.Fire)
 
-    world3.getAllEntities should contain allOf(wizard, troll, projectile)
+    world3.getAllEntities should contain allOf (wizard, troll, projectile)
 
   it should "create all wizard types successfully" in:
-    val (world1, gen) = EntityFactory.createGeneratorWizard(world, testPosition)
-    val (world2, wind) = EntityFactory.createWindWizard(world1, testPosition)
+    val (world1, gen)     = EntityFactory.createGeneratorWizard(world, testPosition)
+    val (world2, wind)    = EntityFactory.createWindWizard(world1, testPosition)
     val (world3, barrier) = EntityFactory.createBarrierWizard(world2, testPosition)
-    val (world4, fire) = EntityFactory.createFireWizard(world3, testPosition)
-    val (world5, ice) = EntityFactory.createIceWizard(world4, testPosition)
+    val (world4, fire)    = EntityFactory.createFireWizard(world3, testPosition)
+    val (world5, ice)     = EntityFactory.createIceWizard(world4, testPosition)
 
     world5.getAllEntities should have size 5
 
   it should "create all troll types successfully" in:
-    val (world1, base) = EntityFactory.createBaseTroll(world, testPosition)
-    val (world2, warrior) = EntityFactory.createWarriorTroll(world1, testPosition)
+    val (world1, base)     = EntityFactory.createBaseTroll(world, testPosition)
+    val (world2, warrior)  = EntityFactory.createWarriorTroll(world1, testPosition)
     val (world3, assassin) = EntityFactory.createAssassinTroll(world2, testPosition)
-    val (world4, thrower) = EntityFactory.createThrowerTroll(world3, testPosition)
+    val (world4, thrower)  = EntityFactory.createThrowerTroll(world3, testPosition)
 
     world4.getAllEntities should have size 4
 
   it should "create all projectile types successfully" in:
-    val (world1, fire) = EntityFactory.createProjectile(world, testPosition, ProjectileType.Fire)
-    val (world2, ice) = EntityFactory.createProjectile(world1, testPosition, ProjectileType.Ice)
-    val (world3, wind) = EntityFactory.createProjectile(world2, testPosition, ProjectileType.Wind)
+    val (world1, fire)  = EntityFactory.createProjectile(world, testPosition, ProjectileType.Fire)
+    val (world2, ice)   = EntityFactory.createProjectile(world1, testPosition, ProjectileType.Ice)
+    val (world3, wind)  = EntityFactory.createProjectile(world2, testPosition, ProjectileType.Wind)
     val (world4, troll) = EntityFactory.createProjectile(world3, testPosition, ProjectileType.Troll)
 
     world4.getAllEntities should have size 4
@@ -379,7 +379,7 @@ class EntityFactoryTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
   it should "create entities with proper health initialization" in:
     val (world1, wizard) = EntityFactory.createFireWizard(world, testPosition)
-    val (world2, troll) = EntityFactory.createBaseTroll(world1, testPosition)
+    val (world2, troll)  = EntityFactory.createBaseTroll(world1, testPosition)
 
     val wizardHealth = world2.getComponent[HealthComponent](wizard).get
     wizardHealth.currentHealth shouldBe wizardHealth.maxHealth
@@ -396,7 +396,7 @@ class EntityFactoryTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
   it should "create entities with proper health bar configuration" in:
     val (world1, wizard) = EntityFactory.createFireWizard(world, testPosition)
-    val (world2, troll) = EntityFactory.createBaseTroll(world1, testPosition)
+    val (world2, troll)  = EntityFactory.createBaseTroll(world1, testPosition)
 
     val wizardHealthBar = world2.getComponent[HealthBarComponent](wizard).get
     wizardHealthBar.barWidth should be > 0.0
@@ -408,7 +408,7 @@ class EntityFactoryTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
   it should "ensure attacking entities have valid attack ranges" in:
     val (world1, fireWizard) = EntityFactory.createFireWizard(world, testPosition)
-    val (world2, baseTroll) = EntityFactory.createBaseTroll(world1, testPosition)
+    val (world2, baseTroll)  = EntityFactory.createBaseTroll(world1, testPosition)
 
     val wizardAttack = world2.getComponent[AttackComponent](fireWizard).get
     wizardAttack.range should be > 0.0

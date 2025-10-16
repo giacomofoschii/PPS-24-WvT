@@ -14,8 +14,8 @@ import scala.reflect.Selectable.reflectiveSelectable
 
 class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
-  var engine: GameEngine = _
-  var gameLoop: GameLoop = _
+  var engine: GameEngine             = _
+  var gameLoop: GameLoop             = _
   var mockController: GameController = _
 
   before:
@@ -31,17 +31,17 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     new GameController(World.empty):
       private var updateCount = 0
       private val eventHandler: EventHandler = new EventHandler:
-        override def processEvents(): List[GameEvent] = List.empty
-        override def postEvent(event: GameEvent): Unit = ()
+        override def processEvents(): List[GameEvent]                                                = List.empty
+        override def postEvent(event: GameEvent): Unit                                               = ()
         override def registerHandler[T <: GameEvent](eventClass: Class[T])(handler: T => Unit): Unit = ()
         override def getCurrentPhase: GamePhase = GamePhase.MainMenu
-        override def clearQueue(): Unit = ()
+        override def clearQueue(): Unit         = ()
 
-      override def getWorld: World = World.empty
-      override def update(): Unit = updateCount += 1
+      override def getWorld: World               = World.empty
+      override def update(): Unit                = updateCount += 1
       override def getEventHandler: EventHandler = eventHandler
-      def getSystemsState: GameSystemsState = GameSystemsState.initial(WAVE_FIRST)
-      def getUpdateCount: Int = updateCount
+      def getSystemsState: GameSystemsState      = GameSystemsState.initial(WAVE_FIRST)
+      def getUpdateCount: Int                    = updateCount
 
   behavior of "GameLoop"
 
@@ -88,7 +88,7 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     gameLoop.stop()
     engine.stop()
 
-    val updateCount = mockController.asInstanceOf[{def getUpdateCount: Int}].getUpdateCount
+    val updateCount = mockController.asInstanceOf[{ def getUpdateCount: Int }].getUpdateCount
     updateCount should be > 0
 
   it should "not update engine when stopped" in:
@@ -98,10 +98,10 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     gameLoop.stop()
     Thread.sleep(LOOP_STARTUP_DELAY_MS)
 
-    val updateCountAfterStop = mockController.asInstanceOf[{def getUpdateCount: Int}].getUpdateCount
+    val updateCountAfterStop = mockController.asInstanceOf[{ def getUpdateCount: Int }].getUpdateCount
 
     Thread.sleep(MEDIUM_RUN_MS)
-    val updateCountAfterWait = mockController.asInstanceOf[{def getUpdateCount: Int}].getUpdateCount
+    val updateCountAfterWait = mockController.asInstanceOf[{ def getUpdateCount: Int }].getUpdateCount
 
     updateCountAfterWait shouldBe updateCountAfterStop +- 2
 
@@ -128,10 +128,10 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     Thread.sleep(SHORT_RUN_MS)
     engine.pause()
 
-    val updateCountWhenPaused = mockController.asInstanceOf[{def getUpdateCount: Int}].getUpdateCount
+    val updateCountWhenPaused = mockController.asInstanceOf[{ def getUpdateCount: Int }].getUpdateCount
 
     Thread.sleep(MEDIUM_RUN_MS)
-    val updateCountAfterPause = mockController.asInstanceOf[{def getUpdateCount: Int}].getUpdateCount
+    val updateCountAfterPause = mockController.asInstanceOf[{ def getUpdateCount: Int }].getUpdateCount
 
     gameLoop.stop()
     engine.stop()
@@ -147,10 +147,10 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     Thread.sleep(SHORT_RUN_MS)
     engine.resume()
 
-    val updateCountAfterResume = mockController.asInstanceOf[{def getUpdateCount: Int}].getUpdateCount
+    val updateCountAfterResume = mockController.asInstanceOf[{ def getUpdateCount: Int }].getUpdateCount
 
     Thread.sleep(SHORT_RUN_MS)
-    val finalUpdateCount = mockController.asInstanceOf[{def getUpdateCount: Int}].getUpdateCount
+    val finalUpdateCount = mockController.asInstanceOf[{ def getUpdateCount: Int }].getUpdateCount
 
     gameLoop.stop()
     engine.stop()
@@ -172,10 +172,10 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     gameLoop.start()
 
     Thread.sleep(MEDIUM_RUN_MS)
-    val updateCount1 = mockController.asInstanceOf[{def getUpdateCount: Int}].getUpdateCount
+    val updateCount1 = mockController.asInstanceOf[{ def getUpdateCount: Int }].getUpdateCount
 
     Thread.sleep(MEDIUM_RUN_MS)
-    val updateCount2 = mockController.asInstanceOf[{def getUpdateCount: Int}].getUpdateCount
+    val updateCount2 = mockController.asInstanceOf[{ def getUpdateCount: Int }].getUpdateCount
 
     gameLoop.stop()
     engine.stop()
@@ -193,7 +193,7 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     engine.stop()
 
     // Events should be processed during updates
-    mockController.asInstanceOf[{def getUpdateCount: Int}].getUpdateCount should be > 0
+    mockController.asInstanceOf[{ def getUpdateCount: Int }].getUpdateCount should be > 0
 
   behavior of "LoopState"
 
@@ -209,7 +209,7 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
   it should "transition to running state" in:
 
-    val state = LoopState()
+    val state        = LoopState()
     val runningState = state.startRunning
 
     runningState.status shouldBe LoopStatus.Running
@@ -219,7 +219,7 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
   it should "transition to stopped state" in:
 
-    val state = LoopState().startRunning
+    val state        = LoopState().startRunning
     val stoppedState = state.stopRunning
 
     stoppedState.status shouldBe LoopStatus.Idle
@@ -227,7 +227,7 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
   it should "mark as paused" in:
 
-    val state = LoopState().startRunning
+    val state       = LoopState().startRunning
     val pausedState = state.markPaused()
 
     pausedState.isPaused shouldBe true
@@ -235,8 +235,8 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
   it should "resume from pause" in:
 
-    val state = LoopState().startRunning.markPaused()
-    val currentTime = System.nanoTime()
+    val state        = LoopState().startRunning.markPaused()
+    val currentTime  = System.nanoTime()
     val resumedState = state.resumeFromPause(currentTime)
 
     resumedState.isPaused shouldBe false
@@ -245,8 +245,8 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
   it should "update frame correctly" in:
 
-    val state = LoopState().startRunning
-    val currentTime = System.nanoTime()
+    val state        = LoopState().startRunning
+    val currentTime  = System.nanoTime()
     val updatedState = state.updateFrame(currentTime)
 
     updatedState.lastUpdate shouldBe currentTime
@@ -254,22 +254,22 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
   it should "consume time step from accumulator" in:
 
-    val state = LoopState(accumulator = 100L)
+    val state         = LoopState(accumulator = 100L)
     val consumedState = state.consumeTimeStep(16L)
 
     consumedState.accumulator shouldBe 84L
 
   it should "increment frame count" in:
 
-    val state = LoopState()
+    val state            = LoopState()
     val incrementedState = state.incrementFrameCount
 
     incrementedState.frameCount shouldBe 1
 
   it should "update FPS after one second" in:
 
-    val currentTime = System.currentTimeMillis()
-    val state = LoopState(frameCount = 60, fpsTimer = currentTime - 1000L)
+    val currentTime  = System.currentTimeMillis()
+    val state        = LoopState(frameCount = 60, fpsTimer = currentTime - 1000L)
     val updatedState = state.updateFps(currentTime)
 
     updatedState.currentFps shouldBe 60
@@ -278,8 +278,8 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
   it should "not update FPS before one second" in:
 
-    val currentTime = System.currentTimeMillis()
-    val state = LoopState(frameCount = 30, fpsTimer = currentTime - 500L, currentFps = 60)
+    val currentTime  = System.currentTimeMillis()
+    val state        = LoopState(frameCount = 30, fpsTimer = currentTime - 500L, currentFps = 60)
     val updatedState = state.updateFps(currentTime)
 
     updatedState.currentFps shouldBe 60
@@ -309,7 +309,7 @@ class GameLoopTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     LoopStatus.Stopping.isRunning shouldBe false
 
   it should "create loop with custom engine" in:
-    val customEngine = new GameEngineImpl()
+    val customEngine     = new GameEngineImpl()
     val customController = createMockController()
     customEngine.initialize(customController)
 

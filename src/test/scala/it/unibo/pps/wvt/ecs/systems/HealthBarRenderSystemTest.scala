@@ -12,7 +12,7 @@ import scalafx.scene.paint.Color
 
 class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
-  var world: World = _
+  var world: World                           = _
   var healthBarSystem: HealthBarRenderSystem = _
 
   before:
@@ -28,12 +28,14 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers with BeforeAnd
         .withElixir(ELIXIR_START)
 
     val wizard = testWorld.getEntitiesByType("wizard").head
-    val damagedWorld = testWorld.updateComponent[HealthComponent](wizard, h =>
-      HealthComponent(HEALTH_MID, HEALTH_FULL)
+    val damagedWorld = testWorld.updateComponent[HealthComponent](
+      wizard,
+      h =>
+        HealthComponent(HEALTH_MID, HEALTH_FULL)
     )
 
     val (_, updatedSystem) = healthBarSystem.update(damagedWorld)
-    val healthBars = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
+    val healthBars         = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
 
     healthBars should have size ENTITY_COUNT_SINGLE
     val (_, percentage, color, _, _, _) = healthBars.head
@@ -47,7 +49,7 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers with BeforeAnd
         .withElixir(ELIXIR_START)
 
     val (_, updatedSystem) = healthBarSystem.update(testWorld)
-    val healthBars = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
+    val healthBars         = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
 
     healthBars shouldBe empty
 
@@ -58,12 +60,14 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers with BeforeAnd
         .withElixir(ELIXIR_START)
 
     val wizard = testWorld.getEntitiesByType("wizard").head
-    val deadWorld = testWorld.updateComponent[HealthComponent](wizard, h =>
-      HealthComponent(HEALTH_ZERO, HEALTH_FULL)
+    val deadWorld = testWorld.updateComponent[HealthComponent](
+      wizard,
+      h =>
+        HealthComponent(HEALTH_ZERO, HEALTH_FULL)
     )
 
     val (_, updatedSystem) = healthBarSystem.update(deadWorld)
-    val healthBars = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
+    val healthBars         = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
 
     healthBars shouldBe empty
 
@@ -74,12 +78,14 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers with BeforeAnd
         .withElixir(ELIXIR_START)
 
     val troll = testWorld.getEntitiesByType("troll").head
-    val damagedWorld = testWorld.updateComponent[HealthComponent](troll, h =>
-      HealthComponent(HEALTH_LOW, HEALTH_FULL)
+    val damagedWorld = testWorld.updateComponent[HealthComponent](
+      troll,
+      h =>
+        HealthComponent(HEALTH_LOW, HEALTH_FULL)
     )
 
     val (_, updatedSystem) = healthBarSystem.update(damagedWorld)
-    val healthBars = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
+    val healthBars         = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
 
     healthBars should have size ENTITY_COUNT_SINGLE
     val (_, percentage, color, _, _, _) = healthBars.head
@@ -87,7 +93,7 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers with BeforeAnd
     color shouldBe Color.Red
 
   it should "create default health bar for wizard without explicit health bar component" in:
-    val pos = GridMapper.logicalToPhysical(GRID_ROW_MID, GRID_COL_START).get
+    val pos              = GridMapper.logicalToPhysical(GRID_ROW_MID, GRID_COL_START).get
     val (world1, wizard) = world.createEntity()
     val testWorld = world1
       .addComponent(wizard, WizardTypeComponent(WizardType.Fire))
@@ -95,14 +101,14 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers with BeforeAnd
       .addComponent(wizard, HealthComponent(HEALTH_MID, HEALTH_FULL))
 
     val (_, updatedSystem) = healthBarSystem.update(testWorld)
-    val healthBars = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
+    val healthBars         = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
 
     healthBars should have size ENTITY_COUNT_SINGLE
     val (_, _, color, _, _, _) = healthBars.head
     color shouldBe Color.Yellow
 
   it should "create default health bar for troll without explicit health bar component" in:
-    val pos = GridMapper.logicalToPhysical(GRID_ROW_MID, GRID_COL_END).get
+    val pos             = GridMapper.logicalToPhysical(GRID_ROW_MID, GRID_COL_END).get
     val (world1, troll) = world.createEntity()
     val testWorld = world1
       .addComponent(troll, TrollTypeComponent(TrollType.Base))
@@ -110,7 +116,7 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers with BeforeAnd
       .addComponent(troll, HealthComponent(HEALTH_MID, HEALTH_FULL))
 
     val (_, updatedSystem) = healthBarSystem.update(testWorld)
-    val healthBars = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
+    val healthBars         = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
 
     healthBars should have size ENTITY_COUNT_SINGLE
     val (_, _, color, _, _, _) = healthBars.head
@@ -125,21 +131,25 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers with BeforeAnd
         .withElixir(ELIXIR_HIGH)
 
     val wizards = testWorld.getEntitiesByType("wizard").toList
-    val trolls = testWorld.getEntitiesByType("troll").toList
+    val trolls  = testWorld.getEntitiesByType("troll").toList
 
     var damagedWorld = testWorld
     wizards.foreach: wizard =>
-      damagedWorld = damagedWorld.updateComponent[HealthComponent](wizard, h =>
-        HealthComponent(HEALTH_MID, HEALTH_FULL)
+      damagedWorld = damagedWorld.updateComponent[HealthComponent](
+        wizard,
+        h =>
+          HealthComponent(HEALTH_MID, HEALTH_FULL)
       )
 
     trolls.foreach: troll =>
-      damagedWorld = damagedWorld.updateComponent[HealthComponent](troll, h =>
-        HealthComponent(HEALTH_LOW, HEALTH_FULL)
+      damagedWorld = damagedWorld.updateComponent[HealthComponent](
+        troll,
+        h =>
+          HealthComponent(HEALTH_LOW, HEALTH_FULL)
       )
 
     val (_, updatedSystem) = healthBarSystem.update(damagedWorld)
-    val healthBars = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
+    val healthBars         = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
 
     healthBars should have size ENTITY_COUNT_FEW
 
@@ -150,12 +160,14 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers with BeforeAnd
         .withElixir(ELIXIR_START)
 
     val wizard = testWorld.getEntitiesByType("wizard").head
-    val damagedWorld = testWorld.updateComponent[HealthComponent](wizard, h =>
-      HealthComponent(HEALTH_LOW, HEALTH_FULL)
+    val damagedWorld = testWorld.updateComponent[HealthComponent](
+      wizard,
+      h =>
+        HealthComponent(HEALTH_LOW, HEALTH_FULL)
     )
 
     val (_, updatedSystem) = healthBarSystem.update(damagedWorld)
-    val healthBars = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
+    val healthBars         = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
 
     healthBars should have size ENTITY_COUNT_SINGLE
     val (_, percentage, _, _, _, _) = healthBars.head
@@ -168,11 +180,13 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers with BeforeAnd
         .withElixir(ELIXIR_START)
 
     val wizard = testWorld.getEntitiesByType("wizard").head
-    val damagedWorld = testWorld.updateComponent[HealthComponent](wizard, h =>
-      HealthComponent(HEALTH_MID, HEALTH_FULL)
+    val damagedWorld = testWorld.updateComponent[HealthComponent](
+      wizard,
+      h =>
+        HealthComponent(HEALTH_MID, HEALTH_FULL)
     )
 
-    val (_, firstUpdate) = healthBarSystem.update(damagedWorld)
+    val (_, firstUpdate)  = healthBarSystem.update(damagedWorld)
     val (_, secondUpdate) = firstUpdate.update(damagedWorld)
 
     firstUpdate.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender should have size ENTITY_COUNT_SINGLE
@@ -185,15 +199,19 @@ class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers with BeforeAnd
         .withElixir(ELIXIR_START)
 
     val wizard = testWorld.getEntitiesByType("wizard").head
-    val damagedWorld = testWorld.updateComponent[HealthComponent](wizard, h =>
-      HealthComponent(HEALTH_MID, HEALTH_FULL)
+    val damagedWorld = testWorld.updateComponent[HealthComponent](
+      wizard,
+      h =>
+        HealthComponent(HEALTH_MID, HEALTH_FULL)
     )
 
     val (_, firstUpdate) = healthBarSystem.update(damagedWorld)
     firstUpdate.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender should have size ENTITY_COUNT_SINGLE
 
-    val healedWorld = damagedWorld.updateComponent[HealthComponent](wizard, h =>
-      HealthComponent(HEALTH_FULL, HEALTH_FULL)
+    val healedWorld = damagedWorld.updateComponent[HealthComponent](
+      wizard,
+      h =>
+        HealthComponent(HEALTH_FULL, HEALTH_FULL)
     )
 
     val (_, secondUpdate) = firstUpdate.update(healedWorld)

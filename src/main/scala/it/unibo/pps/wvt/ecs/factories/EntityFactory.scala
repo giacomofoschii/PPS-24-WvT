@@ -8,29 +8,29 @@ import it.unibo.pps.wvt.utilities.ViewConstants.*
 import scalafx.scene.paint.Color
 
 case class ProjectileConfig(
-                             projectileType: ProjectileType,
-                             damage: Int,
-                             imagePath: String
-                           )
+    projectileType: ProjectileType,
+    damage: Int,
+    imagePath: String
+)
 
 case class WizardConfig(
-                         wizardType: WizardType,
-                         health: Int,
-                         cost: Int,
-                         imagePath: String,
-                         attack: Option[AttackComponent] = None,
-                         elixirGenerator: Option[ElixirGeneratorComponent] = None
-                       )
+    wizardType: WizardType,
+    health: Int,
+    cost: Int,
+    imagePath: String,
+    attack: Option[AttackComponent] = None,
+    elixirGenerator: Option[ElixirGeneratorComponent] = None
+)
 
 case class TrollConfig(
-                        trollType: TrollType,
-                        health: Int,
-                        speed: Double,
-                        damage: Int,
-                        range: Double,
-                        cooldown: Long,
-                        imagePath: String
-                      )
+    trollType: TrollType,
+    health: Int,
+    speed: Double,
+    damage: Int,
+    range: Double,
+    cooldown: Long,
+    imagePath: String
+)
 
 trait EntityBuilder[T]:
   def buildComponents(config: T, position: Position): List[Component]
@@ -195,17 +195,15 @@ object EntityFactory:
     )
   )
 
-  /**
-   * Creates an entity with components, returning the updated World and entity ID.
-   */
+  /** Creates an entity with components, returning the updated World and entity ID. */
   private def createEntity[T: EntityBuilder](
-                                              world: World,
-                                              position: Position,
-                                              config: T
-                                            ): (World, EntityId) =
+      world: World,
+      position: Position,
+      config: T
+  ): (World, EntityId) =
     val (world1, entity) = world.createEntity()
-    val builder = summon[EntityBuilder[T]]
-    val components = builder.buildComponents(config, position)
+    val builder          = summon[EntityBuilder[T]]
+    val components       = builder.buildComponents(config, position)
 
     val finalWorld = components.foldLeft(world1): (w, component) =>
       w.addComponent(entity, component)
@@ -215,17 +213,17 @@ object EntityFactory:
   def createProjectile(world: World, position: Position, projectileType: ProjectileType): (World, EntityId) =
     projectileConfigs.get(projectileType) match
       case Some(config) => createEntity(world, position, config)
-      case None => throw IllegalArgumentException(s"Unknown projectile type: $projectileType")
+      case None         => throw IllegalArgumentException(s"Unknown projectile type: $projectileType")
 
   private def createWizard(world: World, position: Position, wizardType: WizardType): (World, EntityId) =
     wizardConfigs.get(wizardType) match
       case Some(config) => createEntity(world, position, config)
-      case None => throw IllegalArgumentException(s"Unknown wizard type: $wizardType")
+      case None         => throw IllegalArgumentException(s"Unknown wizard type: $wizardType")
 
   private def createTroll(world: World, position: Position, trollType: TrollType): (World, EntityId) =
     trollConfigs.get(trollType) match
       case Some(config) => createEntity(world, position, config)
-      case None => throw IllegalArgumentException(s"Unknown troll type: $trollType")
+      case None         => throw IllegalArgumentException(s"Unknown troll type: $trollType")
 
   def createGeneratorWizard(world: World, position: Position): (World, EntityId) =
     createWizard(world, position, WizardType.Generator)

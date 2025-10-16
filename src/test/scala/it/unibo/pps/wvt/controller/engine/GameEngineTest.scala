@@ -13,7 +13,7 @@ import scala.reflect.Selectable.reflectiveSelectable
 
 class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
-  var engine: GameEngine = _
+  var engine: GameEngine             = _
   var mockController: GameController = _
 
   before:
@@ -27,17 +27,17 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     new GameController(World.empty):
       private var updateCount = 0
       private val eventHandler: EventHandler = new EventHandler:
-        override def processEvents(): List[GameEvent] = List.empty
-        override def postEvent(event: GameEvent): Unit = ()
+        override def processEvents(): List[GameEvent]                                                = List.empty
+        override def postEvent(event: GameEvent): Unit                                               = ()
         override def registerHandler[T <: GameEvent](eventClass: Class[T])(handler: T => Unit): Unit = ()
         override def getCurrentPhase: GamePhase = GamePhase.MainMenu
-        override def clearQueue(): Unit = ()
+        override def clearQueue(): Unit         = ()
 
-      override def getWorld: World = World.empty
-      override def update(): Unit = updateCount += 1
+      override def getWorld: World               = World.empty
+      override def update(): Unit                = updateCount += 1
       override def getEventHandler: EventHandler = eventHandler
-      def getSystemsState: GameSystemsState = GameSystemsState.initial(WAVE_FIRST)
-      def getUpdateCount: Int = updateCount
+      def getSystemsState: GameSystemsState      = GameSystemsState.initial(WAVE_FIRST)
+      def getUpdateCount: Int                    = updateCount
 
   behavior of "GameEngine"
 
@@ -154,7 +154,7 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     Thread.sleep(MEDIUM_SLEEP_MS)
     engine.stop()
 
-    customController.asInstanceOf[{def getUpdateCount: Int}].getUpdateCount should be > 0
+    customController.asInstanceOf[{ def getUpdateCount: Int }].getUpdateCount should be > 0
 
   it should "not call controller update when paused" in:
     val customController = createMockController()
@@ -164,10 +164,10 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     Thread.sleep(SHORT_SLEEP_MS)
     engine.pause()
 
-    val updateCountWhenPaused = customController.asInstanceOf[{def getUpdateCount: Int}].getUpdateCount
+    val updateCountWhenPaused = customController.asInstanceOf[{ def getUpdateCount: Int }].getUpdateCount
 
     Thread.sleep(MEDIUM_SLEEP_MS)
-    val updateCountAfterPause = customController.asInstanceOf[{def getUpdateCount: Int}].getUpdateCount
+    val updateCountAfterPause = customController.asInstanceOf[{ def getUpdateCount: Int }].getUpdateCount
 
     engine.stop()
 
@@ -255,11 +255,11 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
     // Events should be processed during updates
     // Verification through controller update count
-    mockController.asInstanceOf[{def getUpdateCount: Int}].getUpdateCount should be > 0
+    mockController.asInstanceOf[{ def getUpdateCount: Int }].getUpdateCount should be > 0
 
   it should "maintain singleton instance through GameEngine object" in:
     val controller1 = createMockController()
-    val engine1 = GameEngine.create(controller1)
+    val engine1     = GameEngine.create(controller1)
 
     val instance = GameEngine.getInstance
     instance shouldBe defined
@@ -284,40 +284,40 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     state.gameLoop shouldBe None
 
   it should "transition to running status" in:
-    val state = EngineState()
+    val state        = EngineState()
     val runningState = state.transitionTo(EngineStatus.Running)
 
     runningState.status shouldBe EngineStatus.Running
     runningState.gameState.isPaused shouldBe false
 
   it should "transition to paused status" in:
-    val state = EngineState().transitionTo(EngineStatus.Running)
+    val state       = EngineState().transitionTo(EngineStatus.Running)
     val pausedState = state.transitionTo(EngineStatus.Paused)
 
     pausedState.status shouldBe EngineStatus.Paused
     pausedState.gameState.isPaused shouldBe true
 
   it should "transition to stopped status" in:
-    val state = EngineState().transitionTo(EngineStatus.Running)
+    val state        = EngineState().transitionTo(EngineStatus.Running)
     val stoppedState = state.transitionTo(EngineStatus.Stopped)
 
     stoppedState.status shouldBe EngineStatus.Stopped
     stoppedState.gameState.isPaused shouldBe false
 
   it should "update game time when running" in:
-    val state = EngineState().transitionTo(EngineStatus.Running)
+    val state        = EngineState().transitionTo(EngineStatus.Running)
     val updatedState = state.updateGameTime(TIME_INCREMENT)
 
     updatedState.gameState.elapsedTime shouldBe TIME_INCREMENT
 
   it should "not update game time when not running" in:
-    val state = EngineState()
+    val state        = EngineState()
     val updatedState = state.updateGameTime(TIME_INCREMENT)
 
     updatedState.gameState.elapsedTime shouldBe 0L
 
   it should "update game phase" in:
-    val state = EngineState()
+    val state        = EngineState()
     val updatedState = state.updatePhase(GamePhase.Playing)
 
     updatedState.gameState.phase shouldBe GamePhase.Playing
@@ -331,7 +331,7 @@ class GameEngineTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
   it should "check if paused correctly" in:
     val runningState = EngineState().transitionTo(EngineStatus.Running)
-    val pausedState = runningState.transitionTo(EngineStatus.Paused)
+    val pausedState  = runningState.transitionTo(EngineStatus.Paused)
 
     runningState.isPaused shouldBe false
     pausedState.isPaused shouldBe true

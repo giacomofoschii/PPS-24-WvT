@@ -9,7 +9,7 @@ import org.scalatest.BeforeAndAfterEach
 
 class GameControllerTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
 
-  var world: World = _
+  var world: World               = _
   var controller: GameController = _
 
   override def beforeEach(): Unit =

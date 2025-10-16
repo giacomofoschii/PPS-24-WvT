@@ -35,7 +35,6 @@ class GameSystemsStateTest extends AnyFlatSpec with Matchers:
     maybeStateAfterSpend shouldBe defined
     maybeStateAfterSpend.get.getCurrentElixir shouldBe (INITIAL_ELIXIR - ELIXIR_SPEND_AMOUNT)
 
-
   it should "fail to spend elixir when funds are insufficient" in:
     val (_, state) = scenario(_.withElixir(ELIXIR_LOW))
 
@@ -62,14 +61,18 @@ class GameSystemsStateTest extends AnyFlatSpec with Matchers:
 
   "A GameSystemsState's condition checker" should "detect a lose condition when a troll reaches the end" in:
     val (world0, state) = scenario(_.withTroll(TrollType.Base).at(GRID_ROW_MID, 0))
-    val trollEntity = world0.getEntitiesByType("troll").head
+    val trollEntity     = world0.getEntitiesByType("troll").head
     val world = world0
       .updateComponent[PositionComponent](
         trollEntity,
-        _.copy(position = world0
-          .getComponent[PositionComponent](trollEntity)
-          .get.position.copy(x = GridMapper.getCellBounds(0, 0)
-            ._1))
+        _.copy(position =
+          world0
+            .getComponent[PositionComponent](trollEntity)
+            .get.position.copy(x =
+              GridMapper.getCellBounds(0, 0)
+                ._1
+            )
+        )
       )
 
     val loseEvent = state.checkLoseCondition(world)

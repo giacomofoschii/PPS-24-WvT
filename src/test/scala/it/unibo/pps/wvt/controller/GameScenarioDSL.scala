@@ -108,7 +108,7 @@ object GameScenarioDSL:
       )
 
       (world, state)
-  
+
   case class WizardPlacer(builder: ScenarioBuilder, wizardType: WizardType):
     def at(row: Int, col: Int): ScenarioBuilder =
       builder.placeWizard(wizardType, row, col)
