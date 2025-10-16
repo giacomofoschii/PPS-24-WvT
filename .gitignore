@@ -86,9 +86,6 @@ fabric.properties
 
 .idea/*
 
-!.idea/codeStyles
-!.idea/runConfigurations
-
 ### SBT ###
 # Simple Build Tool
 # http://www.scala-sbt.org/release/docs/Getting-Started/Directories.html#configuring-version-control

@@ -7,104 +7,142 @@ import it.unibo.pps.wvt.ecs.core.*
 import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 
 import scala.annotation.tailrec
+import scala.language.reflectiveCalls
+import scala.reflect.ClassTag
 
+/** CombatSystem handles combat-related mechanics in the game, including ranged attacks by wizards and trolls. */
 case class CombatSystem() extends System:
 
   type TargetSelector = (EntityId, World)
   type DamageModifier = Int => Int
 
-  override def update(world: World): System =
-    processRangedAttacks(world)
-    updateCooldowns(world)
-    this
+  override def update(world: World): (World, System) =
+    val world1 = processRangedAttacks(world)
+    val world2 = updateComponentTimer(world1, classOf[CooldownComponent], (t, _) => CooldownComponent(t))
+    val world3 = updateComponentTimer(world2, classOf[FreezedComponent], (t, c) => FreezedComponent(t, c.speedModifier))
+    (world3, this)
 
-  private def processRangedAttacks(world: World): Unit =
-    processWizardProjectiles(world)
-    processThrowerProjectiles(world)
+  private def processRangedAttacks(world: World): World =
+    val world1 = processWizardProjectiles(world)
+    val world2 = processThrowerProjectiles(world1)
+    world2
 
-  private def processWizardProjectiles(world: World): Unit =
+  private def processWizardProjectiles(world: World): World =
     @tailrec
-    def processWizardList(wizards: List[(EntityId, WizardType, Position, AttackComponent)]): Unit =
+    def processWizardList(
+        wizards: List[(EntityId, WizardType, Position, AttackComponent)],
+        currentWorld: World
+    ): World =
       wizards match
-        case Nil => ()
+        case Nil => currentWorld
         case (entity, wizardType, pos, attack) :: tail =>
           val projType = wizardType match
             case WizardType.Fire => ProjectileType.Fire
-            case WizardType.Ice => ProjectileType.Ice
-            case _ => ProjectileType.Wind
-          EntityFactory.createProjectile(world, pos, projType)
-          world.addComponent(entity, CooldownComponent(attack.cooldown))
-          processWizardList(tail)
+            case WizardType.Ice  => ProjectileType.Ice
+            case _               => ProjectileType.Wind
+          val updatedWorld = spawnProjectileAndSetCooldown(currentWorld, entity, pos, projType, attack.cooldown)
+          processWizardList(tail, updatedWorld)
 
-    val wizards = for
-      entity <- world.getEntitiesByType("wizard")
+    val wizards = (for
+      entity     <- world.getEntitiesByType("wizard")
       wizardType <- world.getComponent[WizardTypeComponent](entity)
       if wizardType.wizardType != WizardType.Generator && wizardType.wizardType != WizardType.Barrier
-      pos <- world.getComponent[PositionComponent](entity)
+      pos    <- world.getComponent[PositionComponent](entity)
       attack <- world.getComponent[AttackComponent](entity)
+      if findClosestTarget(pos.position, attack.range, "troll", world, attacksLeft = false).isDefined
       if !isOnCooldown(entity, world)
-      if hasTargetsInRange(entity, pos.position, attack.range, world)
-    yield (entity, wizardType.wizardType, pos.position, attack)
+    yield (entity, wizardType.wizardType, pos.position, attack)).toList
 
-    processWizardList(wizards.toList)
+    processWizardList(wizards, world)
 
-  private def hasTargetsInRange(wizardEntity: EntityId, wizardPos: Position, range: Double, world: World): Boolean =
+  private def processThrowerProjectiles(world: World): World =
     @tailrec
-    def checkTrolls(trolls: List[EntityId]): Boolean =
-      trolls match
-        case Nil => false
-        case head :: tail =>
-          world.getComponent[PositionComponent](head) match
-            case Some(trollPos) =>
-              val distance = calculateDistance(wizardPos, trollPos.position)
-              if distance <= range then true
-              else checkTrolls(tail)
-            case None => checkTrolls(tail)
-
-    checkTrolls(world.getEntitiesByType("troll").toList)
-
-  private def calculateDistance(pos1: Position, pos2: Position): Double =
-    val grid1 = GridMapper.physicalToLogical(pos1)
-    val grid2 = GridMapper.physicalToLogical(pos2)
-    math.sqrt(math.pow(grid1.get._2 - grid2.get._2, 2) + math.pow(grid1.get._1 - grid2.get._1, 2))
-
-  private def processThrowerProjectiles(world: World): Unit =
-    @tailrec
-    def processThrowerList(throwers: List[(EntityId, Position, AttackComponent)]): Unit =
+    def processThrowerList(throwers: List[(EntityId, Position, AttackComponent)], currentWorld: World): World =
       throwers match
-        case Nil => ()
+        case Nil => currentWorld
         case (entity, pos, attack) :: tail =>
-          EntityFactory.createProjectile(world, pos, ProjectileType.Troll)
-          world.addComponent(entity, CooldownComponent(attack.cooldown))
-          processThrowerList(tail)
+          val worldWithBlock = findClosestTarget(pos, attack.range, "wizard", world, attacksLeft = true)
+            .map(target => addBlocker(currentWorld, entity, target))
+            .getOrElse(currentWorld)
 
-    val throwers = for
-      entity <- world.getEntitiesByType("troll")
+          val updatedWorld =
+            spawnProjectileAndSetCooldown(worldWithBlock, entity, pos, ProjectileType.Troll, attack.cooldown)
+          processThrowerList(tail, updatedWorld)
+
+    val throwers = (for
+      entity    <- world.getEntitiesByType("troll")
       trollType <- world.getComponent[TrollTypeComponent](entity)
       if trollType.trollType == Thrower
-      pos <- world.getComponent[PositionComponent](entity)
-      if GridMapper.physicalToLogical(pos.position).get._2 <= 6
+      pos    <- world.getComponent[PositionComponent](entity)
       attack <- world.getComponent[AttackComponent](entity)
+      if findClosestTarget(pos.position, attack.range, "wizard", world, attacksLeft = true).isDefined
       if !isOnCooldown(entity, world)
-    yield (entity, pos.position, attack)
+    yield (entity, pos.position, attack)).toList
 
-    processThrowerList(throwers.toList)
+    processThrowerList(throwers, world)
+
+  private def addBlocker(world: World, troll: EntityId, wizard: EntityId): World =
+    world.getComponent[BlockedComponent](troll) match
+      case Some(blocked) if blocked.blockedBy == wizard => world
+      case _ =>
+        world.removeComponent[BlockedComponent](troll)
+          .addComponent(troll, BlockedComponent(wizard))
+
+  private def findClosestTarget(
+      attackerPos: Position,
+      range: Double,
+      targetType: String,
+      world: World,
+      attacksLeft: Boolean
+  ): Option[EntityId] =
+    world.getEntitiesByType(targetType)
+      .flatMap(target => world.getComponent[PositionComponent](target).map(pos => (target, pos.position)))
+      .filter { case (_, targetPos) =>
+        val distance         = calculateDistance(attackerPos, targetPos)
+        val correctDirection = if attacksLeft then distance <= 0 else distance >= 0
+        val inRange          = math.abs(distance) <= range
+        inRange && correctDirection
+      }
+      .minByOption { case (_, targetPos) => math.abs(calculateDistance(attackerPos, targetPos)) }
+      .map(_._1)
+
+  private def calculateDistance(pos1: Position, pos2: Position): Double =
+    (GridMapper.physicalToLogical(pos1), GridMapper.physicalToLogical(pos2)) match
+      case (Some((r1, c1)), Some((r2, c2))) if r1 == r2 =>
+        (c2 - c1).toDouble
+      case _ =>
+        Double.MaxValue
+
+  private def spawnProjectileAndSetCooldown(
+      world: World,
+      entity: EntityId,
+      position: Position,
+      projectileType: ProjectileType,
+      cooldown: Long
+  ): World =
+    val (world1, _) = EntityFactory.createProjectile(world, position, projectileType)
+    world1.addComponent(entity, CooldownComponent(cooldown))
 
   private def isOnCooldown(entity: EntityId, world: World): Boolean =
     world.getComponent[CooldownComponent](entity).exists(_.remainingTime > 0)
 
-  private def updateCooldowns(world: World): Unit =
+  private def updateComponentTimer[C <: Component](
+      world: World,
+      componentClass: Class[C],
+      recreate: (Long, C) => C
+  )(using ct: ClassTag[C]): World =
     @tailrec
-    def updateCooldownList(entities: List[EntityId]): Unit =
+    def updateList(entities: List[EntityId], currentWorld: World): World =
       entities match
-        case Nil => ()
+        case Nil => currentWorld
         case head :: tail =>
-          world.getComponent[CooldownComponent](head).foreach: cooldown =>
-            val newTime = (cooldown.remainingTime - 16L).max(0L)
-            if newTime > 0 then
-              world.addComponent(head, CooldownComponent(newTime))
-            else
-              world.removeComponent[CooldownComponent](head)
-          updateCooldownList(tail)
-
-    updateCooldownList(world.getEntitiesWithComponent[CooldownComponent].toList)
+          val updatedWorld = world.getComponent[C](head) match
+            case Some(comp) =>
+              val newTime = (comp.asInstanceOf[{ def remainingTime: Long }].remainingTime - 16L).max(0L)
+              if newTime > 0 then
+                currentWorld.addComponent(head, recreate(newTime, comp))
+              else
+                currentWorld.removeComponent[C](head)
+            case None => currentWorld
+          updateList(tail, updatedWorld)
+    updateList(world.getEntitiesWithComponent[C].toList, world)

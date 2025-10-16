@@ -1,0 +1,65 @@
+name: Build, Test & Format
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # 1. Fa il checkout del codice
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Imposta l'ambiente Java 21 (usando il metodo robusto)
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'sbt'
+
+      # 3. Installa sbt su ogni sistema operativo
+      - name: Install sbt (macOS)
+        if: runner.os == 'macOS'
+        run: brew install sbt
+
+      - name: Install sbt (Windows)
+        if: runner.os == 'Windows'
+        run: choco install sbt
+
+      - name: Install sbt (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | sudo tee /etc/apt/sources.list.d/sbt.list
+          echo "deb https://repo.scala-sbt.org/scalasbt/debian /" | sudo tee /etc/apt/sources.list.d/sbt_old.list
+          curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | sudo apt-key add
+          sudo apt-get update
+          sudo apt-get install sbt
+
+      # 4. Imposta un ambiente grafico virtuale per ScalaFX (solo su Linux)
+      - name: Set up headless GUI for Linux
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y libgtk-3-0 libxtst6 libxrender1 libasound2t64 libgl1 libglx-mesa0 xvfb
+
+      # 5. Controlla la formattazione del codice
+      - name: Check Scala Formatting
+        run: sbt scalafmtCheckAll
+
+      # 6. Esegui i test
+      - name: Run tests on Linux
+        if: runner.os == 'Linux'
+        run: xvfb-run sbt test
+
+      - name: Run tests on macOS and Windows
+        if: runner.os == 'macOS' || runner.os == 'Windows'
+        run: sbt test

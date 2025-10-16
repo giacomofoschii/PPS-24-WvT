@@ -1,385 +1,408 @@
 package it.unibo.pps.wvt.ecs.systems
 
-import it.unibo.pps.wvt.ecs.core.World
+import it.unibo.pps.wvt.controller.GameScenarioDSL.*
 import it.unibo.pps.wvt.ecs.components.*
-import it.unibo.pps.wvt.ecs.factories.EntityFactory
-import it.unibo.pps.wvt.ecs.config.WaveLevel
-import it.unibo.pps.wvt.utilities.Position
-import it.unibo.pps.wvt.utilities.ViewConstants.*
+import it.unibo.pps.wvt.ecs.core.{EntityId, World}
+import it.unibo.pps.wvt.utilities.GamePlayConstants.*
 import it.unibo.pps.wvt.utilities.TestConstants.*
+import it.unibo.pps.wvt.utilities.GridMapper
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfter
 
-import scala.util.Random
-
 class SpawnSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
-  // Test DSL for readable test setup
-  private object SpawnTestDSL:
-    extension (world: World)
-      def withWizardAt(position: Position): World =
-        EntityFactory.createGeneratorWizard(world, position)
-        world
-
-      def trollCount: Int =
-        world.getEntitiesByType("troll").size
-
-      def getTrollTypes: Set[TrollType] =
-        world.getEntitiesByType("troll")
-          .flatMap(world.getComponent[TrollTypeComponent])
-          .map(_.trollType)
-          .toSet
-
-      def getTrollPositions: Seq[Position] =
-        world.getEntitiesByType("troll")
-          .flatMap(world.getComponent[PositionComponent])
-          .map(_.position)
-          .toSeq
-
-      def getTrollHealthValues: Seq[Int] =
-        world.getEntitiesByType("troll")
-          .flatMap(world.getComponent[HealthComponent])
-          .map(_.currentHealth)
-          .toSeq
-
-    extension (system: SpawnSystem)
-      def activateWith(world: World): SpawnSystem =
-        system.update(world).asInstanceOf[SpawnSystem]
-
-      def updateAndWait(world: World, waitMs: Long): SpawnSystem =
-        val updated = system.update(world).asInstanceOf[SpawnSystem]
-        Thread.sleep(waitMs)
-        updated
-
-      def updateMultipleTimes(world: World, times: Int, waitMs: Long = SHORT_DELAY): SpawnSystem =
-        var current = system
-        for (_ <- 1 to times)
-          current = current.updateAndWait(world, waitMs)
-        current
-
-  import SpawnTestDSL.*
-
-  behavior of "SpawnSystem - Initialization and Activation"
-
-  it should "start inactive with correct initial state" in:
-    val system = SpawnSystem()
-
-    system.isActive shouldBe false
-    system.firstWizardRow shouldBe None
-    system.hasSpawnedAtLeastOnce shouldBe false
-    system.trollsSpawnedThisWave shouldBe 0
-    system.getPendingSpawnsCount shouldBe 0
-    system.currentWave shouldBe TEST_WAVE_1
-
-  it should "not activate or spawn when no wizard is placed" in:
-    val world = World()
-    val system = SpawnSystem()
-
-    val updatedSystem = system.updateAndWait(world, MEDIUM_DELAY)
-
-    updatedSystem.isActive shouldBe false
-    updatedSystem.firstWizardRow shouldBe None
-    world.trollCount shouldBe 0
-
-  it should "activate and capture wizard row when first wizard is placed" in:
-    val world = World()
-    val system = SpawnSystem()
-
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    val updatedSystem = system.activateWith(world)
-
-    updatedSystem.isActive shouldBe true
-    updatedSystem.firstWizardRow shouldBe Some(TEST_WIZARD_ROW)
-
-  it should "work with multiple wizards using first wizard's row" in:
-    val world = World()
-    val system = SpawnSystem()
-
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    EntityFactory.createFireWizard(world, Position(TEST_WIZARD_ROW + 1, TEST_WIZARD_COL))
-
-    val updatedSystem = system.activateWith(world)
-
-    updatedSystem.isActive shouldBe true
-    updatedSystem.firstWizardRow shouldBe Some(TEST_WIZARD_ROW)
-
-  behavior of "SpawnSystem - Spawn Mechanics"
-
-  it should "schedule and spawn trolls after activation" in:
-    val world = World()
-    val system = SpawnSystem()
-
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    val activeSystem = system.activateWith(world)
-
-    val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
-    Thread.sleep(spawnInterval + LONG_DELAY)
-    val spawnedSystem = activeSystem.update(world).asInstanceOf[SpawnSystem]
-
-    spawnedSystem.getPendingSpawnsCount should be > 0
-    spawnedSystem.hasSpawnedAtLeastOnce shouldBe true
-
-  it should "spawn trolls at rightmost column" in:
-    val world = World()
-    val system = SpawnSystem()
-
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    val activeSystem = system.activateWith(world)
-
-    val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
-    Thread.sleep(spawnInterval + LONG_DELAY)
-    activeSystem.updateMultipleTimes(world, TEST_MULTIPLE_UPDATES, MEDIUM_DELAY)
-
-    val positions = world.getTrollPositions
-    positions.foreach(_.x shouldBe TEST_SPAWN_COLUMN)
-
-  it should "spawn multiple trolls per batch" in:
-    val world = World()
-    val system = SpawnSystem(rng = Random(TEST_SEED))
-
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    val activeSystem = system.activateWith(world)
-
-    val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
-    Thread.sleep(spawnInterval + MEDIUM_DELAY)
-    val spawnedSystem = activeSystem.update(world).asInstanceOf[SpawnSystem]
-
-    spawnedSystem.getPendingSpawnsCount should be >= 1
-    spawnedSystem.getPendingSpawnsCount should be <= 3
-
-  it should "process scheduled spawns and reduce pending count" in:
-    val world = World()
-    val system = SpawnSystem()
-
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    val activeSystem = system.activateWith(world)
-
-    val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
-    Thread.sleep(spawnInterval + MEDIUM_DELAY)
-    val withSpawns = activeSystem.update(world).asInstanceOf[SpawnSystem]
-    val pendingBefore = withSpawns.getPendingSpawnsCount
-
-    pendingBefore should be > 0
-
-    // Wait for scheduled spawns to be processed
-    Thread.sleep(LONG_DELAY + MEDIUM_DELAY)
-    val processed = withSpawns.update(world).asInstanceOf[SpawnSystem]
-
-    // Either trolls have been spawned or pending count has been reduced
-    val hasSpawned = world.trollCount > 0 || processed.getPendingSpawnsCount < pendingBefore
-    hasSpawned shouldBe true
-
-  it should "spawn different troll types over multiple updates" in:
-    val world = World()
-    val system = SpawnSystem()
-
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
-
-    var currentSystem = system.activateWith(world)
-    for (_ <- 1 to TEST_MANY_UPDATES)
-      Thread.sleep(spawnInterval + SHORT_DELAY)
-      currentSystem = currentSystem.update(world).asInstanceOf[SpawnSystem]
-
-    val trollTypes = world.getTrollTypes
-    trollTypes.nonEmpty shouldBe true
-
-  behavior of "SpawnSystem - Wave Scaling and Limits"
-
-  it should "apply wave scaling to troll stats" in:
-    val world = World()
-    val system = SpawnSystem()
-
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
-
-    var currentSystem = system.activateWith(world)
-    Thread.sleep(spawnInterval + MEDIUM_DELAY)
-    currentSystem = currentSystem.update(world).asInstanceOf[SpawnSystem]
-    Thread.sleep(LONG_DELAY)
-    currentSystem.update(world)
-
-    val trolls = world.getEntitiesByType("troll")
-    if trolls.nonEmpty then
-      val firstTroll = trolls.head
-      world.getComponent[HealthComponent](firstTroll) shouldBe defined
-      world.getComponent[MovementComponent](firstTroll) shouldBe defined
-      world.getComponent[AttackComponent](firstTroll) shouldBe defined
-
-  it should "respect wave max troll limit" in:
-    val world = World()
-    val system = SpawnSystem()
-
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    val maxTrolls = WaveLevel.maxTrollsPerWave(TEST_WAVE_1)
-    val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
-
-    var currentSystem = system.activateWith(world)
-    for (_ <- 1 to TEST_MANY_UPDATES * 2)
-      Thread.sleep(spawnInterval + SHORT_DELAY)
-      currentSystem = currentSystem.update(world).asInstanceOf[SpawnSystem]
-
-    currentSystem.getTrollsSpawned should be <= maxTrolls
-
-  it should "not generate spawns when max trolls reached" in:
-    val world = World()
-    val maxTrolls = WaveLevel.maxTrollsPerWave(TEST_WAVE_1)
-    val system = SpawnSystem(trollsSpawnedThisWave = maxTrolls)
-
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
-
-    var currentSystem = system.activateWith(world)
-    Thread.sleep(spawnInterval + MEDIUM_DELAY)
-    currentSystem = currentSystem.update(world).asInstanceOf[SpawnSystem]
-
-    currentSystem.getPendingSpawnsCount shouldBe 0
-
-  behavior of "SpawnSystem - State Management"
-
-  it should "track trolls spawned and provide correct state info" in:
-    val world = World()
-    val system = SpawnSystem()
-
-    system.getNextSpawnTime shouldBe None
-    system.getTrollsSpawned shouldBe 0
-    system.getMaxTrolls shouldBe WaveLevel.maxTrollsPerWave(TEST_WAVE_1)
-
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
-
-    var currentSystem = system.activateWith(world)
-    Thread.sleep(spawnInterval + MEDIUM_DELAY)
-    currentSystem = currentSystem.update(world).asInstanceOf[SpawnSystem]
-
-    currentSystem.getTrollsSpawned should be > 0
-    if currentSystem.getPendingSpawnsCount > 0 then
-      currentSystem.getNextSpawnTime shouldBe defined
-
-  it should "maintain and update last spawn time" in:
-    val world = World()
-    val system = SpawnSystem()
-
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    val activeSystem = system.activateWith(world)
-    val initialTime = activeSystem.lastSpawnTime
-
-    val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
-    Thread.sleep(spawnInterval + MEDIUM_DELAY)
-    val spawnedSystem = activeSystem.update(world).asInstanceOf[SpawnSystem]
-
-    spawnedSystem.lastSpawnTime should be >= initialTime
-
-  behavior of "SpawnSystem - Spawn Intervals"
-
-  it should "respect spawn interval and not spawn too early" in:
-    val world = World()
-    val system = SpawnSystem()
-
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
-
-    var currentSystem = system.activateWith(world)
-    currentSystem = currentSystem.update(world).asInstanceOf[SpawnSystem]
-    val firstPending = currentSystem.getPendingSpawnsCount
-
-    Thread.sleep(spawnInterval / 2)
-    currentSystem = currentSystem.update(world).asInstanceOf[SpawnSystem]
-    val secondPending = currentSystem.getPendingSpawnsCount
-
-    secondPending shouldBe firstPending
-
-  it should "generate new spawns after interval expires" in:
-    val world = World()
-    val system = SpawnSystem()
-
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
-
-    var currentSystem = system.activateWith(world)
-    Thread.sleep(spawnInterval + MEDIUM_DELAY)
-    currentSystem = currentSystem.update(world).asInstanceOf[SpawnSystem]
-    Thread.sleep(LONG_DELAY)
-    currentSystem = currentSystem.update(world).asInstanceOf[SpawnSystem]
-    val firstCount = currentSystem.getTrollsSpawned
-
-    Thread.sleep(spawnInterval + MEDIUM_DELAY)
-    currentSystem = currentSystem.update(world).asInstanceOf[SpawnSystem]
-
-    currentSystem.getTrollsSpawned should be >= firstCount
-
-  behavior of "SpawnSystem - Random Seed and Factory"
-
-  it should "produce deterministic results with fixed seed" in:
-    val world1 = World()
-    val world2 = World()
-    val system1 = SpawnSystem(rng = Random(TEST_SEED))
-    val system2 = SpawnSystem(rng = Random(TEST_SEED))
-
-    world1.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    world2.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-
-    val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
-
-    var current1 = system1.activateWith(world1)
-    var current2 = system2.activateWith(world2)
-
-    Thread.sleep(spawnInterval + MEDIUM_DELAY)
-    current1 = current1.update(world1).asInstanceOf[SpawnSystem]
-    current2 = current2.update(world2).asInstanceOf[SpawnSystem]
-
-    current1.getPendingSpawnsCount shouldBe current2.getPendingSpawnsCount
-
-  it should "create system with factory method" in:
-    val system = SpawnSystem.withConfig(Some(TEST_SEED))
-
-    system shouldBe a[SpawnSystem]
-    system.isActive shouldBe false
-    system.currentWave shouldBe TEST_WAVE_1
-
-  behavior of "SpawnSystem - Edge Cases and Robustness"
-
-  it should "handle empty world without crashing" in:
-    val world = World()
-    val system = SpawnSystem()
-
-    noException should be thrownBy system.update(world)
-
-  it should "handle rapid consecutive updates" in:
-    val world = World()
-    val system = SpawnSystem()
-
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    var currentSystem = system.activateWith(world)
-
-    noException should be thrownBy {
-      for (_ <- 1 to TEST_MANY_UPDATES)
-        currentSystem = currentSystem.update(world).asInstanceOf[SpawnSystem]
+  var world: World             = _
+  var spawnSystem: SpawnSystem = _
+
+  before:
+    world = World.empty
+    spawnSystem = SpawnSystem.withConfig(Some(SPAWN_SEED))
+
+  behavior of "SpawnSystem"
+
+  it should "not be active initially" in:
+    spawnSystem.isActive shouldBe false
+
+  it should "activate when a wizard is placed" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val (_, updatedSystem) = spawnSystem.update(testWorld)
+    updatedSystem.asInstanceOf[SpawnSystem].isActive shouldBe true
+
+  it should "not activate without wizards in world" in:
+    val emptyWorld         = World.empty
+    val (_, updatedSystem) = spawnSystem.update(emptyWorld)
+    updatedSystem.asInstanceOf[SpawnSystem].isActive shouldBe false
+
+  it should "store first wizard row when activated" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val (_, updatedSystem) = spawnSystem.update(testWorld)
+    updatedSystem.asInstanceOf[SpawnSystem].firstWizardRow shouldBe Some(GRID_ROW_MID)
+
+  it should "generate spawn events after initial delay" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val initialTime       = System.currentTimeMillis()
+    val fakeLastSpawnTime = initialTime - INITIAL_SPAWN_DELAY_MS - 10
+
+    val spawnSystem = SpawnSystem.withConfig(Some(SPAWN_SEED)).copy(
+      isActive = true,
+      firstWizardRow = Some(GRID_ROW_MID),
+      lastSpawnTime = fakeLastSpawnTime
+    )
+
+    val (_, updatedSystem) = spawnSystem.update(testWorld)
+    updatedSystem.asInstanceOf[SpawnSystem].getPendingSpawnsCount should be > 0
+
+  it should "spawn trolls at scheduled times" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val (_, system1) = spawnSystem.update(testWorld)
+
+    Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
+
+    var currentWorld  = testWorld
+    var currentSystem = system1
+    var spawned       = false
+    var attempts      = 0
+
+    while (!spawned && attempts < SPAWN_ATTEMPTS)
+      val (nextWorld, nextSystem) = currentSystem.update(currentWorld)
+      currentWorld = nextWorld
+      currentSystem = nextSystem
+      spawned = currentWorld.getEntitiesByType("troll").nonEmpty
+      attempts += 1
+      if (!spawned) Thread.sleep(SHORT_SLEEP_MS)
+
+    currentWorld.getEntitiesByType("troll").size should be > 0
+
+  it should "spawn trolls with correct components" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val (_, system1) = spawnSystem.update(testWorld)
+    Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
+
+    val result = Iterator.iterate((testWorld, system1)): (w, s) =>
+      Thread.sleep(DELAY_MEDIUM_MS)
+      s.update(w)
+    .zipWithIndex
+      .take(SPAWN_ATTEMPTS)
+      .find:
+        case ((w, _), _) =>
+          w.getEntitiesByType("troll").nonEmpty
+
+    result match
+      case Some(((currentWorld, _), _)) =>
+        val trolls = currentWorld.getEntitiesByType("troll")
+        trolls.size should be > 0
+        trolls.foreach: troll =>
+          currentWorld.hasComponent[TrollTypeComponent](troll) shouldBe true
+          currentWorld.hasComponent[PositionComponent](troll) shouldBe true
+          currentWorld.hasComponent[HealthComponent](troll) shouldBe true
+          currentWorld.hasComponent[MovementComponent](troll) shouldBe true
+          currentWorld.hasComponent[AttackComponent](troll) shouldBe true
+      case None =>
+        fail("No trolls were spawned within the expected updates")
+
+  it should "respect maximum trolls per wave" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val (_, system1) = spawnSystem.update(testWorld)
+    val maxTrolls    = system1.asInstanceOf[SpawnSystem].getMaxTrolls
+
+    var currentWorld  = testWorld
+    var currentSystem = system1
+
+    // Simulate enough time for all spawns
+    (1 to UPDATES_COUNT_LONG).foreach: _ =>
+      Thread.sleep(DELAY_MEDIUM_MS)
+      (1 to UPDATES_COUNT_SHORT).foreach: _ =>
+        val (nextWorld, nextSystem) = currentSystem.update(currentWorld)
+        currentWorld = nextWorld
+        currentSystem = nextSystem
+
+    currentSystem.asInstanceOf[SpawnSystem].getTrollsSpawned should be <= maxTrolls
+
+  it should "deactivate when wave is complete" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val (_, system1) = spawnSystem.update(testWorld)
+    system1.asInstanceOf[SpawnSystem].isActive shouldBe true
+
+    var currentWorld  = testWorld
+    var currentSystem = system1
+
+    // Simulate spawning all trolls
+    (1 to UPDATES_COUNT_LONG).foreach: _ =>
+      Thread.sleep(DELAY_MEDIUM_MS)
+      (1 to UPDATES_COUNT_SHORT).foreach: _ =>
+        val (nextWorld, nextSystem) = currentSystem.update(currentWorld)
+        currentWorld = nextWorld
+        currentSystem = nextSystem
+
+      if currentSystem
+          .asInstanceOf[SpawnSystem]
+          .getTrollsSpawned >= currentSystem.asInstanceOf[SpawnSystem].getMaxTrolls &&
+        currentSystem.asInstanceOf[SpawnSystem].getPendingSpawnsCount == 0
+      then
+        currentSystem.asInstanceOf[SpawnSystem].isActive shouldBe false
+
+  it should "apply wave scaling to spawned trolls" in:
+    val spawnSystemWave5 = SpawnSystem.withConfig(Some(SPAWN_SEED)).copy(currentWave = WAVE_MID)
+
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val (_, system1) = spawnSystemWave5.update(testWorld)
+    Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
+
+    var currentWorld  = testWorld
+    var currentSystem = system1
+    var trolls        = Seq.empty[EntityId]
+    var attempts      = 0
+
+    while (trolls.isEmpty && attempts < SPAWN_ATTEMPTS) {
+      Thread.sleep(DELAY_MEDIUM_MS)
+      val (nextWorld, nextSystem) = currentSystem.update(currentWorld)
+      currentWorld = nextWorld
+      currentSystem = nextSystem
+      trolls = currentWorld.getEntitiesByType("troll").toSeq
+      attempts += 1
     }
 
-  it should "return correct system instance after update" in:
-    val world = World()
-    val system = SpawnSystem()
+    trolls.size should be > 0
 
-    val returnedSystem = system.update(world)
+    val troll  = trolls.head
+    val health = currentWorld.getComponent[HealthComponent](troll).get
 
-    returnedSystem shouldBe a[SpawnSystem]
+    // Wave 5 trolls should have scaled health
+    val (baseHealth, _, _) = currentWorld.getComponent[TrollTypeComponent](troll)
+      .map: c =>
+        c.trollType match
+          case TrollType.Base     => (BASE_TROLL_HEALTH, BASE_TROLL_SPEED, BASE_TROLL_DAMAGE)
+          case TrollType.Warrior  => (WARRIOR_TROLL_HEALTH, WARRIOR_TROLL_SPEED, WARRIOR_TROLL_DAMAGE)
+          case TrollType.Assassin => (ASSASSIN_TROLL_HEALTH, ASSASSIN_TROLL_SPEED, ASSASSIN_TROLL_DAMAGE)
+          case TrollType.Thrower  => (THROWER_TROLL_HEALTH, THROWER_TROLL_SPEED, THROWER_TROLL_DAMAGE)
+      .get
 
-  it should "maintain valid troll positions within grid bounds" in:
-    val world = World()
-    val system = SpawnSystem()
+    health.maxHealth should be > baseHealth
 
-    world.withWizardAt(Position(TEST_WIZARD_ROW, TEST_WIZARD_COL))
-    val spawnInterval = WaveLevel.calculateSpawnInterval(TEST_WAVE_1)
+  it should "spawn first troll in wizard's row" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
 
-    var currentSystem = system.activateWith(world)
-    for (_ <- 1 to TEST_MANY_UPDATES)
-      Thread.sleep(spawnInterval + SHORT_DELAY)
-      currentSystem = currentSystem.update(world).asInstanceOf[SpawnSystem]
+    val (_, system1) = spawnSystem.update(testWorld)
+    Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
 
-    val positions = world.getTrollPositions
-    positions.foreach: pos =>
-      pos.y should be >= 0.0
-      pos.y should be < GRID_ROWS.toDouble
-      pos.x shouldBe TEST_SPAWN_COLUMN
+    var currentWorld  = testWorld
+    var currentSystem = system1
+    (1 to UPDATES_COUNT_SHORT).foreach: _ =>
+      val (nextWorld, nextSystem) = currentSystem.update(currentWorld)
+      currentWorld = nextWorld
+      currentSystem = nextSystem
+
+    val trolls = currentWorld.getEntitiesByType("troll")
+    if trolls.nonEmpty then
+      val firstTroll = trolls.head
+      val pos        = currentWorld.getComponent[PositionComponent](firstTroll).get.position
+      val (row, _)   = GridMapper.physicalToLogical(pos).get
+      row shouldBe GRID_ROW_MID
+
+  it should "generate spawns in batches" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val (_, system1) = spawnSystem.update(testWorld)
+    Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
+
+    val (_, system2) = system1.update(testWorld)
+
+    val batchSize = system2.asInstanceOf[SpawnSystem].getPendingSpawnsCount
+    batchSize should (be >= 2 and be <= 4)
+
+  it should "schedule spawns with time offsets within batch" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val (_, system1) = spawnSystem.update(testWorld)
+    Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
+
+    val (_, system2) = system1.update(testWorld)
+
+    system2.asInstanceOf[SpawnSystem].getNextSpawnTime shouldBe defined
+
+  it should "handle pause correctly" in:
+    // Note: This test requires GameEngine to be initialized
+    // Simplified test without actual pause functionality
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val (_, system1) = spawnSystem.update(testWorld)
+    system1.asInstanceOf[SpawnSystem].pausedAt shouldBe None
+
+  it should "track trolls spawned count" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val (_, system1) = spawnSystem.update(testWorld)
+    system1.asInstanceOf[SpawnSystem].getTrollsSpawned shouldBe 0
+
+    Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
+
+    var currentWorld  = testWorld
+    var currentSystem = system1
+    (1 to UPDATES_PER_SECOND).foreach: _ =>
+      val (nextWorld, nextSystem) = currentSystem.update(currentWorld)
+      currentWorld = nextWorld
+      currentSystem = nextSystem
+
+    currentSystem.asInstanceOf[SpawnSystem].getTrollsSpawned should be > 0
+
+  it should "not generate new spawns when inactive" in:
+    val inactiveSystem = spawnSystem.copy(isActive = false)
+    val (testWorld, _) = scenario: builder =>
+      builder.withElixir(ELIXIR_START)
+
+    Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
+
+    val (_, updatedSystem) = inactiveSystem.update(testWorld)
+    updatedSystem.asInstanceOf[SpawnSystem].getPendingSpawnsCount shouldBe 0
+
+  it should "spawn different troll types based on wave distribution" in:
+    val spawnSystemWave10 = SpawnSystem.withConfig(Some(SPAWN_SEED)).copy(currentWave = WAVE_HIGH)
+
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val (_, system1) = spawnSystemWave10.update(testWorld)
+
+    Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
+
+    var currentWorld  = testWorld
+    var currentSystem = system1
+
+    (1 to (UPDATES_COUNT_MEDIUM * 2)).foreach { _ =>
+      Thread.sleep(DELAY_MEDIUM_MS)
+      (1 to (UPDATES_COUNT_SHORT * 2)).foreach { _ =>
+        val (nextWorld, nextSystem) = currentSystem.update(currentWorld)
+        currentWorld = nextWorld
+        currentSystem = nextSystem
+      }
+    }
+
+    val trolls = currentWorld.getEntitiesByType("troll")
+    trolls.size should be > 1
+
+    val trollTypes = trolls.toSeq.map: troll =>
+      currentWorld.getComponent[TrollTypeComponent](troll).get.trollType
+
+    trollTypes.toSet.size should be > 1
+
+  it should "spawn trolls at rightmost column" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val (_, system1) = spawnSystem.update(testWorld)
+    Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
+
+    var currentWorld  = testWorld
+    var currentSystem = system1
+    (1 to UPDATES_PER_SECOND).foreach: _ =>
+      val (nextWorld, nextSystem) = currentSystem.update(currentWorld)
+      currentWorld = nextWorld
+      currentSystem = nextSystem
+
+    val trolls = currentWorld.getEntitiesByType("troll")
+    trolls.foreach: troll =>
+      val pos      = currentWorld.getComponent[PositionComponent](troll).get.position
+      val (_, col) = GridMapper.physicalToLogical(pos).get
+      col shouldBe (GRID_COLS_LOGICAL - 1)
+
+  it should "update last spawn time after generating spawns" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val (_, system1) = spawnSystem.update(testWorld)
+    val initialTime  = system1.asInstanceOf[SpawnSystem].lastSpawnTime
+
+    Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
+
+    val (_, system2) = system1.update(testWorld)
+
+    if system2.asInstanceOf[SpawnSystem].hasSpawnedAtLeastOnce then
+      system2.asInstanceOf[SpawnSystem].lastSpawnTime should be > initialTime
+
+  it should "mark has spawned at least once after first spawn generation" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val (_, system1) = spawnSystem.update(testWorld)
+    system1.asInstanceOf[SpawnSystem].hasSpawnedAtLeastOnce shouldBe false
+
+    Thread.sleep(INITIAL_SPAWN_DELAY_MS + SHORT_WAIT_MS)
+
+    val (_, system2) = system1.update(testWorld)
+
+    if system2.asInstanceOf[SpawnSystem].getPendingSpawnsCount > 0 then
+      system2.asInstanceOf[SpawnSystem].hasSpawnedAtLeastOnce shouldBe true
+
+  it should "use different spawn intervals for first and subsequent spawns" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val (_, system1) = spawnSystem.update(testWorld)
+
+    // First spawn should wait for initial interval
+    Thread.sleep(LONG_SLEEP_MS)
+    val (_, system2) = system1.update(testWorld)
+    system2.asInstanceOf[SpawnSystem].getPendingSpawnsCount shouldBe 0
+
+    // After initial interval
+    Thread.sleep(INITIAL_SPAWN_DELAY_MS)
+    val (_, system3) = system2.update(testWorld)
+    system3.asInstanceOf[SpawnSystem].getPendingSpawnsCount should be > 0

@@ -1,348 +1,293 @@
 package it.unibo.pps.wvt.ecs.systems
 
-import it.unibo.pps.wvt.ecs.core.World
+import it.unibo.pps.wvt.controller.GameScenarioDSL.*
 import it.unibo.pps.wvt.ecs.components.*
-import it.unibo.pps.wvt.ecs.components.TrollType.*
+import it.unibo.pps.wvt.ecs.core.World
 import it.unibo.pps.wvt.utilities.TestConstants.*
+import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 import it.unibo.pps.wvt.utilities.ViewConstants.*
-
-import it.unibo.pps.wvt.utilities.{Position, TestConstants}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfter
 
 class MovementSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
-  // Test DSL for readable test setup
-  private object TestDSL:
-    extension (world: World)
-      def withTroll(trollType: TrollType, position: Position, speed: Double): World =
-        val troll = world.createEntity()
-        world.addComponent(troll, TrollTypeComponent(trollType))
-        world.addComponent(troll, PositionComponent(position))
-        world.addComponent(troll, MovementComponent(speed))
-        world
+  var world: World                   = _
+  var movementSystem: MovementSystem = _
 
-      def withProjectile(projectileType: ProjectileType, position: Position, speed: Double): World =
-        val projectile = world.createEntity()
-        world.addComponent(projectile, ProjectileTypeComponent(projectileType))
-        world.addComponent(projectile, PositionComponent(position))
-        world.addComponent(projectile, MovementComponent(speed))
-        world
+  before:
+    world = World.empty
+    movementSystem = MovementSystem(deltaTime = DELTA_TIME_MS)
 
-      def getTrollAt(position: Position): Option[PositionComponent] =
-        world.getEntitiesByType("troll")
-          .headOption
-          .flatMap(world.getComponent[PositionComponent])
+  behavior of "MovementSystem"
 
-      def getProjectileAt: Option[PositionComponent] =
-        world.getEntitiesByType("projectile")
-          .headOption
-          .flatMap(world.getComponent[PositionComponent])
+  it should "move trolls leftward" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withTroll(TrollType.Base).at(GRID_ROW_MID, GRID_COL_END)
+        .withElixir(ELIXIR_START)
 
-      def getFirstEntityPosition: Option[PositionComponent] =
-        world.getAllEntities
-          .headOption
-          .flatMap(world.getComponent[PositionComponent])
+    val troll      = testWorld.getEntitiesByType("troll").head
+    val initialPos = testWorld.getComponent[PositionComponent](troll).get.position
 
-  import TestDSL.*
+    val (updatedWorld, _) = movementSystem.update(testWorld)
+    val newPos            = updatedWorld.getComponent[PositionComponent](troll).get.position
 
-  behavior of "MovementSystem - Base Troll Movement"
+    newPos.x should be < initialPos.x
+    newPos.y shouldBe initialPos.y +- MOVEMENT_TOLERANCE
 
-  it should "move base trolls straight left with normal speed" in:
-    val world = World()
-    val system = MovementSystem()
+  it should "move wizard projectiles rightward" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withProjectile(ProjectileType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
 
-    world.withTroll(Base, Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL), TEST_SPEED_NORMAL)
-    system.update(world)
+    val projectile = testWorld.getEntitiesByType("projectile").head
+    val initialPos = testWorld.getComponent[PositionComponent](projectile).get.position
 
-    val newPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL))
-    newPos shouldBe defined
-    newPos.get.position.x should be < Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL).x
+    val (updatedWorld, _) = movementSystem.update(testWorld)
+    val newPos            = updatedWorld.getComponent[PositionComponent](projectile).get.position
 
-  it should "move base trolls with slow speed" in:
-    val world = World()
-    val system = MovementSystem()
+    newPos.x should be > initialPos.x
+    newPos.y shouldBe initialPos.y +- MOVEMENT_TOLERANCE
 
-    world.withTroll(Base, Position(TEST_MIDDLE_ROW, TEST_START_COL), TEST_SPEED_SLOW)
-    val initialX = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL)).get.position.x
+  it should "move troll projectiles leftward" in:
+    val pos                  = GridMapper.logicalToPhysical(GRID_ROW_MID, GRID_COL_MID).get
+    val (world1, projectile) = world.createEntity()
+    val testWorld = world1
+      .addComponent(projectile, PositionComponent(pos))
+      .addComponent(projectile, MovementComponent(SPEED_NORMAL))
+      .addComponent(projectile, ProjectileTypeComponent(ProjectileType.Troll))
 
-    system.update(world)
+    val initialPos = testWorld.getComponent[PositionComponent](projectile).get.position
 
-    val newPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL))
-    newPos.get.position.x should be < initialX
+    val (updatedWorld, _) = movementSystem.update(testWorld)
+    val newPos            = updatedWorld.getComponent[PositionComponent](projectile).get.position
 
-  it should "move base trolls with fast speed" in:
-    val world = World()
-    val testDeltaTime = TEST_DELTA_TIME
-    val system = MovementSystem(deltaTime = testDeltaTime)
+    newPos.x should be < initialPos.x
 
-    world.withTroll(Base, Position(TEST_MIDDLE_ROW, TEST_START_COL), TEST_SPEED_FAST)
-    val initialX = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL)).get.position.x
+  it should "not move entities with BlockedComponent" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withTroll(TrollType.Base).at(GRID_ROW_MID, GRID_COL_END)
+        .withElixir(ELIXIR_START)
 
-    system.update(world)
+    val troll        = testWorld.getEntitiesByType("troll").head
+    val blockedWorld = testWorld.addComponent(troll, BlockedComponent(troll))
+    val initialPos   = blockedWorld.getComponent[PositionComponent](troll).get.position
 
-    val newPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL))
-    val displacement = initialX - newPos.get.position.x
-    displacement should be > (TEST_SPEED_NORMAL * CELL_WIDTH * (testDeltaTime / 1000.0) * 0.9)
+    val (updatedWorld, _) = movementSystem.update(blockedWorld)
+    val newPos            = updatedWorld.getComponent[PositionComponent](troll).get.position
 
-  behavior of "MovementSystem - Warrior Troll Movement"
+    newPos.x shouldBe initialPos.x +- EPSILON
+    newPos.y shouldBe initialPos.y +- EPSILON
 
-  it should "move warrior trolls straight left" in:
-    val world = World()
-    val system = MovementSystem()
+  it should "reduce movement speed when entity is frozen" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withTroll(TrollType.Base).at(GRID_ROW_MID, GRID_COL_END)
+        .withElixir(ELIXIR_START)
 
-    world.withTroll(Warrior, Position(TEST_MIDDLE_ROW, TEST_START_COL), TEST_SPEED_FAST)
-    val initialX = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL)).get.position.x
+    val troll       = testWorld.getEntitiesByType("troll").head
+    val frozenWorld = testWorld.addComponent(troll, FreezedComponent(remainingTime = 1000L, speedModifier = 0.5))
 
-    system.update(world)
+    val initialPos        = frozenWorld.getComponent[PositionComponent](troll).get.position
+    val (updatedWorld, _) = movementSystem.update(frozenWorld)
+    val newPos            = updatedWorld.getComponent[PositionComponent](troll).get.position
 
-    val newPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL))
-    newPos.get.position.x should be < initialX
-    newPos.get.position.y shouldBe Position(TEST_MIDDLE_ROW, TEST_START_COL).y
+    val movement = initialPos.x - newPos.x
+    movement should be > 0.0
 
-  behavior of "MovementSystem - Assassin Troll Movement"
+    // Now test normal movement for comparison
+    val (normalWorld, _) = movementSystem.update(testWorld)
+    val normalNewPos     = normalWorld.getComponent[PositionComponent](troll).get.position
+    val normalMovement   = initialPos.x - normalNewPos.x
+
+    movement should be < normalMovement
+
+  it should "initialize zigzag state for assassin trolls" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withTroll(TrollType.Assassin).at(GRID_ROW_MID, GRID_COL_END)
+        .withElixir(ELIXIR_START)
+
+    val assassin = testWorld.getEntitiesByType("troll").head
+    testWorld.hasComponent[ZigZagStateComponent](assassin) shouldBe false
+
+    val (updatedWorld, _) = movementSystem.update(testWorld)
+    updatedWorld.hasComponent[ZigZagStateComponent](assassin) shouldBe true
+
+    val zigzagState = updatedWorld.getComponent[ZigZagStateComponent](assassin).get
+    zigzagState.currentPhase shouldBe ZigZagPhase.OnSpawnRow
 
   it should "move assassin trolls in zigzag pattern" in:
-    val world = World()
-    val system = MovementSystem()
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withTroll(TrollType.Assassin).at(GRID_ROW_MID, GRID_COL_END)
+        .withElixir(ELIXIR_START)
+
+    val assassin   = testWorld.getEntitiesByType("troll").head
+    val initialPos = testWorld.getComponent[PositionComponent](assassin).get.position
+
+    // Initialize zigzag state
+    val (world1, _) = movementSystem.update(testWorld)
+
+    // Move multiple times to see zigzag pattern
+    var currentWorld = world1
+    (1 to UPDATES_COUNT_MEDIUM).foreach: _ =>
+      val (nextWorld, _) = movementSystem.update(currentWorld)
+      currentWorld = nextWorld
+
+    val finalPos = currentWorld.getComponent[PositionComponent](assassin).get.position
+    finalPos.x should be < initialPos.x
+
+  it should "remove projectiles that go out of bounds to the right" in:
+    val pos                  = GridMapper.logicalToPhysical(GRID_ROW_MID, GRID_COLS_LOGICAL - 1).get
+    val (world1, projectile) = world.createEntity()
+    val testWorld = world1
+      .addComponent(projectile, PositionComponent(pos))
+      .addComponent(projectile, MovementComponent(SPEED_VERY_FAST))
+      .addComponent(projectile, ProjectileTypeComponent(ProjectileType.Fire))
+
+    testWorld.getAllEntities should contain(projectile)
+
+    var currentWorld = testWorld
+    (1 to UPDATES_PER_SECOND).foreach: _ =>
+      val (nextWorld, _) = movementSystem.update(currentWorld)
+      currentWorld = nextWorld
+
+    currentWorld.getAllEntities should not contain projectile
+
+  it should "remove troll projectiles that go out of bounds to the left" in:
+    val pos                  = GridMapper.logicalToPhysical(GRID_ROW_MID, GRID_COL_START).get
+    val (world1, projectile) = world.createEntity()
+    val testWorld = world1
+      .addComponent(projectile, PositionComponent(pos))
+      .addComponent(projectile, MovementComponent(SPEED_VERY_FAST))
+      .addComponent(projectile, ProjectileTypeComponent(ProjectileType.Troll))
+
+    testWorld.getAllEntities should contain(projectile)
+
+    var currentWorld = testWorld
+    (1 to UPDATES_PER_SECOND).foreach: _ =>
+      val (nextWorld, _) = movementSystem.update(currentWorld)
+      currentWorld = nextWorld
 
-    world.withTroll(Assassin, Position(TEST_MIDDLE_ROW, TEST_START_COL), TEST_SPEED_NORMAL)
-    val initialPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL)).get.position
-
-    system.update(world)
-
-    val newPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_START_COL)).get.position
-    newPos.x should be < initialPos.x
-    // Y position should change due to zigzag (sin wave)
-    newPos.y should not equal initialPos.y
-
-  it should "handle assassin zigzag at top boundary" in:
-    val world = World()
-    val system = MovementSystem()
-
-    world.withTroll(Assassin, Position(TEST_TOP_BOUNDARY, TEST_MIDDLE_COL), TEST_SPEED_NORMAL)
-
-    system.update(world)
-
-    val newPos = world.getTrollAt(Position(TEST_TOP_BOUNDARY, TEST_MIDDLE_COL))
-    newPos.get.position.y should be >= GRID_OFFSET_Y
-
-  it should "handle assassin zigzag at bottom boundary" in:
-    val world = World()
-    val system = MovementSystem()
-
-    world.withTroll(Assassin, Position(TEST_BOTTOM_BOUNDARY, TEST_MIDDLE_COL), TEST_SPEED_NORMAL)
-
-    system.update(world)
-
-    val newPos = world.getTrollAt(Position(TEST_BOTTOM_BOUNDARY, TEST_MIDDLE_COL))
-    newPos.get.position.y should be <= (GRID_OFFSET_Y + GRID_ROWS * CELL_HEIGHT - CELL_HEIGHT / 2)
-
-  behavior of "MovementSystem - Thrower Troll Movement"
-
-  it should "move thrower trolls until stop column" in:
-      val world = World()
-      val system = MovementSystem()
-
-      val stopX = GRID_OFFSET_X + CELL_WIDTH * TEST_THROWER_STOP_COL
-      val startX = stopX + CELL_WIDTH * 2
-      val y = Position(TEST_MIDDLE_ROW, TEST_THROWER_STOP_COL).y
-
-      world.withTroll(Thrower, Position(startX, y), TEST_SPEED_NORMAL)
-      val initialX = world.getTrollAt(Position(startX, y)).get.position.x
-
-      system.update(world)
-
-      val newPos = world.getTrollAt(Position(startX, y))
-      newPos.get.position.x should be < initialX
-
-  it should "stop thrower trolls at stop column" in:
-    val world = World()
-    val system = MovementSystem()
-    val stopX = GRID_OFFSET_X + CELL_WIDTH * TEST_THROWER_STOP_COL
-
-    world.withTroll(Thrower, Position(TEST_MIDDLE_ROW, TEST_THROWER_STOP_COL), TEST_SPEED_NORMAL)
-    val troll = world.getEntitiesByType("troll").head
-    world.addComponent(troll, PositionComponent(Position(stopX - 1, Position(TEST_MIDDLE_ROW, TEST_THROWER_STOP_COL).y)))
-
-    system.update(world)
-
-    val newPos = world.getComponent[PositionComponent](troll)
-    newPos.get.position.x should be >= stopX - CELL_WIDTH
-
-  behavior of "MovementSystem - Projectile Movement"
-
-  it should "move troll projectiles left" in:
-    val world = World()
-    val system = MovementSystem()
-
-    val startX = GRID_OFFSET_X + CELL_WIDTH * 3
-    val y = Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL).y
-    world.withProjectile(ProjectileType.Troll, Position(startX, y), TEST_SPEED_FAST)
-    val initialX = world.getProjectileAt.get.position.x
-
-    system.update(world)
-
-    val newPos = world.getProjectileAt
-    newPos shouldBe defined
-    newPos.get.position.x should be < initialX
-
-  it should "move wizard projectiles right" in:
-    val world = World()
-    val system = MovementSystem()
-
-    world.withProjectile(ProjectileType.Fire, Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL), TEST_SPEED_NORMAL)
-    val initialX = world.getProjectileAt.get.position.x
-
-    system.update(world)
-
-    val newPos = world.getProjectileAt
-    newPos.get.position.x should be > initialX
-
-  it should "move ice projectiles right" in:
-    val world = World()
-    val system = MovementSystem()
-
-    world.withProjectile(ProjectileType.Ice, Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL), TEST_SPEED_FAST)
-    val initialX = world.getProjectileAt.get.position.x
-
-    system.update(world)
-
-    val newPos = world.getProjectileAt
-    newPos.get.position.x should be > initialX
-
-  it should "move wind projectiles right" in:
-    val world = World()
-    val system = MovementSystem()
-
-    world.withProjectile(ProjectileType.Wind, Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL), TEST_SPEED_NORMAL)
-    val initialX = world.getProjectileAt.get.position.x
-
-    system.update(world)
-
-    val newPos = world.getProjectileAt
-    newPos.get.position.x should be > initialX
-
-  behavior of "MovementSystem - Boundary Handling"
-
-  it should "remove troll projectiles at left boundary" in:
-    val world = World()
-    val system = MovementSystem()
-
-    val projectile = world.createEntity()
-    world.addComponent(projectile, ProjectileTypeComponent(ProjectileType.Troll))
-    world.addComponent(projectile, PositionComponent(Position(GRID_OFFSET_X - 10, GRID_OFFSET_Y + CELL_HEIGHT)))
-    world.addComponent(projectile, MovementComponent(TEST_SPEED_NORMAL))
-
-    system.update(world)
-
-    world.getEntitiesByType("projectile") shouldBe empty
-
-  it should "remove wizard projectiles at right boundary" in:
-    val world = World()
-    val system = MovementSystem()
-
-    val projectile = world.createEntity()
-    world.addComponent(projectile, ProjectileTypeComponent(ProjectileType.Fire))
-    world.addComponent(projectile, PositionComponent(Position(GRID_OFFSET_X + GRID_COLS * CELL_WIDTH + 10, GRID_OFFSET_Y + CELL_HEIGHT)))
-    world.addComponent(projectile, MovementComponent(TEST_SPEED_NORMAL))
-
-    system.update(world)
-
-    world.getEntitiesByType("projectile") shouldBe empty
-
-  it should "constrain projectiles vertically within grid" in:
-    val world = World()
-    val system = MovementSystem()
-
-    world.withProjectile(ProjectileType.Fire, Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL), TEST_SPEED_NORMAL)
-    val projectile = world.getEntitiesByType("projectile").head
-    world.addComponent(projectile, PositionComponent(Position(GRID_OFFSET_X + CELL_WIDTH * 3, GRID_OFFSET_Y - 10)))
-
-    system.update(world)
-
-    val newPos = world.getComponent[PositionComponent](projectile)
-    newPos.get.position.y should be >= GRID_OFFSET_Y
-
-  behavior of "MovementSystem - Special Cases"
-
-  it should "not move entities with zero speed" in:
-    val world = World()
-    val system = MovementSystem()
-
-    world.withTroll(Base, Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL), TEST_SPEED_ZERO)
-    val initialPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL)).get.position
-
-    system.update(world)
-
-    val newPos = world.getTrollAt(Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL))
-    newPos.get.position shouldBe initialPos
-
-  it should "not move entities without movement component" in:
-    val world = World()
-    val system = MovementSystem()
-
-    val entity = world.createEntity()
-    world.addComponent(entity, PositionComponent(Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL)))
-    val initialPos = Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL)
-
-    system.update(world)
-
-    val newPos = world.getFirstEntityPosition
-    newPos.get.position shouldBe initialPos
-
-  it should "not move entities without position component" in:
-    val world = World()
-    val system = MovementSystem()
-
-    val entity = world.createEntity()
-    world.addComponent(entity, MovementComponent(TEST_SPEED_NORMAL))
-
-    system.update(world)
-
-    world.getComponent[PositionComponent](entity) shouldBe None
-
-  behavior of "MovementSystem - Multiple Entities"
-
-  it should "move multiple trolls simultaneously" in:
-    val world = World()
-    val system = MovementSystem()
-
-    world.withTroll(Base, Position(0, TEST_START_COL), TEST_SPEED_NORMAL)
-    world.withTroll(Warrior, Position(1, TEST_START_COL), TEST_SPEED_FAST)
-    world.withTroll(Assassin, Position(2, TEST_START_COL), TEST_SPEED_SLOW)
-
-    system.update(world)
-
-    val trolls = world.getEntitiesByType("troll")
-    trolls.size shouldBe 3
-    trolls.foreach: troll =>
-      val pos = world.getComponent[PositionComponent](troll)
-      pos shouldBe defined
-
-  it should "move mixed entity types correctly" in:
-    val world = World()
-    val system = MovementSystem()
-
-    world.withTroll(Base, Position(TEST_MIDDLE_ROW, TEST_START_COL), TEST_SPEED_NORMAL)
-    world.withProjectile(ProjectileType.Fire, Position(TEST_MIDDLE_ROW, TEST_MIDDLE_COL), TEST_SPEED_FAST)
-
-    system.update(world)
-
-    val trolls = world.getEntitiesByType("troll")
-    val projectiles = world.getEntitiesByType("projectile")
-
-    trolls.size shouldBe 1
-    projectiles.size shouldBe 1
-
-  behavior of "MovementSystem - System State"
-
-  it should "return itself after update" in:
-    val world = World()
-    val system = MovementSystem()
-
-    val returnedSystem = system.update(world)
-
-    returnedSystem shouldBe a[MovementSystem]
-    returnedSystem shouldBe system
+    currentWorld.getAllEntities should not contain projectile
+
+  it should "not move projectiles beyond grid bounds vertically" in:
+    val pos                  = Position(POS_X_MID, GRID_OFFSET_Y + GRID_ROWS * CELL_HEIGHT)
+    val (world1, projectile) = world.createEntity()
+    val testWorld = world1
+      .addComponent(projectile, PositionComponent(pos))
+      .addComponent(projectile, MovementComponent(SPEED_NORMAL))
+      .addComponent(projectile, ProjectileTypeComponent(ProjectileType.Fire))
+
+    val (updatedWorld, _) = movementSystem.update(testWorld)
+    val newPos            = updatedWorld.getComponent[PositionComponent](projectile).get.position
+
+    newPos.y should be <= (GRID_OFFSET_Y + GRID_ROWS * CELL_HEIGHT - CELL_HEIGHT / 2)
+
+  it should "handle multiple trolls moving simultaneously" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withTroll(TrollType.Base).at(GRID_ROW_START, GRID_COL_END)
+        .withTroll(TrollType.Warrior).at(GRID_ROW_MID, GRID_COL_END)
+        .withTroll(TrollType.Assassin).at(GRID_ROW_END, GRID_COL_END)
+        .withElixir(ELIXIR_START)
+
+    val (worldAfterInit, _) = movementSystem.update(testWorld)
+
+    val trolls = worldAfterInit.getEntitiesByType("troll").toList
+    val initialPositions = trolls.map: troll =>
+      worldAfterInit.getComponent[PositionComponent](troll).get.position
+
+    val (updatedWorld, _) = movementSystem.update(worldAfterInit)
+
+    trolls.zip(initialPositions).foreach: (troll, initialPos) =>
+      val newPos = updatedWorld.getComponent[PositionComponent](troll).get.position
+      newPos.x should be < initialPos.x
+
+  it should "handle entities without movement component gracefully" in:
+    val pos              = GridMapper.logicalToPhysical(GRID_ROW_MID, GRID_COL_MID).get
+    val (world1, entity) = world.createEntity()
+    val testWorld        = world1.addComponent(entity, PositionComponent(pos))
+
+    val initialPos = testWorld.getComponent[PositionComponent](entity).get.position
+
+    val (updatedWorld, _) = movementSystem.update(testWorld)
+    val newPos            = updatedWorld.getComponent[PositionComponent](entity).get.position
+
+    newPos.x shouldBe initialPos.x +- EPSILON
+    newPos.y shouldBe initialPos.y +- EPSILON
+
+  it should "transition zigzag phase after duration" in:
+    val movementSystemWithShortDuration = MovementSystem(
+      deltaTime = DELTA_TIME_MS,
+      zigZagPhaseDuration = 100L
+    )
+
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withTroll(TrollType.Assassin).at(GRID_ROW_MID, GRID_COL_END)
+        .withElixir(ELIXIR_START)
+
+    val assassin = testWorld.getEntitiesByType("troll").head
+
+    // Initialize zigzag
+    val (world1, _)  = movementSystemWithShortDuration.update(testWorld)
+    val initialPhase = world1.getComponent[ZigZagStateComponent](assassin).get.currentPhase
+
+    // Wait and update to trigger phase change
+    Thread.sleep(150)
+
+    var currentWorld = world1
+    (1 to UPDATES_COUNT_MEDIUM).foreach: _ =>
+      val (nextWorld, _) = movementSystemWithShortDuration.update(currentWorld)
+      currentWorld = nextWorld
+
+    val finalPhase = currentWorld.getComponent[ZigZagStateComponent](assassin).get.currentPhase
+    finalPhase should not equal initialPhase
+
+  it should "calculate alternate row correctly for zigzag at grid boundaries" in:
+    val (testWorldTop, _) = scenario: builder =>
+      builder
+        .withTroll(TrollType.Assassin).at(GRID_ROW_START, GRID_COL_END)
+        .withElixir(ELIXIR_START)
+
+    val assassinTop    = testWorldTop.getEntitiesByType("troll").head
+    val (worldTop1, _) = movementSystem.update(testWorldTop)
+    val zigzagStateTop = worldTop1.getComponent[ZigZagStateComponent](assassinTop).get
+
+    zigzagStateTop.alternateRow shouldBe 1
+
+    val (testWorldBottom, _) = scenario: builder =>
+      builder
+        .withTroll(TrollType.Assassin).at(GRID_ROW_NEAR_END, GRID_COL_END)
+        .withElixir(ELIXIR_START)
+
+    val assassinBottom    = testWorldBottom.getEntitiesByType("troll").head
+    val (worldBottom1, _) = movementSystem.update(testWorldBottom)
+    val zigzagStateBottom = worldBottom1.getComponent[ZigZagStateComponent](assassinBottom).get
+
+    zigzagStateBottom.alternateRow shouldBe (GRID_ROW_NEAR_END - 1)
+
+  it should "keep warrior trolls moving in straight line" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withTroll(TrollType.Warrior).at(GRID_ROW_MID, GRID_COL_END)
+        .withElixir(ELIXIR_START)
+
+    val warrior    = testWorld.getEntitiesByType("troll").head
+    val initialPos = testWorld.getComponent[PositionComponent](warrior).get.position
+
+    var currentWorld = testWorld
+    (1 to UPDATES_COUNT_MEDIUM).foreach: _ =>
+      val (nextWorld, _) = movementSystem.update(currentWorld)
+      currentWorld = nextWorld
+
+    val finalPos = currentWorld.getComponent[PositionComponent](warrior).get.position
+
+    finalPos.x should be < initialPos.x
+    finalPos.y shouldBe initialPos.y +- MOVEMENT_TOLERANCE
+    currentWorld.hasComponent[ZigZagStateComponent](warrior) shouldBe false
