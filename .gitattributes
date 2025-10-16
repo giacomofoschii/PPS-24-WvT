@@ -1,0 +1,14 @@
+# .gitattributes
+# Forza LF (Unix-style) per tutti i file di testo
+* text=auto eol=lf
+
+# File Scala devono sempre usare LF
+*.scala text eol=lf
+*.sbt text eol=lf
+*.conf text eol=lf
+*.md text eol=lf
+
+# File binari
+*.png binary
+*.jpg binary
+*.jar binary
