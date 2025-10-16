@@ -100,11 +100,11 @@ class InputSystemTest extends AnyFlatSpec with Matchers:
       GridAreaChecker(system)
 
   case class ClickHandler(
-                           system: InputSystem,
-                           x: Double = 0,
-                           y: Double = 0,
-                           result: Option[ClickResult] = None
-                         ):
+      system: InputSystem,
+      x: Double = 0,
+      y: Double = 0,
+      result: Option[ClickResult] = None
+  ):
 
     def at(x: Double, y: Double): ClickHandler =
       val res = system.handleMouseClick(x, y)
@@ -173,18 +173,20 @@ class InputSystemTest extends AnyFlatSpec with Matchers:
       this
 
   case class MultiClickHandler(
-                                system: InputSystem,
-                                clicks: List[(Double, Double)]
-                              ):
+      system: InputSystem,
+      clicks: List[(Double, Double)]
+  ):
 
     def atGridStart: MultiClickHandler =
       copy(clicks = clicks :+ (ViewConstants.GRID_OFFSET_X, ViewConstants.GRID_OFFSET_Y))
 
     def atGridStartPlusCell(colOffset: Int, rowOffset: Int): MultiClickHandler =
-      copy(clicks = clicks :+ (
-        ViewConstants.GRID_OFFSET_X + colOffset * ViewConstants.CELL_WIDTH,
-        ViewConstants.GRID_OFFSET_Y + rowOffset * ViewConstants.CELL_HEIGHT
-      ))
+      copy(clicks =
+        clicks :+ (
+          ViewConstants.GRID_OFFSET_X + colOffset * ViewConstants.CELL_WIDTH,
+          ViewConstants.GRID_OFFSET_Y + rowOffset * ViewConstants.CELL_HEIGHT
+        )
+      )
 
     def at(x: Double, y: Double): MultiClickHandler =
       copy(clicks = clicks :+ (x, y))
@@ -202,10 +204,10 @@ class InputSystemTest extends AnyFlatSpec with Matchers:
       this
 
   case class GridAreaChecker(
-                              system: InputSystem,
-                              x: Double = 0,
-                              y: Double = 0
-                            ):
+      system: InputSystem,
+      x: Double = 0,
+      y: Double = 0
+  ):
 
     def at(x: Double, y: Double): GridAreaChecker =
       copy(x = x, y = y)

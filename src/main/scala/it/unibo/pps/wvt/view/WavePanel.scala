@@ -6,10 +6,10 @@ import scalafx.scene.paint.Color
 import scalafx.scene.text.{Font, FontWeight, Text}
 
 case class WaveState(
-                      lastWaveNumber: Int = -1,
-                      waveText: Option[Text] = None,
-                      wavePanel: Option[VBox] = None
-                    )
+    lastWaveNumber: Int = -1,
+    waveText: Option[Text] = None,
+    wavePanel: Option[VBox] = None
+)
 
 object WavePanel:
   private val stateRef = new java.util.concurrent.atomic.AtomicReference[WaveState](WaveState())
@@ -19,9 +19,9 @@ object WavePanel:
     stateRef.set(newState)
 
     val waveDisplay = createWaveDisplay()
-    val waveLabel = createWaveLabel()
-    val hbox = createWaveContainer(waveLabel, waveDisplay)
-    val panel = createStyledPanel(hbox)
+    val waveLabel   = createWaveLabel()
+    val hbox        = createWaveContainer(waveLabel, waveDisplay)
+    val panel       = createStyledPanel(hbox)
 
     stateRef.updateAndGet(_.copy(waveText = Some(waveDisplay), wavePanel = Some(panel)))
     panel
@@ -31,7 +31,7 @@ object WavePanel:
 
   private def createWaveDisplay(): Text =
     val currentWave = getCurrentWaveNumber
-    val waveText = createStyledText(s"$currentWave", 27, Color.web("#DAA520"))
+    val waveText    = createStyledText(s"$currentWave", 27, Color.web("#DAA520"))
     waveText.margin = Insets(0, 0, 0, 5)
     waveText
 

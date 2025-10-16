@@ -17,17 +17,18 @@ object InfoMenu:
 
   def apply(): Parent =
     lazy val backgroundImage = createBackgroundView("/main_menu.jpg", MENU_SCALE_FACTOR).getOrElse(new ImageView())
-    val contentArea = createContentArea()
-    lazy val rulesView = createRulesView()
-    lazy val wizardsView = createWizardsView()
-    lazy val trollsView = createTrollsView()
+    val contentArea          = createContentArea()
+    lazy val rulesView       = createRulesView()
+    lazy val wizardsView     = createWizardsView()
+    lazy val trollsView      = createTrollsView()
 
     contentArea.children = Seq(rulesView)
 
-    val (rulesButton, wizardsButton, trollsButton) = createNavigationButtons(contentArea, rulesView, wizardsView, trollsView)
-    val topBar = createTopBar(rulesButton, wizardsButton, trollsButton)
+    val (rulesButton, wizardsButton, trollsButton) =
+      createNavigationButtons(contentArea, rulesView, wizardsView, trollsView)
+    val topBar    = createTopBar(rulesButton, wizardsButton, trollsButton)
     val bottomBar = createBottomBar()
-    val layout = createLayout(topBar, contentArea, bottomBar)
+    val layout    = createLayout(topBar, contentArea, bottomBar)
 
     new StackPane:
       children = Seq(backgroundImage, layout)
@@ -43,19 +44,24 @@ object InfoMenu:
       top = topBar
       center = new VBox:
         alignment = Pos.TopCenter
-        padding = Insets(INFO_CENTER_PADDING_VERTICAL, INFO_CENTER_PADDING_HORIZONTAL, INFO_CENTER_PADDING_VERTICAL, INFO_CENTER_PADDING_HORIZONTAL)
+        padding = Insets(
+          INFO_CENTER_PADDING_VERTICAL,
+          INFO_CENTER_PADDING_HORIZONTAL,
+          INFO_CENTER_PADDING_VERTICAL,
+          INFO_CENTER_PADDING_HORIZONTAL
+        )
         children = Seq(contentArea)
       bottom = bottomBar
 
   private def createNavigationButtons(
-                                       contentArea: StackPane,
-                                       rulesView: VBox,
-                                       wizardsView: GridPane,
-                                       trollsView: GridPane
-                                     ): (Button, Button, Button) =
-    val rulesButton = createStyledButton(navButtonPreset("Rules")){}
-    val wizardsButton = createStyledButton(navButtonPreset("Wizards")){}
-    val trollsButton = createStyledButton(navButtonPreset("Trolls")){}
+      contentArea: StackPane,
+      rulesView: VBox,
+      wizardsView: GridPane,
+      trollsView: GridPane
+  ): (Button, Button, Button) =
+    val rulesButton   = createStyledButton(navButtonPreset("Rules")) {}
+    val wizardsButton = createStyledButton(navButtonPreset("Wizards")) {}
+    val trollsButton  = createStyledButton(navButtonPreset("Trolls")) {}
 
     val updateStyles: String => Unit = activeButton =>
       rulesButton.opacity = buttonOpacity(activeButton, "rules")
@@ -79,7 +85,7 @@ object InfoMenu:
 
   private def buttonOpacity(activeButton: String, buttonName: String): Double =
     activeButton == buttonName match
-      case true => INFO_BUTTON_ACTIVE_OPACITY
+      case true  => INFO_BUTTON_ACTIVE_OPACITY
       case false => INFO_BUTTON_INACTIVE_OPACITY
 
   private def createTopBar(rulesButton: Button, wizardsButton: Button, trollsButton: Button): HBox =
@@ -128,7 +134,10 @@ object InfoMenu:
           fill = Color.LightGray
       )
 
-  private def createGrid(cards: Seq[(String, String, String, String, Seq[(String, String)])], cols: Int = INFO_CARD_COLUMNS): GridPane =
+  private def createGrid(
+      cards: Seq[(String, String, String, String, Seq[(String, String)])],
+      cols: Int = INFO_CARD_COLUMNS
+  ): GridPane =
     val grid = new GridPane:
       hgap = INFO_CARD_GRID_GAP
       vgap = INFO_CARD_GRID_GAP
@@ -140,9 +149,15 @@ object InfoMenu:
 
     grid
 
-  private def createCard(name: String, stat: String, ability: String, imagePath: String, icons: Seq[(String, String)]): VBox =
-    val imageView = loadCardImage(imagePath)
-    val statBox = createStatBox(icons)
+  private def createCard(
+      name: String,
+      stat: String,
+      ability: String,
+      imagePath: String,
+      icons: Seq[(String, String)]
+  ): VBox =
+    val imageView  = loadCardImage(imagePath)
+    val statBox    = createStatBox(icons)
     val abilityBox = createAbilityBox(ability)
 
     new VBox:
@@ -241,29 +256,101 @@ object InfoMenu:
 
   private def createWizardsView(): GridPane =
     val cards = Seq(
-      ("Generator", "", "Produces elixir", "/wizard/generator.png",
-        Seq(("♦", GENERATOR_WIZARD_COST.toString), ("♥", GENERATOR_WIZARD_HEALTH.toString))),
-      ("Wind", "", "Base attack", "/wizard/wind.png",
-        Seq(("♦", WIND_WIZARD_COST.toString), ("♥", WIND_WIZARD_HEALTH.toString), ("✖", WIND_WIZARD_ATTACK_DAMAGE.toString), ("→", WIND_WIZARD_RANGE.toString))),
-      ("Fire", "", "Burns enemies", "/wizard/fire.png",
-        Seq(("♦", FIRE_WIZARD_COST.toString), ("♥", FIRE_WIZARD_HEALTH.toString), ("✖", FIRE_WIZARD_ATTACK_DAMAGE.toString), ("→", FIRE_WIZARD_RANGE.toString))),
-      ("Ice", "", "Slows enemies", "/wizard/ice.png",
-        Seq(("♦", ICE_WIZARD_COST.toString), ("♥", ICE_WIZARD_HEALTH.toString), ("✖", ICE_WIZARD_ATTACK_DAMAGE.toString), ("→", ICE_WIZARD_RANGE.toString))),
-      ("Barrier", "", "Blocks damage", "/wizard/barrier.png",
-        Seq(("♦", BARRIER_WIZARD_COST.toString), ("♥", BARRIER_WIZARD_HEALTH.toString)))
+      (
+        "Generator",
+        "",
+        "Produces elixir",
+        "/wizard/generator.png",
+        Seq(("♦", GENERATOR_WIZARD_COST.toString), ("♥", GENERATOR_WIZARD_HEALTH.toString))
+      ),
+      (
+        "Wind",
+        "",
+        "Base attack",
+        "/wizard/wind.png",
+        Seq(
+          ("♦", WIND_WIZARD_COST.toString),
+          ("♥", WIND_WIZARD_HEALTH.toString),
+          ("✖", WIND_WIZARD_ATTACK_DAMAGE.toString),
+          ("→", WIND_WIZARD_RANGE.toString)
+        )
+      ),
+      (
+        "Fire",
+        "",
+        "Burns enemies",
+        "/wizard/fire.png",
+        Seq(
+          ("♦", FIRE_WIZARD_COST.toString),
+          ("♥", FIRE_WIZARD_HEALTH.toString),
+          ("✖", FIRE_WIZARD_ATTACK_DAMAGE.toString),
+          ("→", FIRE_WIZARD_RANGE.toString)
+        )
+      ),
+      (
+        "Ice",
+        "",
+        "Slows enemies",
+        "/wizard/ice.png",
+        Seq(
+          ("♦", ICE_WIZARD_COST.toString),
+          ("♥", ICE_WIZARD_HEALTH.toString),
+          ("✖", ICE_WIZARD_ATTACK_DAMAGE.toString),
+          ("→", ICE_WIZARD_RANGE.toString)
+        )
+      ),
+      (
+        "Barrier",
+        "",
+        "Blocks damage",
+        "/wizard/barrier.png",
+        Seq(("♦", BARRIER_WIZARD_COST.toString), ("♥", BARRIER_WIZARD_HEALTH.toString))
+      )
     )
     createGrid(cards, cols = INFO_CARD_COLUMNS)
 
   private def createTrollsView(): GridPane =
     val cards = Seq(
-      ("Base", "", "Standard troll", "/troll/BaseTroll.png",
-        Seq(("♥", BASE_TROLL_HEALTH.toString), ("✖", BASE_TROLL_DAMAGE.toString), ("→", BASE_TROLL_RANGE.toString))),
-      ("Warrior", "", "Slow but tough", "/troll/WarriorTroll.png",
-        Seq(("♥", WARRIOR_TROLL_HEALTH.toString), ("✖", WARRIOR_TROLL_DAMAGE.toString), ("→", WARRIOR_TROLL_RANGE.toString))),
-      ("Assassin", "", "Fast killer", "/troll/Assassin.png",
-        Seq(("♥", ASSASSIN_TROLL_HEALTH.toString), ("✖", ASSASSIN_TROLL_DAMAGE.toString), ("→", ASSASSIN_TROLL_RANGE.toString))),
-      ("Thrower", "", "Ranged attacker", "/troll/ThrowerTroll.png",
-        Seq(("♥", THROWER_TROLL_HEALTH.toString), ("✖", THROWER_TROLL_DAMAGE.toString), ("→", THROWER_TROLL_RANGE.toString)))
+      (
+        "Base",
+        "",
+        "Standard troll",
+        "/troll/BaseTroll.png",
+        Seq(("♥", BASE_TROLL_HEALTH.toString), ("✖", BASE_TROLL_DAMAGE.toString), ("→", BASE_TROLL_RANGE.toString))
+      ),
+      (
+        "Warrior",
+        "",
+        "Slow but tough",
+        "/troll/WarriorTroll.png",
+        Seq(
+          ("♥", WARRIOR_TROLL_HEALTH.toString),
+          ("✖", WARRIOR_TROLL_DAMAGE.toString),
+          ("→", WARRIOR_TROLL_RANGE.toString)
+        )
+      ),
+      (
+        "Assassin",
+        "",
+        "Fast killer",
+        "/troll/Assassin.png",
+        Seq(
+          ("♥", ASSASSIN_TROLL_HEALTH.toString),
+          ("✖", ASSASSIN_TROLL_DAMAGE.toString),
+          ("→", ASSASSIN_TROLL_RANGE.toString)
+        )
+      ),
+      (
+        "Thrower",
+        "",
+        "Ranged attacker",
+        "/troll/ThrowerTroll.png",
+        Seq(
+          ("♥", THROWER_TROLL_HEALTH.toString),
+          ("✖", THROWER_TROLL_DAMAGE.toString),
+          ("→", THROWER_TROLL_RANGE.toString)
+        )
+      )
     )
     createGrid(cards, cols = INFO_CARD_COLUMNS)
 

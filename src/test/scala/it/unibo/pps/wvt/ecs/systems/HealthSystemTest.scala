@@ -1,6 +1,6 @@
 package it.unibo.pps.wvt.ecs.systems
 
-import it.unibo.pps.wvt.ecs.core.{World, EntityId}
+import it.unibo.pps.wvt.ecs.core.{EntityId, World}
 import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
 import it.unibo.pps.wvt.utilities.TestConstants.*
@@ -184,7 +184,9 @@ class HealthSystemTest extends AnyFlatSpec with Matchers:
       .entity(1).shouldBeDead
       .entity(2).shouldBeDead
       .entity(3).shouldBeDead
-      .systemShouldHaveElixir(INITIAL_ELIXIR + BASE_TROLL_REWARD + WARRIOR_TROLL_REWARD + ASSASSIN_TROLL_REWARD + THROWER_TROLL_REWARD)
+      .systemShouldHaveElixir(
+        INITIAL_ELIXIR + BASE_TROLL_REWARD + WARRIOR_TROLL_REWARD + ASSASSIN_TROLL_REWARD + THROWER_TROLL_REWARD
+      )
 
   it should "handle cascading removal of blocked components" in:
     aHealthSystem
@@ -246,11 +248,11 @@ class HealthSystemTest extends AnyFlatSpec with Matchers:
 
   // === DSL Definitions ===
   case class HealthSystemDSL(
-                              world: World,
-                              elixirSystem: ElixirSystem,
-                              healthSystem: HealthSystem,
-                              entities: List[EntityId]
-                            ):
+      world: World,
+      elixirSystem: ElixirSystem,
+      healthSystem: HealthSystem,
+      entities: List[EntityId]
+  ):
 
     // === Entity Creation ===
     def withEntity: EntityBuilder =
@@ -259,12 +261,12 @@ class HealthSystemTest extends AnyFlatSpec with Matchers:
 
     def withTroll(trollType: TrollType): EntityBuilder =
       val (updatedWorld, entity) = world.createEntity()
-      val worldWithComponent = updatedWorld.addComponent(entity, TrollTypeComponent(trollType))
+      val worldWithComponent     = updatedWorld.addComponent(entity, TrollTypeComponent(trollType))
       EntityBuilder(this.copy(world = worldWithComponent, entities = entities :+ entity), entity)
 
     def withWizard(wizardType: WizardType): EntityBuilder =
       val (updatedWorld, entity) = world.createEntity()
-      val worldWithComponent = updatedWorld.addComponent(entity, WizardTypeComponent(wizardType))
+      val worldWithComponent     = updatedWorld.addComponent(entity, WizardTypeComponent(wizardType))
       EntityBuilder(this.copy(world = worldWithComponent, entities = entities :+ entity), entity)
 
     // === Actions ===

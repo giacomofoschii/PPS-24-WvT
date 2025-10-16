@@ -9,7 +9,6 @@ import it.unibo.pps.wvt.utilities.TestConstants.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-
 class ElixirSystemTest extends AnyFlatSpec with Matchers:
 
   behavior of "ElixirSystem"
@@ -220,14 +219,14 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       ElixirSystemDSL(ElixirSystem(totalElixir = amount))
 
   case class ElixirSystemDSL(
-                              system: ElixirSystem,
-                              world: Option[World] = None,
-                              initialElixir: Option[Int] = None,
-                              previousElixir: Option[Int] = None,
-                              spendResult: Option[(ElixirSystem, Boolean)] = None,
-                              savedLastPeriodicGeneration: Option[Long] = None,
-                              savedActivationTime: Option[Long] = None
-                            ):
+      system: ElixirSystem,
+      world: Option[World] = None,
+      initialElixir: Option[Int] = None,
+      previousElixir: Option[Int] = None,
+      spendResult: Option[(ElixirSystem, Boolean)] = None,
+      savedLastPeriodicGeneration: Option[Long] = None,
+      savedActivationTime: Option[Long] = None
+  ):
 
     // === Setup methods ===
     def withWorld: ElixirSystemDSL = copy(world = Some(World()))
@@ -277,12 +276,16 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       world.map(w => copy(system = system.update(w)._2.asInstanceOf[ElixirSystem])).getOrElse(this)
 
     def whenUpdatedImmediately: ElixirSystemDSL =
-      copy(system = world.map(w => system.update(w)._2.asInstanceOf[ElixirSystem]).getOrElse(system),
-        previousElixir = Some(system.getCurrentElixir))
+      copy(
+        system = world.map(w => system.update(w)._2.asInstanceOf[ElixirSystem]).getOrElse(system),
+        previousElixir = Some(system.getCurrentElixir)
+      )
 
     def whenUpdatedAgainImmediately: ElixirSystemDSL =
-      copy(system = world.map(w => system.update(w)._2.asInstanceOf[ElixirSystem]).getOrElse(system),
-        previousElixir = Some(system.getCurrentElixir))
+      copy(
+        system = world.map(w => system.update(w)._2.asInstanceOf[ElixirSystem]).getOrElse(system),
+        previousElixir = Some(system.getCurrentElixir)
+      )
 
     def whenActivated: ElixirSystemDSL =
       copy(system = system.activateGeneration())

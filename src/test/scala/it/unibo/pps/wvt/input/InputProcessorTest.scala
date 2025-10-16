@@ -79,8 +79,14 @@ class InputProcessorTest extends AnyFlatSpec with Matchers:
       .at(0, 0).shouldBeOutsideGrid
       .at(ViewConstants.GRID_OFFSET_X - 1, ViewConstants.GRID_OFFSET_Y).shouldBeOutsideGrid
       .at(ViewConstants.GRID_OFFSET_X, ViewConstants.GRID_OFFSET_Y - 1).shouldBeOutsideGrid
-      .at(ViewConstants.GRID_OFFSET_X + ViewConstants.GRID_COLS * ViewConstants.CELL_WIDTH, ViewConstants.GRID_OFFSET_Y).shouldBeOutsideGrid
-      .at(ViewConstants.GRID_OFFSET_X, ViewConstants.GRID_OFFSET_Y + ViewConstants.GRID_ROWS * ViewConstants.CELL_HEIGHT).shouldBeOutsideGrid
+      .at(
+        ViewConstants.GRID_OFFSET_X + ViewConstants.GRID_COLS * ViewConstants.CELL_WIDTH,
+        ViewConstants.GRID_OFFSET_Y
+      ).shouldBeOutsideGrid
+      .at(
+        ViewConstants.GRID_OFFSET_X,
+        ViewConstants.GRID_OFFSET_Y + ViewConstants.GRID_ROWS * ViewConstants.CELL_HEIGHT
+      ).shouldBeOutsideGrid
 
   it should "return true for coordinates at grid start boundaries" in:
     theProcessor
@@ -151,7 +157,7 @@ class InputProcessorTest extends AnyFlatSpec with Matchers:
       )
 
     def whenProcessed: ClickResultAssertions =
-      val click = MouseClick(x, y)
+      val click  = MouseClick(x, y)
       val result = processor.processClick(click)
       ClickResultAssertions(result)
 
@@ -196,10 +202,10 @@ class InputProcessorTest extends AnyFlatSpec with Matchers:
       GridAreaChecker(processor)
 
   case class GridAreaChecker(
-                              processor: InputProcessor,
-                              x: Double = 0,
-                              y: Double = 0
-                            ):
+      processor: InputProcessor,
+      x: Double = 0,
+      y: Double = 0
+  ):
 
     def at(x: Double, y: Double): GridAreaChecker =
       copy(x = x, y = y)
@@ -241,7 +247,7 @@ class InputProcessorTest extends AnyFlatSpec with Matchers:
       )
 
     def atBottomRight: GridAreaChecker =
-      val rightX = ViewConstants.GRID_OFFSET_X + ViewConstants.GRID_COLS * ViewConstants.CELL_WIDTH - 1
+      val rightX  = ViewConstants.GRID_OFFSET_X + ViewConstants.GRID_COLS * ViewConstants.CELL_WIDTH - 1
       val bottomY = ViewConstants.GRID_OFFSET_Y + ViewConstants.GRID_ROWS * ViewConstants.CELL_HEIGHT - 1
       copy(x = rightX, y = bottomY)
 

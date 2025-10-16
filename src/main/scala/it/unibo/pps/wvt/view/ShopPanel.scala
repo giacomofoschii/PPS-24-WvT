@@ -16,19 +16,19 @@ import scalafx.application.Platform
 import scalafx.scene.Cursor
 
 case class ShopState(
-                      elixirAmount: Int = INITIAL_ELIXIR,
-                      isOpen: Boolean = true,
-                      wizardStates: Map[WizardType, Boolean] = WizardType.values.map(_ -> false).toMap
-                    )
+    elixirAmount: Int = INITIAL_ELIXIR,
+    isOpen: Boolean = true,
+    wizardStates: Map[WizardType, Boolean] = WizardType.values.map(_ -> false).toMap
+)
 
 object ShopPanel:
   private val stateRef = new java.util.concurrent.atomic.AtomicReference[ShopState](ShopState())
 
-  private val elixirTextRef = new java.util.concurrent.atomic.AtomicReference[Option[Text]](None)
+  private val elixirTextRef  = new java.util.concurrent.atomic.AtomicReference[Option[Text]](None)
   private val wizardCardsRef = new java.util.concurrent.atomic.AtomicReference[Map[WizardType, VBox]](Map.empty)
-  private val costTextsRef = new java.util.concurrent.atomic.AtomicReference[Map[WizardType, Text]](Map.empty)
+  private val costTextsRef   = new java.util.concurrent.atomic.AtomicReference[Map[WizardType, Text]](Map.empty)
   private val shopContentRef = new java.util.concurrent.atomic.AtomicReference[Option[VBox]](None)
-  private val shopPanelRef = new java.util.concurrent.atomic.AtomicReference[Option[VBox]](None)
+  private val shopPanelRef   = new java.util.concurrent.atomic.AtomicReference[Option[VBox]](None)
 
   def createShopPanel(): VBox =
     val newState = ShopState()
@@ -36,8 +36,8 @@ object ShopPanel:
     wizardCardsRef.set(Map.empty)
     costTextsRef.set(Map.empty)
 
-    val elixirDisplay = createElixirDisplay()
-    val wizardGrid = createWizardGrid()
+    val elixirDisplay    = createElixirDisplay()
+    val wizardGrid       = createWizardGrid()
     val contentContainer = createContentContainer(elixirDisplay, wizardGrid)
 
     shopContentRef.set(Some(contentContainer))
@@ -50,7 +50,7 @@ object ShopPanel:
 
   private def toggleShop(): Unit =
     val currentState = stateRef.get()
-    val newState = currentState.copy(isOpen = !currentState.isOpen)
+    val newState     = currentState.copy(isOpen = !currentState.isOpen)
     stateRef.set(newState)
 
     shopContentRef.get().foreach: content =>
@@ -62,14 +62,16 @@ object ShopPanel:
   private def createContentContainer(elixir: Text, grid: GridPane): VBox =
     new VBox:
       spacing = SHOP_PANEL_SPACING
-      padding = Insets(SHOP_CONTENT_TOP_PADDING, SHOP_PANEL_SIDE_PADDING, SHOP_PANEL_BOTTOM_PADDING, SHOP_PANEL_SIDE_PADDING)
+      padding =
+        Insets(SHOP_CONTENT_TOP_PADDING, SHOP_PANEL_SIDE_PADDING, SHOP_PANEL_BOTTOM_PADDING, SHOP_PANEL_SIDE_PADDING)
       alignment = Pos.TopCenter
       children = Seq(elixir, grid)
 
   private def createStyledShopPanel(content: VBox): VBox =
     val panel = new VBox:
       spacing = SHOP_PANEL_SPACING
-      padding = Insets(SHOP_PANEL_TOP_PADDING, SHOP_PANEL_SIDE_PADDING, SHOP_PANEL_BOTTOM_PADDING, SHOP_PANEL_SIDE_PADDING)
+      padding =
+        Insets(SHOP_PANEL_TOP_PADDING, SHOP_PANEL_SIDE_PADDING, SHOP_PANEL_BOTTOM_PADDING, SHOP_PANEL_SIDE_PADDING)
       alignment = Pos.TopCenter
       prefWidth = SHOP_PANEL_WIDTH
       maxWidth = SHOP_PANEL_WIDTH
@@ -123,7 +125,7 @@ object ShopPanel:
 
   def updateElixir(): Unit = Platform.runLater:
     val currentElixir = ViewController.getController.map(_.getCurrentElixir).getOrElse(INITIAL_ELIXIR)
-    val currentState = stateRef.get()
+    val currentState  = stateRef.get()
 
     (currentElixir != currentState.elixirAmount) match
       case true =>
@@ -133,12 +135,12 @@ object ShopPanel:
       case false => ()
 
   private def updateCardStates(currentElixir: Int): Unit =
-    val cards = wizardCardsRef.get()
+    val cards         = wizardCardsRef.get()
     val currentStates = stateRef.get().wizardStates
 
     val newStates = WizardType.values.map: wizardType =>
-      val cost = getWizardCost(wizardType)
-      val canAfford = currentElixir >= cost
+      val cost          = getWizardCost(wizardType)
+      val canAfford     = currentElixir >= cost
       val previousState = currentStates.getOrElse(wizardType, !canAfford)
 
       (canAfford != previousState || previousState == canAfford) match
@@ -159,7 +161,7 @@ object ShopPanel:
     card.onMouseExited = null
 
     canAfford match
-      case true => setupAffordableCard(card, wizardType)
+      case true  => setupAffordableCard(card, wizardType)
       case false => setupUnaffordableCard(card)
 
   private def setupAffordableCard(card: VBox, wizardType: WizardType): Unit =
@@ -180,7 +182,8 @@ object ShopPanel:
     card.onMouseExited = _ => card.style = normalStyle
 
   private def setupUnaffordableCard(card: VBox): Unit =
-    card.style = s"""-fx-background-color: rgba($SHOP_CARD_BG_R,$SHOP_CARD_BG_G,$SHOP_CARD_BG_B,$SHOP_CARD_DISABLED_OPACITY);
+    card.style =
+      s"""-fx-background-color: rgba($SHOP_CARD_BG_R,$SHOP_CARD_BG_G,$SHOP_CARD_BG_B,$SHOP_CARD_DISABLED_OPACITY);
                     -fx-background-radius: $SHOP_CARD_BORDER_RADIUS;
                     -fx-padding: $SHOP_CARD_PADDING;
                     -fx-effect: dropshadow(gaussian, rgba(0,0,0,$SHOP_CARD_SHADOW_OPACITY), $SHOP_CARD_SHADOW_RADIUS,0,$SHOP_CARD_SHADOW_OFFSET_X,$SHOP_CARD_SHADOW_OFFSET_Y);
@@ -210,10 +213,10 @@ object ShopPanel:
 
   private def getDisplayName(wizardType: WizardType): String = wizardType match
     case WizardType.Generator => "Generator"
-    case other => other.toString
+    case other                => other.toString
 
   private def createWizardCard(wizardType: WizardType): VBox =
-    val cost = getWizardCost(wizardType)
+    val cost      = getWizardCost(wizardType)
     val imagePath = getWizardImagePath(wizardType)
     val canAfford = ViewController.getController.exists(_.getCurrentElixir >= cost)
 
@@ -261,14 +264,14 @@ object ShopPanel:
 
   def getWizardCost(wizardType: WizardType): Int = wizardType match
     case WizardType.Generator => GENERATOR_WIZARD_COST
-    case WizardType.Wind => WIND_WIZARD_COST
-    case WizardType.Barrier => BARRIER_WIZARD_COST
-    case WizardType.Fire => FIRE_WIZARD_COST
-    case WizardType.Ice => ICE_WIZARD_COST
+    case WizardType.Wind      => WIND_WIZARD_COST
+    case WizardType.Barrier   => BARRIER_WIZARD_COST
+    case WizardType.Fire      => FIRE_WIZARD_COST
+    case WizardType.Ice       => ICE_WIZARD_COST
 
   private def getWizardImagePath(wizardType: WizardType): String = wizardType match
     case WizardType.Generator => "/wizard/generator.png"
-    case WizardType.Wind => "/wizard/wind.png"
-    case WizardType.Barrier => "/wizard/barrier.png"
-    case WizardType.Fire => "/wizard/fire.png"
-    case WizardType.Ice => "/wizard/ice.png"
+    case WizardType.Wind      => "/wizard/wind.png"
+    case WizardType.Barrier   => "/wizard/barrier.png"
+    case WizardType.Fire      => "/wizard/fire.png"
+    case WizardType.Ice       => "/wizard/ice.png"
