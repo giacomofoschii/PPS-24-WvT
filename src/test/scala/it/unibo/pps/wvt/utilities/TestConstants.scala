@@ -31,8 +31,8 @@ object TestConstants:
   val HEALTH_MID: Int  = 50
   val HEALTH_FULL: Int = 100
   val HEALTH_HIGH: Int = 150
-  
-  //Health System specific values
+
+  // Health System specific values
   val TEST_ENTITY_MAX_HEALTH: Int                  = 100
   val TEST_ENTITY_HALF_HEALTH: Int                 = 50
   val TEST_ENTITY_LOW_HEALTH: Int                  = 30
