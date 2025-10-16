@@ -32,6 +32,19 @@ object TestConstants:
   val HEALTH_FULL: Int = 100
   val HEALTH_HIGH: Int = 150
 
+  val TEST_ENTITY_MAX_HEALTH: Int = 100
+  val TEST_ENTITY_HALF_HEALTH: Int = 50
+  val TEST_ENTITY_LOW_HEALTH: Int = 30
+  val TEST_ENTITY_VERY_LOW_HEALTH: Int = 10
+  val TEST_ENTITY_MINIMAL_HEALTH: Int = 1
+  val TEST_ENTITY_DEAD_HEALTH: Int = 0
+  val TEST_HEALTH_THREE_QUARTER: Int = 75
+  val TEST_DAMAGE_LIGHT: Int = 5
+  val TEST_DAMAGE_MEDIUM: Int = 20
+  val TEST_DAMAGE_HEAVY: Int = 40
+  val TEST_DAMAGE_FATAL: Int = 100
+  val TEST_EXPECTED_HEALTH_AFTER_HEAVY_DAMAGE: Int = 60
+
   // Elixir values
   val ELIXIR_ZERO: Int         = 0
   val ELIXIR_LOW: Int          = 50
@@ -122,6 +135,13 @@ object TestConstants:
   // Elixir generation
   val ELIXIR_GEN_RATE: Float = 1.0f
   val ELIXIR_GEN_AMOUNT: Int = 5
+  val ELIXIR_WAIT_MARGIN: Long = 50L
+  val ELIXIR_SPEND_SMALL: Int = 10
+  val ELIXIR_SPEND_MEDIUM: Int = 20
+  val ELIXIR_SPEND_COMBINED: Int = 30
+  val ELIXIR_SPEND_EXCESSIVE: Int = 300
+  val ELIXIR_ADD_AMOUNT: Int = 50
+  val ELIXIR_ADD_LARGE: Int = 500
 
   // Game engine timing constants
   val SHORT_SLEEP_MS          = 100L
