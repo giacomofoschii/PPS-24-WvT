@@ -1,277 +1,200 @@
 package it.unibo.pps.wvt.ecs.systems
 
-import it.unibo.pps.wvt.ecs.core.{EntityId, World}
+import it.unibo.pps.wvt.controller.GameScenarioDSL.*
 import it.unibo.pps.wvt.ecs.components.*
-import it.unibo.pps.wvt.utilities.Position
+import it.unibo.pps.wvt.ecs.core.World
 import it.unibo.pps.wvt.utilities.TestConstants.*
-import scalafx.scene.paint.Color
+import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.BeforeAndAfter
+import scalafx.scene.paint.Color
 
-class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers:
+class HealthBarRenderSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
 
-  // Test DSL for HealthBarRenderSystem
-  private object HealthBarTestDSL:
-    extension (world: World)
-      def createEntityWithHealth(health: Int, maxHealth: Int, withWizardType: Boolean = false): EntityId =
-        val entity = world.createEntity()
-        world.addComponent(entity, PositionComponent(Position(TEST_HEALTH_BAR_X, TEST_HEALTH_BAR_Y)))
-        world.addComponent(entity, HealthComponent(health, maxHealth))
-        if withWizardType then
-          world.addComponent(entity, WizardTypeComponent(WizardType.Fire))
-        entity
+  var world: World = _
+  var healthBarSystem: HealthBarRenderSystem = _
 
-      def createWizardWithHealth(
-          health: Int,
-          maxHealth: Int,
-          position: Position = Position(TEST_HEALTH_BAR_X, TEST_HEALTH_BAR_Y)
-      ): EntityId =
-        val entity = world.createEntity()
-        world.addComponent(entity, PositionComponent(position))
-        world.addComponent(entity, HealthComponent(health, maxHealth))
-        world.addComponent(entity, WizardTypeComponent(WizardType.Wind))
-        entity
+  before:
+    world = World.empty
+    healthBarSystem = HealthBarRenderSystem()
 
-      def createTrollWithHealth(health: Int, maxHealth: Int): EntityId =
-        val entity = world.createEntity()
-        world.addComponent(entity, PositionComponent(Position(TEST_HEALTH_BAR_X, TEST_HEALTH_BAR_Y)))
-        world.addComponent(entity, HealthComponent(health, maxHealth))
-        world.addComponent(entity, TrollTypeComponent(TrollType.Base))
-        entity
+  behavior of "HealthBarRenderSystem"
 
-      def damageEntity(entity: EntityId, damage: Int): Unit =
-        world.getComponent[HealthComponent](entity).foreach: health =>
-          val newHealth = math.max(TEST_ENTITY_DEAD_HEALTH, health.currentHealth - damage)
-          world.updateComponent[HealthComponent](entity, _ => health.copy(currentHealth = newHealth))
+  it should "render health bars for wizards with health less than 100%" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
 
-    extension (system: HealthBarRenderSystem)
-      def updateAndGetBars(world: World): Seq[RenderableHealthBar] =
-        val updated = system.update(world).asInstanceOf[HealthBarRenderSystem]
-        updated.getHealthBarsToRender
+    val wizard = testWorld.getEntitiesByType("wizard").head
+    val damagedWorld = testWorld.updateComponent[HealthComponent](wizard, h =>
+      HealthComponent(HEALTH_MID, HEALTH_FULL)
+    )
 
-      def getBarCount(world: World): Int =
-        updateAndGetBars(world).size
+    val (_, updatedSystem) = healthBarSystem.update(damagedWorld)
+    val healthBars = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
 
-  import HealthBarTestDSL.*
-
-  behavior of "HealthBarRenderSystem - Basic Functionality"
-
-  it should "start with empty cache" in:
-    val system = HealthBarRenderSystem()
-
-    system.getHealthBarsToRender shouldBe empty
-
-  it should "render health bar for entity with partial health" in:
-    val world  = World()
-    val system = HealthBarRenderSystem()
-
-    world.createEntityWithHealth(TEST_HEALTH_BAR_HALF_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
-    val bars = system.updateAndGetBars(world)
-
-    bars should have size TEST_ONE_BAR
-
-  it should "not render health bar for entity at full health" in:
-    val world  = World()
-    val system = HealthBarRenderSystem()
-
-    world.createEntityWithHealth(TEST_HEALTH_BAR_MAX_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
-    val bars = system.updateAndGetBars(world)
-
-    bars shouldBe empty
-
-  it should "not render health bar for dead entity" in:
-    val world  = World()
-    val system = HealthBarRenderSystem()
-
-    world.createEntityWithHealth(TEST_ENTITY_DEAD_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
-    val bars = system.updateAndGetBars(world)
-
-    bars shouldBe empty
-
-  behavior of "HealthBarRenderSystem - Color Updates"
-
-  it should "use green color for high health percentage" in:
-    val world  = World()
-    val system = HealthBarRenderSystem()
-
-    world.createEntityWithHealth(TEST_HEALTH_BAR_HIGH_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
-    val bars = system.updateAndGetBars(world)
-
-    bars should have size TEST_ONE_BAR
-    val (_, percentage, color, _, _, _) = bars.head
-    percentage should be > TEST_HEALTH_BAR_GREEN_THRESHOLD
-    color shouldBe Color.Green
-
-  it should "use yellow color for medium health percentage" in:
-    val world  = World()
-    val system = HealthBarRenderSystem()
-
-    world.createEntityWithHealth(TEST_HEALTH_BAR_MEDIUM_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
-    val bars = system.updateAndGetBars(world)
-
-    bars should have size TEST_ONE_BAR
-    val (_, percentage, color, _, _, _) = bars.head
-    percentage should be > TEST_HEALTH_BAR_RED_THRESHOLD
-    percentage should be <= TEST_HEALTH_BAR_GREEN_THRESHOLD
+    healthBars should have size ENTITY_COUNT_SINGLE
+    val (_, percentage, color, _, _, _) = healthBars.head
+    percentage shouldBe 0.5 +- EPSILON
     color shouldBe Color.Yellow
 
-  it should "use red color for low health percentage" in:
-    val world  = World()
-    val system = HealthBarRenderSystem()
+  it should "not render health bars for entities at full health" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
 
-    world.createEntityWithHealth(TEST_HEALTH_BAR_LOW_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
-    val bars = system.updateAndGetBars(world)
+    val (_, updatedSystem) = healthBarSystem.update(testWorld)
+    val healthBars = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
 
-    bars should have size TEST_ONE_BAR
-    val (_, percentage, color, _, _, _) = bars.head
-    percentage should be <= TEST_HEALTH_BAR_RED_THRESHOLD
+    healthBars shouldBe empty
+
+  it should "not render health bars for dead entities" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
+
+    val wizard = testWorld.getEntitiesByType("wizard").head
+    val deadWorld = testWorld.updateComponent[HealthComponent](wizard, h =>
+      HealthComponent(HEALTH_ZERO, HEALTH_FULL)
+    )
+
+    val (_, updatedSystem) = healthBarSystem.update(deadWorld)
+    val healthBars = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
+
+    healthBars shouldBe empty
+
+  it should "render health bars for trolls with red color" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withTroll(TrollType.Base).at(GRID_ROW_MID, GRID_COL_END)
+        .withElixir(ELIXIR_START)
+
+    val troll = testWorld.getEntitiesByType("troll").head
+    val damagedWorld = testWorld.updateComponent[HealthComponent](troll, h =>
+      HealthComponent(HEALTH_LOW, HEALTH_FULL)
+    )
+
+    val (_, updatedSystem) = healthBarSystem.update(damagedWorld)
+    val healthBars = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
+
+    healthBars should have size ENTITY_COUNT_SINGLE
+    val (_, percentage, color, _, _, _) = healthBars.head
+    percentage shouldBe 0.25 +- EPSILON
     color shouldBe Color.Red
 
-  behavior of "HealthBarRenderSystem - Multiple Entities"
+  it should "create default health bar for wizard without explicit health bar component" in:
+    val pos = GridMapper.logicalToPhysical(GRID_ROW_MID, GRID_COL_START).get
+    val (world1, wizard) = world.createEntity()
+    val testWorld = world1
+      .addComponent(wizard, WizardTypeComponent(WizardType.Fire))
+      .addComponent(wizard, PositionComponent(pos))
+      .addComponent(wizard, HealthComponent(HEALTH_MID, HEALTH_FULL))
 
-  it should "render health bars for multiple damaged entities" in:
-    val world  = World()
-    val system = HealthBarRenderSystem()
+    val (_, updatedSystem) = healthBarSystem.update(testWorld)
+    val healthBars = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
 
-    world.createEntityWithHealth(TEST_HEALTH_BAR_HALF_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
-    world.createEntityWithHealth(TEST_HEALTH_BAR_LOW_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
-    world.createEntityWithHealth(TEST_HEALTH_BAR_MEDIUM_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
+    healthBars should have size ENTITY_COUNT_SINGLE
+    val (_, _, color, _, _, _) = healthBars.head
+    color shouldBe Color.Yellow
 
-    val bars = system.updateAndGetBars(world)
-    bars should have size TEST_THREE_BARS
+  it should "create default health bar for troll without explicit health bar component" in:
+    val pos = GridMapper.logicalToPhysical(GRID_ROW_MID, GRID_COL_END).get
+    val (world1, troll) = world.createEntity()
+    val testWorld = world1
+      .addComponent(troll, TrollTypeComponent(TrollType.Base))
+      .addComponent(troll, PositionComponent(pos))
+      .addComponent(troll, HealthComponent(HEALTH_MID, HEALTH_FULL))
 
-  it should "filter out full health entities from multiple entities" in:
-    val world  = World()
-    val system = HealthBarRenderSystem()
+    val (_, updatedSystem) = healthBarSystem.update(testWorld)
+    val healthBars = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
 
-    world.createEntityWithHealth(TEST_HEALTH_BAR_MAX_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
-    world.createEntityWithHealth(TEST_HEALTH_BAR_HALF_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
-    world.createEntityWithHealth(TEST_HEALTH_BAR_MAX_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
-    world.createEntityWithHealth(TEST_HEALTH_BAR_LOW_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
+    healthBars should have size ENTITY_COUNT_SINGLE
+    val (_, _, color, _, _, _) = healthBars.head
+    color shouldBe Color.Yellow
 
-    val bars = system.updateAndGetBars(world)
-    bars should have size TEST_TWO_BARS
+  it should "render multiple health bars for multiple damaged entities" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_START, GRID_COL_START)
+        .withWizard(WizardType.Ice).at(GRID_ROW_MID, GRID_COL_START)
+        .withTroll(TrollType.Base).at(GRID_ROW_END, GRID_COL_END)
+        .withElixir(ELIXIR_HIGH)
 
-  behavior of "HealthBarRenderSystem - Average Health Calculation"
+    val wizards = testWorld.getEntitiesByType("wizard").toList
+    val trolls = testWorld.getEntitiesByType("troll").toList
 
-  it should "calculate average health for wizards correctly" in:
-    val world  = World()
-    val system = HealthBarRenderSystem()
+    var damagedWorld = testWorld
+    wizards.foreach: wizard =>
+      damagedWorld = damagedWorld.updateComponent[HealthComponent](wizard, h =>
+        HealthComponent(HEALTH_MID, HEALTH_FULL)
+      )
 
-    world.createWizardWithHealth(TEST_HEALTH_BAR_HALF_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
-    world.createWizardWithHealth(TEST_HEALTH_BAR_MAX_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
+    trolls.foreach: troll =>
+      damagedWorld = damagedWorld.updateComponent[HealthComponent](troll, h =>
+        HealthComponent(HEALTH_LOW, HEALTH_FULL)
+      )
 
-    val updated   = system.update(world).asInstanceOf[HealthBarRenderSystem]
-    val avgHealth = updated.getAverageHealth(world, "wizard")
+    val (_, updatedSystem) = healthBarSystem.update(damagedWorld)
+    val healthBars = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
 
-    avgHealth shouldBe defined
-    avgHealth.get shouldBe TEST_HEALTH_BAR_AVG_WIZARD_HEALTH +- TEST_HEALTH_BAR_TOLERANCE
+    healthBars should have size ENTITY_COUNT_FEW
 
-  it should "calculate average health for trolls correctly" in:
-    val world  = World()
-    val system = HealthBarRenderSystem()
+  it should "update health bar color based on health percentage" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
 
-    world.createTrollWithHealth(TEST_HEALTH_BAR_LOW_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
-    world.createTrollWithHealth(TEST_HEALTH_BAR_MEDIUM_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
-    world.createTrollWithHealth(TEST_HEALTH_BAR_HIGH_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
+    val wizard = testWorld.getEntitiesByType("wizard").head
+    val damagedWorld = testWorld.updateComponent[HealthComponent](wizard, h =>
+      HealthComponent(HEALTH_LOW, HEALTH_FULL)
+    )
 
-    val updated   = system.update(world).asInstanceOf[HealthBarRenderSystem]
-    val avgHealth = updated.getAverageHealth(world, "troll")
+    val (_, updatedSystem) = healthBarSystem.update(damagedWorld)
+    val healthBars = updatedSystem.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender
 
-    avgHealth shouldBe defined
-    avgHealth.get shouldBe TEST_HEALTH_BAR_AVG_TROLL_HEALTH +- TEST_HEALTH_BAR_TOLERANCE
+    healthBars should have size ENTITY_COUNT_SINGLE
+    val (_, percentage, _, _, _, _) = healthBars.head
+    percentage shouldBe 0.25 +- EPSILON
 
-  it should "return None for average health when no entities exist" in:
-    val world  = World()
-    val system = HealthBarRenderSystem()
+  it should "maintain health bar cache across updates" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
 
-    val updated   = system.update(world).asInstanceOf[HealthBarRenderSystem]
-    val avgHealth = updated.getAverageHealth(world, "wizard")
+    val wizard = testWorld.getEntitiesByType("wizard").head
+    val damagedWorld = testWorld.updateComponent[HealthComponent](wizard, h =>
+      HealthComponent(HEALTH_MID, HEALTH_FULL)
+    )
 
-    avgHealth shouldBe None
+    val (_, firstUpdate) = healthBarSystem.update(damagedWorld)
+    val (_, secondUpdate) = firstUpdate.update(damagedWorld)
 
-  behavior of "HealthBarRenderSystem - Edge Cases"
+    firstUpdate.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender should have size ENTITY_COUNT_SINGLE
+    secondUpdate.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender should have size ENTITY_COUNT_SINGLE
 
-  it should "handle entity without health component" in:
-    val world  = World()
-    val system = HealthBarRenderSystem()
+  it should "clear health bar cache when entity is healed to full" in:
+    val (testWorld, _) = scenario: builder =>
+      builder
+        .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+        .withElixir(ELIXIR_START)
 
-    val entity = world.createEntity()
-    world.addComponent(entity, PositionComponent(Position(TEST_HEALTH_BAR_X, TEST_HEALTH_BAR_Y)))
+    val wizard = testWorld.getEntitiesByType("wizard").head
+    val damagedWorld = testWorld.updateComponent[HealthComponent](wizard, h =>
+      HealthComponent(HEALTH_MID, HEALTH_FULL)
+    )
 
-    val bars = system.updateAndGetBars(world)
-    bars shouldBe empty
+    val (_, firstUpdate) = healthBarSystem.update(damagedWorld)
+    firstUpdate.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender should have size ENTITY_COUNT_SINGLE
 
-  it should "handle entity without position component" in:
-    val world  = World()
-    val system = HealthBarRenderSystem()
+    val healedWorld = damagedWorld.updateComponent[HealthComponent](wizard, h =>
+      HealthComponent(HEALTH_FULL, HEALTH_FULL)
+    )
 
-    val entity = world.createEntity()
-    world.addComponent(entity, HealthComponent(TEST_HEALTH_BAR_HALF_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH))
-
-    val bars = system.updateAndGetBars(world)
-    bars shouldBe empty
-
-  it should "handle empty world without errors" in:
-    val world  = World()
-    val system = HealthBarRenderSystem()
-
-    noException should be thrownBy system.update(world)
-    system.getHealthBarsToRender shouldBe empty
-
-  behavior of "HealthBarRenderSystem - Health Bar Properties"
-
-  it should "calculate correct health percentage" in:
-    val world  = World()
-    val system = HealthBarRenderSystem()
-
-    world.createEntityWithHealth(TEST_HEALTH_BAR_QUARTER_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
-    val bars = system.updateAndGetBars(world)
-
-    bars should have size TEST_ONE_BAR
-    val (_, percentage, _, _, _, _) = bars.head
-    percentage shouldBe TEST_HEALTH_BAR_QUARTER_PERCENTAGE +- TEST_HEALTH_BAR_TOLERANCE
-
-  it should "maintain correct position for health bar" in:
-    val world   = World()
-    val system  = HealthBarRenderSystem()
-    val testPos = Position(TEST_HEALTH_BAR_CUSTOM_X, TEST_HEALTH_BAR_CUSTOM_Y)
-
-    world.createWizardWithHealth(TEST_HEALTH_BAR_HALF_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH, testPos)
-    val bars = system.updateAndGetBars(world)
-
-    bars should have size TEST_ONE_BAR
-    val (position, _, _, _, _, _) = bars.head
-    position shouldBe testPos
-
-  behavior of "HealthBarRenderSystem - Dynamic Health Changes"
-
-  it should "update health bar when entity takes damage" in:
-    val world  = World()
-    val system = HealthBarRenderSystem()
-
-    val entity = world.createEntityWithHealth(TEST_HEALTH_BAR_MAX_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
-
-    // Initially no bar (full health)
-    system.getBarCount(world) shouldBe TEST_NO_BARS
-
-    // Damage entity
-    world.damageEntity(entity, TEST_HEALTH_BAR_DAMAGE_MEDIUM)
-
-    // Now bar should appear
-    system.getBarCount(world) shouldBe TEST_ONE_BAR
-
-  it should "remove health bar when entity reaches full health" in:
-    val world  = World()
-    val system = HealthBarRenderSystem()
-
-    val entity = world.createEntityWithHealth(TEST_HEALTH_BAR_HALF_HEALTH, TEST_HEALTH_BAR_MAX_HEALTH)
-
-    // Initially has bar
-    system.getBarCount(world) shouldBe TEST_ONE_BAR
-
-    // Heal to full
-    world.updateComponent[HealthComponent](entity, h => h.copy(currentHealth = h.maxHealth))
-
-    // Bar should disappear
-    system.getBarCount(world) shouldBe TEST_NO_BARS
+    val (_, secondUpdate) = firstUpdate.update(healedWorld)
+    secondUpdate.asInstanceOf[HealthBarRenderSystem].getHealthBarsToRender shouldBe empty

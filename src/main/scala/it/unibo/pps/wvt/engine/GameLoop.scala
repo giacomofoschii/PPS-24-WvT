@@ -23,7 +23,7 @@ sealed trait LoopStatus:
 
 /** Companion object for LoopStatus, containing case objects for each status. */
 object LoopStatus:
-  private case object Idle extends LoopStatus
+  case object Idle extends LoopStatus
   case object Running      extends LoopStatus
   case object Stopping     extends LoopStatus
 

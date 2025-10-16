@@ -1,150 +1,139 @@
 package it.unibo.pps.wvt.utilities
 
-import it.unibo.pps.wvt.utilities.GamePlayConstants.*
-import it.unibo.pps.wvt.utilities.ViewConstants.*
+import it.unibo.pps.wvt.ecs.config.WaveLevel
 
 object TestConstants:
-  // Time constants (in milliseconds)
-  val SHORT_DELAY: Long           = 50L
-  val MEDIUM_DELAY: Long          = 100L
-  val LONG_DELAY: Long            = 200L
-  val FPS_CALCULATION_DELAY: Long = 1100L
-  val STANDARD_DELTA_TIME: Long   = 16L // ~60 FPS
-  val EXPECTED_FRAME_TIME: Long   = 500L
 
-  // Loop iterations
-  val SMALL_ITERATION_COUNT: Int  = 3
-  val MEDIUM_ITERATION_COUNT: Int = 10
+  // Grid positions
+  val GRID_ROW_START: Int = 0
+  val GRID_ROW_MID: Int = 2
+  val GRID_ROW_END: Int = 4
+  val GRID_COL_START: Int = 0
+  val GRID_COL_MID: Int = 3
+  val GRID_COL_END: Int = 6
+  // Added for specific test cases
+  val GRID_ROW_NEAR_END: Int = 4
+  val GRID_COL_NEAR_MID: Int = 2
+  val GRID_COL_NEAR_END: Int = 4
+  val GRID_COLS_LOGICAL: Int = 7 // Assuming 7 columns in the logical grid
 
-  // Expected values
-  val INITIAL_TIME: Long        = 0L
-  val INITIAL_ENTITY_COUNT: Int = 0
-  val INITIAL_FPS: Int          = 0
+  // Position values
+  val POS_X_START: Float = 0f
+  val POS_X_MID: Float = 400f
+  val POS_X_END: Float = 800f
+  val POS_Y_START: Float = 0f
+  val POS_Y_MID: Float = 300f
+  val POS_Y_END: Float = 600f
 
-  // FPS testing
-  val MIN_EXPECTED_FPS: Int       = 45
-  val MAX_EXPECTED_FPS: Int       = 75
-  val MAX_UPDATES_AFTER_STOP: Int = 10
+  // Health values
+  val HEALTH_ZERO: Int = 0
+  val HEALTH_LOW: Int = 25
+  val HEALTH_MID: Int = 50
+  val HEALTH_FULL: Int = 100
+  val HEALTH_HIGH: Int = 150
 
-  // Update count expectations
-  val MIN_UPDATES_200MS: Int = 5
-  val MAX_UPDATES_200MS: Int = 25
+  // Elixir values
+  val ELIXIR_ZERO: Int = 0
+  val ELIXIR_LOW: Int = 50
+  val ELIXIR_SPEND_AMOUNT: Int = 50 // New constant for testing elixir spending
+  val ELIXIR_START: Int = 100
+  val ELIXIR_MID: Int = 200
+  val ELIXIR_HIGH: Int = 500
 
-  // Timing calculations
-  val TIMING_TOLERANCE: Int                 = 10
-  def expectedUpdatesFor(timeMs: Long): Int = (timeMs / STANDARD_DELTA_TIME).toInt
-  def minExpectedUpdates(timeMs: Long): Int = expectedUpdatesFor(timeMs) - TIMING_TOLERANCE
-  def maxExpectedUpdates(timeMs: Long): Int = expectedUpdatesFor(timeMs) + TIMING_TOLERANCE
+  // Wave numbers
+  val WAVE_FIRST: Int = 1
+  val WAVE_SECOND: Int = 2 // New constant for testing wave progression
+  val WAVE_MID: Int = 5
+  val WAVE_HIGH: Int = 10
+  val WAVE_MAX: Int = 20
 
-  // Health system test constants (only those not in GamePlayConstants)
-  val TEST_ENTITY_MAX_HEALTH: Int                   = 100
-  val TEST_ENTITY_HALF_HEALTH: Int                  = 50
-  val TEST_ENTITY_LOW_HEALTH: Int                   = 20
-  val TEST_ENTITY_VERY_LOW_HEALTH: Int              = 10
-  val TEST_ENTITY_MINIMAL_HEALTH: Int               = 1
-  val TEST_ENTITY_DEAD_HEALTH: Int                  = 0
-  val TEST_DAMAGE_LIGHT: Int                        = 10
-  val TEST_DAMAGE_MEDIUM: Int                       = 15
-  val TEST_DAMAGE_HEAVY: Int                        = 20
-  val TEST_DAMAGE_FATAL: Int                        = 30
-  val TEST_HEALTH_QUARTER: Int                      = 25
-  val TEST_HEALTH_THREE_QUARTER: Int                = 75
-  val TEST_EXPECTED_HEALTH_AFTER_MEDIUM_DAMAGE: Int = 30
-  val TEST_EXPECTED_HEALTH_AFTER_HEAVY_DAMAGE: Int  = 80
-  val TEST_HEALTH_PERCENTAGE_QUARTER: Double        = 0.25
-  val TEST_HEALTH_PERCENTAGE_FULL: Double           = 1.0
-  val TEST_HEALTH_PERCENTAGE_ZERO: Double           = 0.0
+  // Speed values
+  val SPEED_ZERO: Float = 0f
+  val SPEED_SLOW: Float = 1f
+  val SPEED_NORMAL: Float = 3f
+  val SPEED_FAST: Float = 5f
+  val SPEED_VERY_FAST: Float = 10f
 
-  // Spawn system test constants
-  val TEST_WIZARD_ROW: Int   = GRID_ROWS / 2
-  val TEST_WIZARD_COL        = 2
-  val TEST_SPAWN_COLUMN: Int = GRID_COLS - 1
-  val TEST_WAVE_1            = 1
-  val TEST_WAVE_2            = 2
-  val TEST_MULTIPLE_UPDATES  = 5
-  val TEST_MANY_UPDATES      = 10
-  val TEST_SEED              = 42L
+  // Damage values
+  val DAMAGE_ZERO: Int = 0
+  val DAMAGE_LOW: Int = 10
+  val DAMAGE_NORMAL: Int = 20
+  val DAMAGE_HIGH: Int = 50
+  val DAMAGE_VERY_HIGH: Int = 100
 
-  // Elixir test constants
-  val ELIXIR_WAIT_MARGIN: Long    = 500L
-  val ELIXIR_SPEND_SMALL: Int     = 50
-  val ELIXIR_SPEND_MEDIUM: Int    = 30
-  val ELIXIR_SPEND_EXCESSIVE: Int = INITIAL_ELIXIR + 100
-  val ELIXIR_ADD_AMOUNT: Int      = 75
-  val ELIXIR_ADD_LARGE: Int       = 100
-  val ELIXIR_SPEND_COMBINED: Int  = 250
+  // Time values (seconds)
+  val DELTA_TIME_FRAME: Float = 0.016f // ~60 FPS
+  val DELTA_TIME_HALF_SEC: Float = 0.5f
+  val DELTA_TIME_ONE_SEC: Float = 1.0f
+  val DELTA_TIME_TWO_SEC: Float = 2.0f
 
-  // Timer test constants
-  val TEST_TIMER_ZERO: Long    = 0L
-  val TEST_OLD_TIMESTAMP: Long = 123456L
-  val TEST_TIME_BUFFER: Long   = 1000L
-  val TEST_TIME_SHORT: Long    = 1000L
-  val TEST_TIME_LONG: Long     = 10000L
+  // Cooldown values
+  val COOLDOWN_FAST: Float = 0.5f
+  val COOLDOWN_NORMAL: Float = 1.0f
+  val COOLDOWN_SLOW: Float = 2.0f
 
-  // Generator test constants
-  val TEST_GENERATOR_ELIXIR_TINY: Int         = 5
-  val TEST_GENERATOR_ELIXIR_LOW: Int          = 10
-  val TEST_GENERATOR_ELIXIR_HIGH: Int         = 15
-  val TEST_GENERATOR_COOLDOWN_SHORT: Long     = 3000L
-  val TEST_GENERATOR_COOLDOWN_LONG: Long      = 5000L
-  val TEST_GENERATOR_COOLDOWN_VERY_LONG: Long = 10000L
+  // Range values
+  val RANGE_MELEE: Float = 1.5f
+  val RANGE_SHORT: Float = 3.0f
+  val RANGE_MEDIUM: Float = 5.0f
+  val RANGE_LONG: Float = 10.0f
 
-  // Test constants for movement
-  val TEST_DELTA_TIME: Double   = 0.016
-  val TEST_MIDDLE_ROW: Int      = GRID_ROWS / 2
-  val TEST_MIDDLE_COL: Int      = GRID_COLS / 2
-  val TEST_START_COL: Int       = GRID_COLS - 1
-  val TEST_SPEED_SLOW           = 0.5
-  val TEST_SPEED_NORMAL         = 1.0
-  val TEST_SPEED_FAST           = 2.0
-  val TEST_SPEED_ZERO           = 0.0
-  val TEST_THROWER_STOP_COL     = 6
-  val TEST_LEFT_BOUNDARY        = 0
-  val TEST_RIGHT_BOUNDARY: Int  = GRID_COLS - 1
-  val TEST_TOP_BOUNDARY         = 0
-  val TEST_BOTTOM_BOUNDARY: Int = GRID_ROWS - 1
+  // Test thresholds
+  val EPSILON: Float = 0.001f
+  val POSITION_TOLERANCE: Float = 0.1f
 
-  // EntityFactory test constants
-  val TEST_PROJECTILE_X: Double = 300.0
-  val TEST_PROJECTILE_Y: Double = 200.0
-  val TEST_WIZARD_X: Double     = 400.0
-  val TEST_WIZARD_Y: Double     = 300.0
-  val TEST_TROLL_X: Double      = 800.0
-  val TEST_TROLL_Y: Double      = 400.0
-  val TEST_CUSTOM_X: Double     = 500.0
-  val TEST_CUSTOM_Y: Double     = 350.0
+  // Game dimensions
+  val GAME_WIDTH: Int = 800
+  val GAME_HEIGHT: Int = 600
 
-  // Image paths for projectiles
-  val TEST_FIRE_PROJECTILE_PATH: String  = "/projectile/fire.png"
-  val TEST_ICE_PROJECTILE_PATH: String   = "/projectile/ice.png"
-  val TEST_TROLL_PROJECTILE_PATH: String = "/projectile/troll.png"
-  val TEST_WIND_PROJECTILE_PATH: String  = "/projectile/base.png"
+  // Movement and timing
+  val DELTA_TIME_MS = 16.0
+  val ZIGZAG_DURATION_MS = 5000L
+  val MOVEMENT_TOLERANCE = 5.0
 
-  // HealthBarRenderSystem test constants
-  val TEST_HEALTH_BAR_X: Double           = 600.0
-  val TEST_HEALTH_BAR_Y: Double           = 300.0
-  val TEST_HEALTH_BAR_CUSTOM_X: Double    = 650.0
-  val TEST_HEALTH_BAR_CUSTOM_Y: Double    = 350.0
-  val TEST_HEALTH_BAR_MAX_HEALTH: Int     = 100
-  val TEST_HEALTH_BAR_HALF_HEALTH: Int    = 50
-  val TEST_HEALTH_BAR_HIGH_HEALTH: Int    = 80
-  val TEST_HEALTH_BAR_MEDIUM_HEALTH: Int  = 50
-  val TEST_HEALTH_BAR_LOW_HEALTH: Int     = 20
-  val TEST_HEALTH_BAR_QUARTER_HEALTH: Int = 25
-  val TEST_HEALTH_BAR_DAMAGE_MEDIUM: Int  = 20
+  // Spawn timing and wave settings
+  val SPAWN_INTERVAL_SHORT: Float = 1.0f
+  val SPAWN_INTERVAL_NORMAL: Float = 2.0f
+  val SPAWN_INTERVAL_LONG: Float = 5.0f
+  val SPAWN_SEED = 42L
+  val INITIAL_SPAWN_DELAY_MS = 3000L
+  val BATCH_DELAY_MS = 500L
+  val SHORT_WAIT_MS = 50L
+  val LONG_WAIT_MS = 3000L
+  val SPAWN_ATTEMPTS: Int = 10
+  val WAVE_ONE_MAX_TROLLS: Int = WaveLevel.maxTrollsPerWave(WAVE_FIRST)
 
-  // Health bar thresholds (matching HealthBarComponent logic)
-  val TEST_HEALTH_BAR_GREEN_THRESHOLD: Double    = 0.6
-  val TEST_HEALTH_BAR_RED_THRESHOLD: Double      = 0.3
-  val TEST_HEALTH_BAR_QUARTER_PERCENTAGE: Double = 0.25
-  val TEST_HEALTH_BAR_TOLERANCE: Double          = 0.01
+  // Entity counts
+  val ENTITY_COUNT_SINGLE: Int = 1
+  val ENTITY_COUNT_FEW: Int = 3
+  val ENTITY_COUNT_MANY: Int = 10
 
-  // Health bar counts
-  val TEST_NO_BARS: Int    = 0
-  val TEST_ONE_BAR: Int    = 1
-  val TEST_TWO_BARS: Int   = 2
-  val TEST_THREE_BARS: Int = 3
+  // Update counts for tests
+  val UPDATES_COUNT_SHORT: Int = 10
+  val UPDATES_COUNT_MEDIUM: Int = 50
+  val UPDATES_COUNT_LONG: Int = 100
+  val UPDATES_PER_SECOND: Int = 60 // Approx. number of updates to simulate 1 second
 
-  // Average health calculations
-  val TEST_HEALTH_BAR_AVG_WIZARD_HEALTH: Double = 0.75 // (50 + 100) / 2 / 100
-  val TEST_HEALTH_BAR_AVG_TROLL_HEALTH: Double  = 0.5  // (20 + 50 + 80) / 3 / 100
+  // Delay values for tests in milliseconds
+  val DELAY_FRAME_MS: Long = 17 // ~60 FPS
+  val DELAY_SHORT_MS: Long = 30
+  val DELAY_MEDIUM_MS: Long = 50
+
+  // Elixir generation
+  val ELIXIR_GEN_RATE: Float = 1.0f
+  val ELIXIR_GEN_AMOUNT: Int = 5
+
+  // Game engine timing constants
+  val SHORT_SLEEP_MS = 100L
+  val MEDIUM_SLEEP_MS = 200L
+  val LONG_SLEEP_MS = 1000L
+  val ENGINE_STARTUP_DELAY_MS = 50L
+  val TIME_INCREMENT = 16L
+
+  // Game loop timing and FPS constants
+  val LOOP_STARTUP_DELAY_MS = 50L
+  val FPS_MEASUREMENT_DELAY_MS = 1100L
+  val SHORT_RUN_MS = 200L
+  val MEDIUM_RUN_MS = 500L
+  val EXPECTED_FPS_MIN = 30
+  val EXPECTED_FPS_MAX = 70

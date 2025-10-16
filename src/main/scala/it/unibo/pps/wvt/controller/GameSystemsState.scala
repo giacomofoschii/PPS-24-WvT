@@ -84,7 +84,7 @@ private[controller] case class GameSystemsState(
     * @param world The current state of the game world.
     * @return An optional GameEvent indicating a win if the condition is met.
     */
-  private def checkWinCondition(world: World): Option[GameEvent] =
+  private[controller] def checkWinCondition(world: World): Option[GameEvent] =
     Option.when(
       spawn.hasSpawnedAtLeastOnce &&
         !spawn.isActive &&
@@ -99,7 +99,7 @@ private[controller] case class GameSystemsState(
     * @param world The current state of the game world.
     * @return An optional GameEvent indicating a loss if the condition is met.
     */
-  private def checkLoseCondition(world: World): Option[GameEvent] =
+  private[controller] def checkLoseCondition(world: World): Option[GameEvent] =
     LazyList.from(world.getEntitiesByType("troll"))
       .flatMap(entity => world.getComponent[PositionComponent](entity))
       .find(pos => pos.position.x <= GridMapper.getCellBounds(0, 0)._1 + 1e-3)
