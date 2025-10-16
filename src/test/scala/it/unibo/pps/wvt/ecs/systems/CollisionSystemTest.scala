@@ -33,8 +33,10 @@ class CollisionSystemTest extends AnyFlatSpec with Matchers with BeforeAndAfter:
     val (finalWorld, _) = collisionSystem.update(w)
 
     finalWorld.getAllEntities should not contain projectile
-    val trollHealth = finalWorld.getComponent[HealthComponent](troll)
-    trollHealth.get.currentHealth should be < 100
+
+    val collisionComp = finalWorld.getComponent[CollisionComponent](troll)
+    collisionComp shouldBe defined
+    collisionComp.get.amount shouldBe 25
 
   it should "not detect collision when entities are in different cells" in:
     val (world1, projectile) = world.createEntity()

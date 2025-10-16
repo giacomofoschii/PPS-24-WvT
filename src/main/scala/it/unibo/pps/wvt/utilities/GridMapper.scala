@@ -26,10 +26,13 @@ object GridMapper:
 
   def logicalToPhysical(logicalPos: LogicalCoords): Option[Position] =
     val (row, col) = logicalPos
-    Some(Position(
-      GRID_OFFSET_X + col * CELL_WIDTH + CELL_WIDTH / 2,
-      GRID_OFFSET_Y + row * CELL_HEIGHT + CELL_HEIGHT / 2
-    ))
+    if row >= 0 && row < GRID_ROWS && col >= 0 && col < GRID_COLS then
+      Some(Position(
+        GRID_OFFSET_X + col * CELL_WIDTH + CELL_WIDTH / 2,
+        GRID_OFFSET_Y + row * CELL_HEIGHT + CELL_HEIGHT / 2
+      ))
+    else
+      None
 
   def physicalToLogical(pos: Position): Option[LogicalCoords] =
     if isInCell(pos) then
