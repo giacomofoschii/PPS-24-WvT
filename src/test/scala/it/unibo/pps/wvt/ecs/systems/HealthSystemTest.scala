@@ -236,7 +236,6 @@ class HealthSystemTest extends AnyFlatSpec with Matchers:
       .entityShouldNotHaveBlockedComponent(0)
       .whenUpdatedAgain
 
-  // === DSL Setup ===
   private def aHealthSystem: HealthSystemDSL =
     val elixirSystem = ElixirSystem(totalElixir = INITIAL_ELIXIR)
     HealthSystemDSL(
@@ -246,7 +245,6 @@ class HealthSystemTest extends AnyFlatSpec with Matchers:
       entities = List.empty
     )
 
-  // === DSL Definitions ===
   case class HealthSystemDSL(
       world: World,
       elixirSystem: ElixirSystem,
@@ -254,7 +252,6 @@ class HealthSystemTest extends AnyFlatSpec with Matchers:
       entities: List[EntityId]
   ):
 
-    // === Entity Creation ===
     def withEntity: EntityBuilder =
       val (updatedWorld, entity) = world.createEntity()
       EntityBuilder(this.copy(world = updatedWorld, entities = entities :+ entity), entity)
@@ -269,7 +266,6 @@ class HealthSystemTest extends AnyFlatSpec with Matchers:
       val worldWithComponent     = updatedWorld.addComponent(entity, WizardTypeComponent(wizardType))
       EntityBuilder(this.copy(world = worldWithComponent, entities = entities :+ entity), entity)
 
-    // === Actions ===
     def whenUpdated: HealthSystemDSL =
       val (updatedWorld, updatedSystem) = healthSystem.update(world)
       copy(
@@ -281,11 +277,9 @@ class HealthSystemTest extends AnyFlatSpec with Matchers:
     def whenUpdatedAgain: HealthSystemDSL =
       whenUpdated
 
-    // === Entity Selection for Assertions ===
     def entity(index: Int): EntityAssertions =
       EntityAssertions(this, entities(index))
 
-    // === Assertions on System ===
     def systemShouldHaveElixir(expected: Int): HealthSystemDSL =
       healthSystem.elixirSystem.getCurrentElixir shouldBe expected
       this

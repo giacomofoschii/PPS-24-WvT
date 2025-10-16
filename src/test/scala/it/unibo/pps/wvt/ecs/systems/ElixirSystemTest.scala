@@ -1,7 +1,6 @@
 package it.unibo.pps.wvt.ecs.systems
 
 import it.unibo.pps.wvt.ecs.core.World
-import it.unibo.pps.wvt.ecs.components.*
 import it.unibo.pps.wvt.ecs.factories.EntityFactory
 import it.unibo.pps.wvt.utilities.Position
 import it.unibo.pps.wvt.utilities.GamePlayConstants.*
@@ -203,7 +202,6 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       .whenUpdated
       .activationTimeShouldNotChange
 
-  // === DSL setup ===
   private def anElixirSystem: ElixirSystemDSL =
     ElixirSystemDSL(ElixirSystem())
 
@@ -213,7 +211,6 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
   private def anElixirSystemWith(amount: Int): ElixirAmountBuilder =
     ElixirAmountBuilder(amount)
 
-  // === DSL Definitions ===
   case class ElixirAmountBuilder(amount: Int):
     def elixir: ElixirSystemDSL =
       ElixirSystemDSL(ElixirSystem(totalElixir = amount))
@@ -228,7 +225,6 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       savedActivationTime: Option[Long] = None
   ):
 
-    // === Setup methods ===
     def withWorld: ElixirSystemDSL = copy(world = Some(World()))
 
     def activated: ElixirSystemDSL =
@@ -257,7 +253,6 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       world.foreach(EntityFactory.createBarrierWizard(_, pos))
       this
 
-    // === Timing and memory ===
     def rememberingInitialElixir: ElixirSystemDSL =
       copy(initialElixir = Some(system.getCurrentElixir))
 
@@ -271,7 +266,6 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
       Thread.sleep(millis)
       this
 
-    // === Actions ===
     def whenUpdated: ElixirSystemDSL =
       world.map(w => copy(system = system.update(w)._2.asInstanceOf[ElixirSystem])).getOrElse(this)
 
@@ -300,7 +294,6 @@ class ElixirSystemTest extends AnyFlatSpec with Matchers:
     def whenReset: ElixirSystemDSL =
       copy(system = ElixirSystem())
 
-    // === Assertions ===
     def shouldHaveElixir(expected: Int): ElixirSystemDSL =
       system.getCurrentElixir shouldBe expected
       this

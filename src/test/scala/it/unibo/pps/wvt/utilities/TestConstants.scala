@@ -25,13 +25,14 @@ object TestConstants:
   val POS_Y_MID: Float   = 300f
   val POS_Y_END: Float   = 600f
 
-  // Health values
+  // HealthBar values
   val HEALTH_ZERO: Int = 0
   val HEALTH_LOW: Int  = 25
   val HEALTH_MID: Int  = 50
   val HEALTH_FULL: Int = 100
   val HEALTH_HIGH: Int = 150
-
+  
+  //Health System specific values
   val TEST_ENTITY_MAX_HEALTH: Int                  = 100
   val TEST_ENTITY_HALF_HEALTH: Int                 = 50
   val TEST_ENTITY_LOW_HEALTH: Int                  = 30
@@ -133,8 +134,6 @@ object TestConstants:
   val DELAY_MEDIUM_MS: Long = 50
 
   // Elixir generation
-  val ELIXIR_GEN_RATE: Float      = 1.0f
-  val ELIXIR_GEN_AMOUNT: Int      = 5
   val ELIXIR_WAIT_MARGIN: Long    = 50L
   val ELIXIR_SPEND_SMALL: Int     = 10
   val ELIXIR_SPEND_MEDIUM: Int    = 20
