@@ -53,7 +53,7 @@ jobs:
 
       # 5. Controlla la formattazione del codice
       - name: Check Scala Formatting
-        run: sbt scalafmtAll
+        run: sbt scalafmtCheckAll
 
       # 6. Esegui i test
       - name: Run tests on Linux
