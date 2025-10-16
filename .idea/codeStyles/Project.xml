@@ -1,8 +1,0 @@
-<component name="ProjectCodeStyleConfiguration">
-  <code_scheme name="Project" version="173">
-    <ScalaCodeStyleSettings>
-      <option name="SCALAFMT_CONFIG_PATH" value="C:\Users\giaky\Desktop\Wizards_vs_Trolls_PPS\.scalafmt.conf" />
-      <option name="SCALAFMT_REFORMAT_ON_FILES_SAVE" value="true" />
-    </ScalaCodeStyleSettings>
-  </code_scheme>
-</component>
