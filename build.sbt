@@ -8,5 +8,11 @@ lazy val root = (project in file("."))
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19" % Test,
     libraryDependencies += "org.scalafx" %% "scalafx" % "21.0.0-R32",
     fork := true,
-    Compile / mainClass := Some("it.unibo.pps.wvt.main")
+    Compile / mainClass := Some("it.unibo.pps.wvt.main"),
+    assembly / mainClass := Some("it.unibo.pps.wvt.main"),
+    assembly / assemblyJarName := "WizardVsTrolls.jar",
+    assembly / assemblyMergeStrategy := {
+      case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+      case x => MergeStrategy.first
+    }
   )
