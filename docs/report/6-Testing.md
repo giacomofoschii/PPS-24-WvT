@@ -1,11 +1,10 @@
 ---
 title: Testing
-layout: default
 nav_order: 6
-has_children: false
+parent: Report
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Approccio
 Il progetto è stato sviluppato seguendo un approccio **Test-Driven Development (TDD)**.  

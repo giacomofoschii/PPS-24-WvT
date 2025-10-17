@@ -1,8 +1,7 @@
 ---
 title: Introduzione
-layout: default
-nav_order: 2
-has_children: false
+nav_order: 0
+parent: Report
 ---
 
 # Introduzione
