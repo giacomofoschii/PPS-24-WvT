@@ -6,16 +6,11 @@ description: "Wizards vs Trolls - Un gioco tower defense sviluppato in Scala."
 permalink: /
 ---
 
-<p style="text-align:center">
-  <img src="assets/img/logo_title.png" alt="Wizards vs Trolls" style="max-width:500px; height:auto; display:inline-block;" />
-</p>
-{: .fs-9 }
+{: style="text-align: center;"}
+![Wizards vs Trolls](assets/img/logo_title.png){: style="max-width: 400px;"}
 
 Implementazione, in Scala, del gioco "Wizards vs Trolls" per il corso di "Paradigmi di Programmazione e Sviluppo".
 {: .fs-6 .fw-300 }
-<img src="assets/img/fire.png" alt="Fire" style="max-width:200px; height:auto; display:block;" />
 
-[Documentazione](https://giacomofoschii.github.io/PPS-24-WvT/){: .btn .btn-primary .mb-4 .mb-md-0 .mr-2 }
-[Repository GitHub](https://github.com/giacomofoschii/PPS-24-WvT){: .btn .mb-4 .mb-md-0 }
-
-<img src="assets/img/BaseTroll.png" alt="Base Troll" style="max-width:200px; height:auto; display:block;" />
+{: style="display: flex; align-items: center; justify-content: center; gap: 2rem; flex-wrap: wrap;"}
+![Fuoco](assets/img/fire.png){: style="max-width: 150px;"} [Documentazione](https://giacomofoschii.github.io/PPS-24-WvT/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 } [Repository GitHub](https://github.com/giacomofoschii/PPS-24-WvT){: .btn .fs-5 .mb-4 .mb-md-0 } ![Troll Base](assets/img/BaseTroll.png){: style="max-width: 150px;"}
