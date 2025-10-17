@@ -2,7 +2,7 @@
 title: Sprint 4
 layout: default
 nav_order: 4
-parent: Sprint
+parent: Processo di Sviluppo
 ---
 
 # Sprint 4 - Polish & Game Flow

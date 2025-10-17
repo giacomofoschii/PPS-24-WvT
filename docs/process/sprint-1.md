@@ -2,7 +2,7 @@
 title: Sprint 1
 layout: default
 nav_order: 1
-parent: Sprint
+parent: Processo di Sviluppo
 ---
 
 # Sprint 1 - Foundation & Core Systems

@@ -2,7 +2,7 @@
 title: Sprint 3
 layout: default
 nav_order: 3
-parent: Sprint
+parent: Processo di Sviluppo
 ---
 
 # Sprint 3 - Economy & Combat Systems

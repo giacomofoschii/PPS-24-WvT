@@ -2,7 +2,7 @@
 title: Sprint 2
 layout: default
 nav_order: 2
-parent: Sprint
+parent: Processo di Sviluppo
 ---
 
 # Sprint 2 - Entities & Basic Interactions
