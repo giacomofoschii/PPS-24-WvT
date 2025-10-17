@@ -47,31 +47,119 @@ Questa scelta architetturale è stata motivata da diversi fattori:
 
 ## Struttura del Progetto
 
-La struttura del progetto è organizzata in moduli principali, riflettendo la separazione MVC con il Model implementato tramite ECS:
+``` mermaid
+classDiagram
+    %% Package Model - ECS
+    namespace Model_ECS {
+        class World {
+        }
+        class EntityId {
+        }
+        class Component {
+            <<trait>>
+        }
+        class System {
+            <<trait>>
+        }
+        class EntityFactory {
+        }
+    }
+    
+    %% Package Controller
+    namespace Controller {
+        class GameController
+        class GameSystemsState
+        class EventHandler {
+          <<trait>>
+        }
+        class EventQueue
+    }
+    
+    %% Package Engine
+    namespace Engine {
+        class GameEngine {
+          <<trait>>
+        }
+        class GameLoop {
+          <<trait>>
+        }
+        class GameState
+    }
+    
+    %% Package View
+    namespace View {
+        class ViewController {
+          <<object>>
+        }
+        class GameView {
+          <<object>>
+        }
+        class MainMenu {
+          <<object>>
+        }
+        class ShopPanel {
+          <<object>>
+        }
+        class WavePanel {
+          <<object>>
+        }
+    }
+    
+    %% Relationships - Model Internal (ECS Pattern)
+    World o-- EntityId
+    World o-- Component
+    System ..> World
+    EntityFactory ..> World
+    EntityFactory ..> Component
+    
+    %% Relationships - Controller Internal
+    GameController --> GameSystemsState
+    GameController --> EventHandler
+    EventHandler --> EventQueue
+    EventHandler ..> GameController
+    GameSystemsState *-- System
+    
+    %% Relationships - Engine Internal
+    GameEngine --> GameLoop
+    GameEngine --> GameState
+    GameEngine --> GameController
+    
+    %% Relationships - View Internal
+    ViewController ..> GameView
+    ViewController ..> MenuView
+    GameView ..> ShopPanel
+    GameView ..> WavePanel
+    
+    %% Relationships - Between Packages (MVC)
+    GameController --> World
+    GameController --> System
+    GameController --> GameEngine
+    ViewController --> GameController
+    GameView ..> ViewController
+```
 
-* **Model (ECS Core)**: Contiene la logica del gioco e la gestione dello stato tramite Entity Component System.
-    * `EntityId`: Identificatore unico per ogni entità di gioco.
-    * `EntityIdGenerator`: Generatore funzionale e thread-safe di identificatori univoci.
-    * `Component`: Trait base per tutti i componenti che definiscono aspetti delle entità (posizione, salute, attacco, movimento, tipo, ecc.).
-    * `System`: Trait base per tutti i sistemi che implementano la logica di gioco (movimento, combattimento, elisir, ondate, salute, proiettili).
-    * `World`: Contenitore immutabile che mantiene tutte le entità e i loro Component, fornendo API per creare, modificare e interrogare le entità.
-    * `EntityFactory`: Factory funzionale basata su type classes per la creazione di entità (maghi, troll, proiettili) a partire da configurazioni.
+La struttura del progetto è organizzata in quattro moduli principali, che riflettono una chiara separazione delle 
+responsabilità ispirata al pattern Model-View-Controller (MVC), con una distinzione esplicita per il motore di 
+gioco (Engine).
 
-* **Controller**: Contiene i componenti che gestiscono il flusso del gioco e coordinano la comunicazione tra Model e View.
-    * `GameEngine`: Coordina l'esecuzione sequenziale di tutti i System, mantiene il World corrente, gestisce le condizioni di game over e fornisce l'interfaccia per il posizionamento dei maghi.
-    * `GameLoop`: Implementa il fixed timestep loop a 60 FPS, gestisce l'accumulator per aggiornamenti deterministici, supporta pausa/ripresa e calcola gli FPS correnti.
+1. **Model (ECS)**: Rappresenta il nucleo logico del gioco. Implementato con il pattern Entity-Component-System, questo 
+modulo definisce la struttura dei dati (`Component`), la logica di gioco (`System`) e il contenitore dello 
+stato del mondo (`World`). È completamente disaccoppiato dagli altri moduli e si occupa esclusivamente 
+delle regole e dello stato della simulazione. La EntityFactory astrae la creazione delle entità di gioco.
 
-* **View**: Contiene tutti i componenti responsabili dell'interfaccia grafica e dell'interazione con l'utente.
-    * `GameView`: Implementa l'interfaccia grafica principale del gioco, visualizzando la griglia, le entità (maghi, troll, proiettili), le barre della vita, l'HUD con elisir e ondata corrente, e gestendo gli input dell'utente per il posizionamento dei maghi.
-    * `MenuView`: Gestisce il menu principale con opzioni per avviare una nuova partita o visualizzare le informazioni di gioco.
-    * `GameOverView`: Mostra la schermata di fine partita con le statistiche finali (ondate superate, nemici eliminati, elisir speso).
-    * `HUDComponents`: Componenti riutilizzabili per l'interfaccia (barra elisir, pannello selezione maghi, contatore ondata).
+2. **Engine**: È il cuore pulsante dell'applicazione. Il `GameEngine` gestisce il ciclo di vita del gioco, 
+orchestrando le transizioni di stato (es. `Playing`, `Paused`) definite in `GameState`. Si appoggia al `GameLoop` per 
+garantire un'esecuzione a timestep fisso, assicurando che la logica di gioco progredisca in modo deterministico e 
+indipendente dal frame rate.
 
-* **Utilities**: Contiene classi di supporto e configurazioni condivise.
-    * `Position`: Classe per rappresentare coordinate (x, y) con operazioni di distanza e direzione.
-    * `GamePlayConstants`: Costanti relative al gameplay (statistiche maghi e troll, costi, velocità, danni, cooldown).
-    * `ViewConstants`: Costanti relative alla visualizzazione (dimensioni griglia, celle, colori, dimensioni barre vita).
-    * `GameConstants`: Costanti generali (FPS target, timestep, intervalli di spawn).
+3. **Controller**: Agisce come intermediario, collegando l'input dell'utente, la logica di gioco e il motore. 
+Il `GameController` riceve eventi dall'`EventHandler` e comanda al `GameEngine` di aggiornare lo stato. 
+Il `GameSystemsState` aggrega e gestisce l'esecuzione ordinata di tutti i sistemi logici del Model.
+
+4. **View**: Costituisce l'interfaccia grafica. Il `ViewController` gestisce la navigazione tra le diverse 
+schermate (`GameView`, `MenuView`, etc.). La `GameView` si occupa del rendering degli elementi di gioco, 
+inclusi componenti specifici come `ShopPanel` e `WavePanel`. La `View` cattura le interazioni dell'utente e 
+le inoltra al `Controller` sotto forma di eventi, senza contenere alcuna logica di gioco.
 
 ## Principi di Programmazione Funzionale
 
