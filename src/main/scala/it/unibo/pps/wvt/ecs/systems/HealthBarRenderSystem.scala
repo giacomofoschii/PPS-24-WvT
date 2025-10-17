@@ -59,7 +59,7 @@ case class HealthBarRenderSystem(
     if entities.nonEmpty then Some(collectBars(entities, List.empty)) else None
 
   /** Creates a default HealthBarComponent based on the entity type.
-    * Wizards get blue health bars, trolls get red health bars, and others get default settings.
+    * Wizards get green health bars, trolls get red health bars, and others get default settings.
     *
     * @param entity The ID of the entity.
     * @param world  The game world containing entities and their components.
@@ -67,7 +67,7 @@ case class HealthBarRenderSystem(
     */
   private def createDefaultHealthBar(entity: EntityId, world: World): HealthBarComponent =
     world.getComponent[WizardTypeComponent](entity)
-      .map(_ => HealthBarComponent(barColor = Color.Blue))
+      .map(_ => HealthBarComponent(barColor = Color.Green))
       .orElse(world.getComponent[TrollTypeComponent](entity)
         .map(_ => HealthBarComponent(barColor = Color.Red)))
       .getOrElse(HealthBarComponent())

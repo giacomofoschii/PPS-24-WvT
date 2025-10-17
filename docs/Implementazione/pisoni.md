@@ -19,21 +19,23 @@ Il mio contributo al progetto si è focalizzato sulle seguenti aree:
 * **Implementazione del `GameController` e gestione degli eventi**: Sviluppo di un sistema di gestione degli eventi per 
 disaccoppiare i componenti del sistema e implementazione del `GameController` per coordinare le interazioni 
 tra i vari sistemi di gioco.
-* **Logica dei Troll**: Implementazione del `MovementSystem` e dello `SpawnSystem` per il comportamento dei nemici.
+
+* **Logica delle entità**: Implementazione del `MovementSystem` e dello `SpawnSystem` per il comportamento dei nemici, 
+e dell'`HealthBarRenderSystem` per il rendering delle barre della salute delle entità di gioco.
 
 * **Interfaccia utente**: Sviluppo dei menu di pausa e delle schermate di vittoria/sconfitta.
 
 * **Testing**: Scrittura di test per i sistemi implementati, come `MovementSystemTest` e `SpawnSystemTest`.
 
 
-## Implementazione - Game Engine e Game Loop
+## Implementazione - GameEngine e GameLoop
 
 Il cuore del gioco è rappresentato dal `GameEngine` e dal `GameLoop`, componenti che ho sviluppato per orchestrare 
 l'intero flusso di gioco.
 
 ---
 
-### Game Engine
+### GameEngine
 
 Il `GameEngine` è stato progettato come una macchina a stati finiti che gestisce le fasi principali del 
 gioco (`MainMenu`, `Playing`, `Paused`, `GameOver`). L'engine è responsabile di:
@@ -63,7 +65,7 @@ case class GameState(
     case other   => copy(phase = other)
 ```
 
-### Game Loop
+### GameLoop
 
 Per garantire un'esperienza di gioco fluida e un comportamento deterministico, ho implementato un 
 **game loop a timestep fisso**.Questo approccio disaccoppia la logica di gioco dalla velocità di rendering, 
@@ -93,11 +95,11 @@ private def processAccumulatedFrames(): Unit =
     processAccumulatedFrames()
 ```
 
-## Implementazione - Game Controller e gestione degli eventi
+## Implementazione - GameController e gestione degli eventi
 
 ---
 
-### Game Controller e Gestione degli Stati
+### GameController e gestione degli Stati
 
 Il `GameController` agisce come il principale orchestratore del gioco, facendo da ponte tra l'input dell'utente, 
 la logica di gioco (i sistemi ECS) e il `GameEngine`. La sua responsabilità è quella di tradurre le azioni 
@@ -201,7 +203,7 @@ non solo cambia la vista, ma avvia anche il GameEngine se non è già in esecuzi
 Questa architettura a eventi permette di avere un controllo centralizzato e prevedibile sul flusso del gioco, 
 rendendo il sistema più robusto e facile da estendere con nuove funzionalità e interazioni.
 
-## Implementazione - Logica dei Troll
+## Implementazione - Logica delle entità
 
 La logica comportamentale delle entità nemiche, i troll, è stata implementata attraverso due sistemi dedicati 
 all'interno dell'architettura Entity-Component-System (ECS): lo `SpawnSystem` e il `MovementSystem`. 
@@ -210,7 +212,7 @@ della gestione del loro comportamento di movimento sulla plancia di gioco.
 
 ---
 
-### Spawn System: Generazione Procedurale delle Ordate
+### SpawnSystem: Generazione Procedurale delle Ordate
 
 Lo `SpawnSystem` orchestra la comparsa dei troll, introducendo una curva di difficoltà progressiva e un 
 elemento di imprevedibilità. Una scelta progettuale chiave è stata quella di attivare il sistema solo dopo il 
@@ -247,35 +249,91 @@ Come si evince dal codice, il primo troll di un'ondata viene sempre generato sul
 posizionato, una scelta implementativa per focalizzare l'azione iniziale nel punto in cui il giocatore ha 
 deciso di stabilire la sua prima linea di difesa.
 
-### Movement System: Strategie di movimento dei Troll
+### MovementSystem: Strategie di movimento dei Troll
 
 Una volta che un'entità è stata generata, il suo comportamento spaziale è governato dal `MovementSystem`. 
-Questo sistema è responsabile dell'aggiornamento della posizione di tutte le entità mobili, applicando strategie di 
-movimento differenziate in base alla tipologia dell'entità, secondo un'implementazione del Strategy Pattern.
+Durante lo sviluppo, questo sistema ha subito un'importante evoluzione. Inizialmente, il movimento era basato 
+su una logica a celle, dove le entità si spostavano istantaneamente da una cella della griglia all'altra. 
+Questo approccio, sebbene semplice da implementare, risultava visivamente "scattoso" e poco realistico.
 
-* **Movimento Lineare**: La maggior parte dei troll implementa una strategia di movimento lineare, 
+Per migliorare la fluidità e la qualità visiva del gioco, si è deciso di passare a un sistema di movimento 
+basato su pixel. Questa transizione ha richiesto la definizione di una struttura dati `Position` che 
+rappresenta le coordinate `(x, y)` nello spazio di gioco con valori `Double`, consentendo spostamenti 
+frazionari e quindi animazioni più fluide.
+
+Il `MovementSystem` è stato quindi riprogettato per aggiornare la `PositionComponent` di ogni entità 
+mobile a ogni ciclo del game loop, calcolando lo spostamento in base alla 
+velocità dell'entità e al `deltaTime` (il tempo trascorso dall'ultimo frame). 
+Questo sistema applica diverse strategie di movimento in base alla tipologia dell'entità, 
+secondo un'implementazione del **Strategy Pattern**:
+
+1. **Movimento Lineare**: La maggior parte dei troll implementa una strategia di movimento lineare, 
 avanzando da destra verso sinistra con una velocità definita nel loro `MovementComponent`. 
 Questo comportamento costituisce il fondamento della sfida tattica del gioco, richiedendo 
 un posizionamento strategico delle unità difensive per intercettare l'avanzata nemica.
 
-* **Movimento a Zigzag**: Per introdurre una maggiore complessità tattica, è stata implementata una 
+2. **Movimento a Zigzag**: Per introdurre una maggiore complessità tattica, è stata implementata una 
 strategia di movimento non lineare per il `Troll Assassino`. Questa unità alterna il proprio percorso 
 tra la corsia di generazione e una corsia adiacente, scelta in modo pseudocasuale. 
 Questo comportamento a zigzag lo rende un bersaglio più elusivo, obbligando il giocatore a 
 considerare un posizionamento difensivo più flessibile.
 
-```scala
-private val trollMovementStrategy: TrollTypeComponent => MovementStrategy = trollType =>
-    trollType.trollType match
-      case Assassin => zigzagMovement
-      case _        => linearLeftMovement
-```
+  ```scala
+  private val trollMovementStrategy: TrollTypeComponent => MovementStrategy = trollType =>
+      trollType.trollType match
+        case Assassin => zigzagMovement
+        case _        => linearLeftMovement
+  ```
 
 Il `MovementSystem` gestisce anche l'interazione con altri sistemi attraverso il sistema a componenti. 
 Ad esempio, la presenza di un `FreezedComponent` su un troll, applicato dal `CollisionSystem` a seguito di un 
 attacco di ghiaccio, viene rilevata dal MovementSystem per modificare dinamicamente la velocità dell'entità. 
 Questo disaccoppiamento tra la logica del movimento e gli effetti di stato, facilitato dall'architettura ECS, 
 ha permesso di implementare interazioni complesse tra entità in modo modulare e manutenibile.
+
+### HealthBarRenderSystem: Feedback visivo sullo stato di salute delle entità
+
+Per fornire al giocatore un feedback visivo immediato sullo stato di salute delle unità in gioco, 
+ho implementato l'**`HealthBarRenderSystem`**. Questo sistema si integra nel ciclo di rendering principale e 
+ha la responsabilità di disegnare le barre della vita sopra le entità che hanno subito danni.
+
+L'implementazione segue un approccio orientato all'efficienza e alla separazione delle responsabilità, 
+operando in diverse fasi all'interno del suo metodo `update`:
+
+1.  **Raccolta Dati**: Il sistema per prima cosa interroga il `World` per identificare tutte le entità che 
+possiedono un `HealthComponent`. Per ciascuna di queste entità, raccoglie le informazioni necessarie per il rendering: 
+la posizione, la percentuale di salute corrente e il `HealthBarComponent` associato. Una scelta implementativa 
+importante è stata quella di fornire un comportamento di default: se un'entità con salute non ha un `HealthBarComponent` 
+esplicito, il sistema ne crea uno al volo, differenziando il colore della barra in base al tipo di 
+entità (verde per i maghi, rosso per i troll). Questo garantisce la coerenza visiva e semplifica la 
+creazione delle entità, che non devono necessariamente essere definite con un componente per la barra della vita.
+
+2.  **Calcolo dei Parametri di Rendering**: Successivamente, i dati raccolti vengono elaborati per calcolare i 
+parametri esatti per il rendering. Questo include l'aggiornamento del colore della barra in base alla 
+percentuale di salute (verde per salute alta, giallo per media, rosso per bassa), una logica incapsulata 
+all'interno del `HealthBarComponent` stesso per mantenere il componente coeso e responsabile del proprio stato visivo.
+
+3.  **Filtro di Visibilità**: Una delle ottimizzazioni chiave del sistema è il filtraggio delle barre della vita. 
+Per evitare di disegnare elementi non necessari e ridurre l'overhead di rendering, vengono renderizzate solo le 
+barre delle entità la cui salute è compresa tra 0% e 100% (esclusi). Le entità con salute piena o quelle sconfitte 
+non mostrano la barra della vita, mantenendo l'interfaccia pulita e focalizzata sulle informazioni rilevanti 
+per il giocatore.
+
+    ```scala
+    // in HealthBarRenderSystem.scala
+    private def filterVisibleBars(bars: Map[EntityId, RenderableHealthBar]): Map[EntityId, RenderableHealthBar] =
+      bars.filter { case (_, (_, percentage, _, _, _, _)) => percentage < 1.0 && percentage > 0.0 }
+    ```
+
+4.  **Caching e Rendering**: Infine, i dati delle barre visibili vengono memorizzati in una cache (`healthBarCache`) 
+all'interno dello stato del sistema. Questa cache viene poi passata al `RenderSystem` 
+principale, che si occupa del disegno effettivo degli elementi a schermo. 
+L'uso di una cache interna permette di disaccoppiare la logica di calcolo delle barre dalla 
+loro effettiva visualizzazione.
+
+Questo approccio garantisce che il feedback visivo sullo stato di salute sia non solo informativo, 
+ma anche performante, contribuendo a un'esperienza di gioco fluida anche in presenza di un 
+numero elevato di entità a schermo.
 
 ## Interfaccia Utente
 
