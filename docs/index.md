@@ -7,7 +7,7 @@ permalink: /
 ---
 
 {: style="text-align: center;"}
-![Wizards vs Trolls](assets/img/logo_title.png){: style="max-width: 400px;"}
+![Wizards vs Trolls](assets/img/logo_title.png){: style="max-width: 300px;"}
 
 Implementazione, in Scala, del gioco "Wizards vs Trolls" per il corso di "Paradigmi di Programmazione e Sviluppo".
 {: .fs-6 .fw-300 }
