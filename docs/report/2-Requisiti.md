@@ -1,3 +1,9 @@
+---
+title: Requisiti
+nav_order: 2
+parent: Report
+---
+
 # Requisiti
 
 L'analisi del problema svolta nella prima fase del progetto ha permesso di evidenziare i requisiti elencati di seguito.

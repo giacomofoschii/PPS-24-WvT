@@ -1,3 +1,9 @@
+---
+title: Processo di sviluppo
+nav_order: 1
+parent: Report
+---
+
 # Processo di sviluppo adottato
 
 Il gruppo ha adottato una metodologia **Agile** per lo sviluppo del progetto.
