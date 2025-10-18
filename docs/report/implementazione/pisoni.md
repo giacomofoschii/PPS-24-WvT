@@ -8,7 +8,7 @@ parent: Implementazione
 
 ---
 
-## Panoramica dei Contributi
+## Panoramica dei contributi
 
 Il mio contributo al progetto si è focalizzato sulle seguenti aree:
 
@@ -27,13 +27,46 @@ e dell'`HealthBarRenderSystem` per il rendering delle barre della salute delle e
 
 * **Testing**: Scrittura di test per i sistemi implementati, come `MovementSystemTest` e `SpawnSystemTest`.
 
+---
+
+## Principali sfide implementative
+
+Durante lo sviluppo del progetto, ho affrontato diverse sfide tecniche significative che hanno
+richiesto un'attenta analisi e soluzioni innovative.
+
+1. ### Gestione della Concorrenza e Thread Safety
+
+La prima sfida importante è stata garantire la thread-safety tra il game loop, che opera su un
+thread dedicato, e l'interfaccia ScalaFX, che richiede aggiornamenti sul JavaFX Application Thread.
+Ho risolto questa problematica utilizzando `AtomicReference` per lo stato dell'engine e del game loop,
+e una `ConcurrentLinkedQueue` per le azioni pendenti nel `GameController`. Questo approccio ha
+permesso di mantenere la separazione tra la logica di gioco e il rendering, evitando race conditions
+e deadlock.
+
+2. ### Transizione da movimento a celle a movimento continuo
+
+Inizialmente, il `MovementSystem` utilizzava un approccio basato su celle discrete, dove le entità
+si teletrasportavano istantaneamente tra posizioni della griglia. Questo metodo, sebbene semplice
+da implementare, produceva un'esperienza visiva poco fluida. La transizione a un sistema di movimento
+basato su pixel ha richiesto una completa riprogettazione: ho ristrutturato la struttura `Position` con
+coordinate `Double`, implementato l'interpolazione del movimento basata sul `deltaTime`, e gestito
+le transizioni graduali per il movimento zigzag degi Troll Assassini. Questa modifica ha migliorato
+significativamente la qualità visiva del gioco, ma ha anche introdotto nuove complessità nella
+gestione delle collisioni e nel mapping tra coordinate logiche e fisiche.
+
+3. ### Complessità del sistema di spawn procedurale
+
+Lo `SpawnSystem` ha presentato sfide nella sincronizzazione tra il timing di gioco e il tempo reale.
+La gestione della pausa richiedeva che gli eventi di spawn schedulati venissero "spostati nel tempo"
+di una durata pari alla pausa stessa. Ho implementato un meccanismo che traccia il momento della pausa
+(`pausedAt`) e, alla ripresa, ricalcola tutti i timestamp degli spawn pendenti.
+
+---
 
 ## Implementazione - GameEngine e GameLoop
 
 Il cuore del gioco è rappresentato dal `GameEngine` e dal `GameLoop`, componenti che ho sviluppato per orchestrare 
 l'intero flusso di gioco.
-
----
 
 ### GameEngine
 
@@ -95,9 +128,9 @@ private def processAccumulatedFrames(): Unit =
     processAccumulatedFrames()
 ```
 
-## Implementazione - GameController e gestione degli eventi
-
 ---
+
+## Implementazione - GameController e gestione degli eventi
 
 ### GameController e gestione degli Stati
 
@@ -203,14 +236,14 @@ non solo cambia la vista, ma avvia anche il GameEngine se non è già in esecuzi
 Questa architettura a eventi permette di avere un controllo centralizzato e prevedibile sul flusso del gioco, 
 rendendo il sistema più robusto e facile da estendere con nuove funzionalità e interazioni.
 
+---
+
 ## Implementazione - Logica delle entità
 
 La logica comportamentale delle entità nemiche, i troll, è stata implementata attraverso due sistemi dedicati 
 all'interno dell'architettura Entity-Component-System (ECS): lo `SpawnSystem` e il `MovementSystem`. 
 Questi moduli sono responsabili, rispettivamente, della generazione procedurale delle ondate di nemici e 
 della gestione del loro comportamento di movimento sulla plancia di gioco.
-
----
 
 ### SpawnSystem: Generazione Procedurale delle Ordate
 
@@ -222,17 +255,17 @@ prima di affrontare la prima ondata.
 
 La generazione dei nemici è un processo dinamico e parametrico, governato da diverse logiche:
 
-* **Difficoltà Progressiva**: La sfida si intensifica con l'avanzare delle ondate. 
+* **Difficoltà progressiva**: La sfida si intensifica con l'avanzare delle ondate. 
 Lo `SpawnSystem` si interfaccia con il modulo di configurazione `WaveLevel` per applicare moltiplicatori 
 alle statistiche base dei troll (salute, velocità, danno). 
 Questo scaling assicura che la difficoltà aumenti in modo controllato e predicibile.
 
-* **Distribuzione Dinamica dei Nemici**: Per evitare la monotonia, la composizione delle ondate varia nel tempo. 
+* **Distribuzione dinamica dei nemici**: Per evitare la monotonia, la composizione delle ondate varia nel tempo. 
 Le ondate iniziali sono dominate da troll di base, ma con il progredire della partita, il sistema introduce 
 gradualmente tipologie di nemici più specializzate e complesse,
 come i `Warrior` o gli `Assassin`, seguendo una distribuzione di probabilità che si evolve a ogni nuova ondata.
 
-* **Generazione a "Batch"**: Anziché generare i troll a intervalli perfettamente regolari, è stata implementata
+* **Generazione a "batch"**: Anziché generare i troll a intervalli perfettamente regolari, è stata implementata
 una logica di "batch". I nemici vengono generati in piccoli gruppi con intervalli temporali leggermente
 randomizzati. Questo approccio crea un flusso di avversari più organico e meno prevedibile, costringendo 
 il giocatore ad adattare costantemente le proprie strategie difensive.
@@ -267,13 +300,13 @@ velocità dell'entità e al `deltaTime` (il tempo trascorso dall'ultimo frame).
 Questo sistema applica diverse strategie di movimento in base alla tipologia dell'entità, 
 secondo un'implementazione del **Strategy Pattern**:
 
-1. **Movimento Lineare**: La maggior parte dei troll implementa una strategia di movimento lineare, 
+1. **Movimento lineare**: La maggior parte dei troll implementa una strategia di movimento lineare, 
 avanzando da destra verso sinistra con una velocità definita nel loro `MovementComponent`. 
 Questo comportamento costituisce il fondamento della sfida tattica del gioco, richiedendo 
-un posizionamento strategico delle unità difensive per intercettare l'avanzata nemica.
+un posizionamento strategico delle entità difensive per intercettare l'avanzata nemica.
 
-2. **Movimento a Zigzag**: Per introdurre una maggiore complessità tattica, è stata implementata una 
-strategia di movimento non lineare per il `Troll Assassino`. Questa unità alterna il proprio percorso 
+2. **Movimento a zigzag**: Per introdurre una maggiore complessità tattica, è stata implementata una 
+strategia di movimento non lineare per il `Troll Assassino`. Questa entità alterna il proprio percorso 
 tra la corsia di generazione e una corsia adiacente, scelta in modo pseudocasuale. 
 Questo comportamento a zigzag lo rende un bersaglio più elusivo, obbligando il giocatore a 
 considerare un posizionamento difensivo più flessibile.
@@ -293,14 +326,14 @@ ha permesso di implementare interazioni complesse tra entità in modo modulare e
 
 ### HealthBarRenderSystem: Feedback visivo sullo stato di salute delle entità
 
-Per fornire al giocatore un feedback visivo immediato sullo stato di salute delle unità in gioco, 
+Per fornire al giocatore un feedback visivo immediato sullo stato di salute delle entità in gioco, 
 ho implementato l'**`HealthBarRenderSystem`**. Questo sistema si integra nel ciclo di rendering principale e 
 ha la responsabilità di disegnare le barre della vita sopra le entità che hanno subito danni.
 
 L'implementazione segue un approccio orientato all'efficienza e alla separazione delle responsabilità, 
 operando in diverse fasi all'interno del suo metodo `update`:
 
-1.  **Raccolta Dati**: Il sistema per prima cosa interroga il `World` per identificare tutte le entità che 
+1.  **Raccolta dati**: Il sistema per prima cosa interroga il `World` per identificare tutte le entità che 
 possiedono un `HealthComponent`. Per ciascuna di queste entità, raccoglie le informazioni necessarie per il rendering: 
 la posizione, la percentuale di salute corrente e il `HealthBarComponent` associato. Una scelta implementativa 
 importante è stata quella di fornire un comportamento di default: se un'entità con salute non ha un `HealthBarComponent` 
@@ -308,12 +341,12 @@ esplicito, il sistema ne crea uno al volo, differenziando il colore della barra 
 entità (verde per i maghi, rosso per i troll). Questo garantisce la coerenza visiva e semplifica la 
 creazione delle entità, che non devono necessariamente essere definite con un componente per la barra della vita.
 
-2.  **Calcolo dei Parametri di Rendering**: Successivamente, i dati raccolti vengono elaborati per calcolare i 
+2.  **Calcolo dei parametri di Rendering**: Successivamente, i dati raccolti vengono elaborati per calcolare i 
 parametri esatti per il rendering. Questo include l'aggiornamento del colore della barra in base alla 
 percentuale di salute (verde per salute alta, giallo per media, rosso per bassa), una logica incapsulata 
 all'interno del `HealthBarComponent` stesso per mantenere il componente coeso e responsabile del proprio stato visivo.
 
-3.  **Filtro di Visibilità**: Una delle ottimizzazioni chiave del sistema è il filtraggio delle barre della vita. 
+3.  **Filtro di visibilità**: Una delle ottimizzazioni chiave del sistema è il filtraggio delle barre della vita. 
 Per evitare di disegnare elementi non necessari e ridurre l'overhead di rendering, vengono renderizzate solo le 
 barre delle entità la cui salute è compresa tra 0% e 100% (esclusi). Le entità con salute piena o quelle sconfitte 
 non mostrano la barra della vita, mantenendo l'interfaccia pulita e focalizzata sulle informazioni rilevanti 
@@ -335,11 +368,14 @@ Questo approccio garantisce che il feedback visivo sullo stato di salute sia non
 ma anche performante, contribuendo a un'esperienza di gioco fluida anche in presenza di un 
 numero elevato di entità a schermo.
 
+---
+
 ## Interfaccia Utente
 
-Oltre alla logica di gioco, il mio contributo si è esteso all'implementazione di componenti cruciali dell'interfaccia utente, in particolare i menu di overlay che gestiscono le interruzioni del flusso di gioco. Questi elementi sono stati sviluppati utilizzando **ScalaFX**, adottando un approccio funzionale e dichiarativo per la costruzione della UI.
-
----
+Oltre alla logica di gioco, il mio contributo si è esteso all'implementazione di componenti cruciali 
+dell'interfaccia utente, in particolare i menu di overlay che gestiscono le interruzioni del flusso di 
+gioco. Questi elementi sono stati sviluppati utilizzando **ScalaFX**, adottando un approccio funzionale e 
+dichiarativo per la costruzione della UI.
 
 ### Menu di Pausa e Schermate di Vittoria/Sconfitta
 
@@ -348,14 +384,14 @@ da parte dell'utente e la conclusione di un'ondata o della partita.
 
 La progettazione di questi componenti si è basata su alcuni principi chiave:
 
-* **Componibilità e Riuso**: Entrambi i pannelli condividono una struttura simile, basata su uno `StackPane` che 
+* **Componibilità e riuso**: Entrambi i pannelli condividono una struttura simile, basata su uno `StackPane` che 
 sovrappone un layout di controlli a un'immagine di sfondo. La creazione dei bottoni e la gestione delle 
 loro azioni sono state delegate a un `ButtonFactory` centralizzato, che traduce le interazioni 
 dell'utente in `GameEvent` specifici (es. `ResumeGame`, `ContinueBattle`, `NewGame`). 
 Questo approccio ha permesso di ridurre la duplicazione del codice e di mantenere una 
 netta separazione tra la vista e la logica di controllo.
 
-* **Gestione Dichiarativa degli Stati**: Per il `GameResultPanel`, ho utilizzato un **Algebraic Data Type (ADT)**, 
+* **Gestione dichiarativa degli stati**: Per il `GameResultPanel`, ho utilizzato un **Algebraic Data Type (ADT)**, 
 definito tramite una `sealed trait`, per modellare i due possibili esiti della partita: `Victory` e `Defeat`. 
 Questa scelta progettuale permette di rappresentare gli stati in modo type-safe ed estensibile. 
 Ogni `case object` incapsula le informazioni specifiche per quel determinato stato, 
@@ -381,7 +417,7 @@ come l'immagine del titolo da mostrare e l'azione da associare al pulsante di co
 correttamente al contesto, offrendo azioni pertinenti all'utente (ad esempio, "Prossima ondata" dopo una vittoria 
 e "Nuova partita" dopo una sconfitta).
 
-* **Caricamento Efficiente delle Risorse**: Per ottimizzare le performance, il caricamento delle immagini 
+* **Caricamento efficiente delle risorse**: Per ottimizzare le performance, il caricamento delle immagini 
 di sfondo e dei titoli è stato implementato utilizzando `lazy val`. In questo modo, le risorse grafiche 
 vengono caricate dal disco solo al momento del loro primo utilizzo effettivo, riducendo il tempo di 
 avvio e il consumo di memoria dell'applicazione. La logica di caricamento e caching è stata incapsulata 
@@ -390,6 +426,8 @@ nell'`ImageFactory`, promuovendo ulteriormente il riuso del codice.
 In sintesi, l'implementazione di questi componenti dell'interfaccia utente ha seguito i principi della 
 programmazione funzionale e della separazione delle responsabilità, portando a un codice modulare, 
 efficiente e facilmente estensibile.
+
+---
 
 ## Testing e Validazione
 
@@ -412,19 +450,7 @@ La creazione manuale di entità, l'aggiunta di componenti e l'impostazione dei p
 verbose, ripetitive e difficili da leggere, oscurando l'intento effettivo del test.
 
 Per superare questa difficoltà, è stato progettato e implementato un **Domain-Specific Language (DSL)** interno, 
-specifico per la creazione di scenari di gioco. 
-La scelta di sviluppare un DSL è stata motivata da diversi obiettivi:
-
-* **Leggibilità e Espressività**: Il DSL consente di descrivere uno stato del mondo di gioco in modo dichiarativo e 
-vicino al linguaggio naturale. Questo rende i test immediatamente comprensibili, anche a distanza 
-di tempo o per chi non ha familiarità con i dettagli implementativi dei componenti.
-
-* **Riduzione del Boilerplate**: Astraendo la complessità della creazione di `World` e `GameSystemsState`, 
-il DSL riduce drasticamente la quantità di codice ripetitivo necessario per la configurazione di ogni test.
-
-* **Manutenibilità**: Centralizzando la logica di creazione degli scenari, 
-eventuali modifiche all'architettura (ad esempio, l'aggiunta di un nuovo componente di base per ogni entità) 
-richiedono modifiche in un unico punto (il DSL stesso), anziché in decine di test.
+specifico per la creazione di scenari di gioco.
 
 Il DSL si basa su un `ScenarioBuilder` che offre una serie di metodi concatenabili per 
 definire lo stato del gioco in modo fluido:
@@ -471,7 +497,10 @@ val (world, state) = scenario: builder =>
 
 Sono state create suite di test per tutti i principali moduli logici del gioco, 
 garantendo una solida copertura delle funzionalità critiche. 
-In particolare, sono stati testati:
+
+I test coprono circa il 75% del codice implementato, con una copertura del 90% per i componenti core del `GameEngine` 
+e dei sistemi ECS. I componenti UI non sono stati testati in quanto basati su ScalaFX, framework che richiede 
+test di integrazione complessi. In particolare, sono stati testati:
 
 * **`GameEngineTest` e `GameLoopTest`**: Verificano la corretta gestione del ciclo di vita del gioco 
 (avvio, arresto, pausa, ripresa) e la stabilità del ciclo di aggiornamento a timestep fisso.
@@ -485,5 +514,9 @@ il numero massimo di troll per ondata e l'applicazione corretta dello scaling di
 * **`GameSystemsStateTest`**: Verifica le transizioni di stato del gioco e la corretta 
 rilevazione delle condizioni di vittoria e sconfitta.
 
-L'approccio al testing adottato, si è dimostrato efficace nel garantire la qualità e la robustezza del codice, 
-costituendo una rete di sicurezza indispensabile durante l'intero ciclo di sviluppo del progetto.
+L'approccio al testing adottato si è dimostrato efficace nel garantire la qualità e la robustezza del codice, 
+costituendo una rete di sicurezza indispensabile durante l'intero ciclo di sviluppo del progetto. Anche se riflettendo
+sul processo, un'adozione del Test-Driven Development (TDD) avrebbe potuto portare ulteriori benefici.
+Questo avrebbe potuto ridurre alcune delle sessioni di refactoring e portare a un design ancora più pulito e 
+disaccoppiato. Inoltre, avrebbe fornito una guida più strutturata per l'implementazione, trasformando 
+i requisiti in casi di test eseguibili che avrebbero definito in modo inequivocabile il comportamento atteso di ogni modulo.
