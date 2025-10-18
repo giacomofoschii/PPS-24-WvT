@@ -34,32 +34,32 @@ e dell'`HealthBarRenderSystem` per il rendering delle barre della salute delle e
 Durante lo sviluppo del progetto, ho affrontato diverse sfide tecniche significative che hanno
 richiesto un'attenta analisi e soluzioni innovative.
 
-1. ### Gestione della Concorrenza e Thread Safety
+1. **Gestione della Concorrenza e Thread Safety**
 
-La prima sfida importante è stata garantire la thread-safety tra il game loop, che opera su un
-thread dedicato, e l'interfaccia ScalaFX, che richiede aggiornamenti sul JavaFX Application Thread.
-Ho risolto questa problematica utilizzando `AtomicReference` per lo stato dell'engine e del game loop,
-e una `ConcurrentLinkedQueue` per le azioni pendenti nel `GameController`. Questo approccio ha
-permesso di mantenere la separazione tra la logica di gioco e il rendering, evitando race conditions
-e deadlock.
+    La prima sfida importante è stata garantire la thread-safety tra il game loop, che opera su un
+    thread dedicato, e l'interfaccia ScalaFX, che richiede aggiornamenti sul JavaFX Application Thread.
+    Ho risolto questa problematica utilizzando `AtomicReference` per lo stato dell'engine e del game loop,
+    e una `ConcurrentLinkedQueue` per le azioni pendenti nel `GameController`. Questo approccio ha
+    permesso di mantenere la separazione tra la logica di gioco e il rendering, evitando race conditions
+    e deadlock.
 
-2. ### Transizione da movimento a celle a movimento continuo
+2. **Transizione da movimento a celle a movimento continuo**
 
-Inizialmente, il `MovementSystem` utilizzava un approccio basato su celle discrete, dove le entità
-si teletrasportavano istantaneamente tra posizioni della griglia. Questo metodo, sebbene semplice
-da implementare, produceva un'esperienza visiva poco fluida. La transizione a un sistema di movimento
-basato su pixel ha richiesto una completa riprogettazione: ho ristrutturato la struttura `Position` con
-coordinate `Double`, implementato l'interpolazione del movimento basata sul `deltaTime`, e gestito
-le transizioni graduali per il movimento zigzag degi Troll Assassini. Questa modifica ha migliorato
-significativamente la qualità visiva del gioco, ma ha anche introdotto nuove complessità nella
-gestione delle collisioni e nel mapping tra coordinate logiche e fisiche.
+    Inizialmente, il `MovementSystem` utilizzava un approccio basato su celle discrete, dove le entità
+    si teletrasportavano istantaneamente tra posizioni della griglia. Questo metodo, sebbene semplice
+    da implementare, produceva un'esperienza visiva poco fluida. La transizione a un sistema di movimento
+    basato su pixel ha richiesto una completa riprogettazione: ho ristrutturato la struttura `Position` con
+    coordinate `Double`, implementato l'interpolazione del movimento basata sul `deltaTime`, e gestito
+    le transizioni graduali per il movimento zigzag degi Troll Assassini. Questa modifica ha migliorato
+    significativamente la qualità visiva del gioco, ma ha anche introdotto nuove complessità nella
+    gestione delle collisioni e nel mapping tra coordinate logiche e fisiche.
 
-3. ### Complessità del sistema di spawn procedurale
+3. **Complessità del sistema di spawn procedurale**
 
-Lo `SpawnSystem` ha presentato sfide nella sincronizzazione tra il timing di gioco e il tempo reale.
-La gestione della pausa richiedeva che gli eventi di spawn schedulati venissero "spostati nel tempo"
-di una durata pari alla pausa stessa. Ho implementato un meccanismo che traccia il momento della pausa
-(`pausedAt`) e, alla ripresa, ricalcola tutti i timestamp degli spawn pendenti.
+    Lo `SpawnSystem` ha presentato sfide nella sincronizzazione tra il timing di gioco e il tempo reale.
+    La gestione della pausa richiedeva che gli eventi di spawn schedulati venissero "spostati nel tempo"
+    di una durata pari alla pausa stessa. Ho implementato un meccanismo che traccia il momento della pausa
+    (`pausedAt`) e, alla ripresa, ricalcola tutti i timestamp degli spawn pendenti.
 
 ---
 
