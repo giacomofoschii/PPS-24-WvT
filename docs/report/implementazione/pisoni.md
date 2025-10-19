@@ -50,7 +50,7 @@ richiesto un'attenta analisi e soluzioni innovative.
     da implementare, produceva un'esperienza visiva poco fluida. La transizione a un sistema di movimento
     basato su pixel ha richiesto una completa riprogettazione: ho ristrutturato la struttura `Position` con
     coordinate `Double`, implementato l'interpolazione del movimento basata sul `deltaTime`, e gestito
-    le transizioni graduali per il movimento zigzag degi Troll Assassini. Questa modifica ha migliorato
+    le transizioni graduali per il movimento zigzag dei Troll Assassini. Questa modifica ha migliorato
     significativamente la qualità visiva del gioco, ma ha anche introdotto nuove complessità nella
     gestione delle collisioni e nel mapping tra coordinate logiche e fisiche.
 
@@ -98,6 +98,9 @@ case class GameState(
     case other   => copy(phase = other)
 ```
 
+Per  garantire la thread-safety nelle operazioni concorrenti, l'aggiornamento dello stato del
+`GameEngine` utilizza un pattern atomico con compare-and-set e tail recursion.
+
 ### GameLoop
 
 Per garantire un'esperienza di gioco fluida e un comportamento deterministico, ho implementato un 
@@ -142,22 +145,8 @@ Per gestire la complessità dei numerosi sistemi che compongono la logica del gi
 (movimento, combattimento, generazione di elisir, ecc.), ho introdotto la case class `GameSystemsState`. 
 Questa classe incapsula lo stato di tutti i sistemi, garantendo che vengano aggiornati in un ordine predicibile e coerente.
 
-```scala
-// in GameSystemsState.scala
-case class GameSystemsState(
-    movement: MovementSystem,
-    collision: CollisionSystem,
-    combat: CombatSystem,
-    elixir: ElixirSystem,
-    health: HealthSystem,
-    spawn: SpawnSystem,
-    render: RenderSystem,
-    selectedWizardType: Option[WizardType] = None,
-    currentWave: Int = 1
-)
-```
 Il metodo `updateAll` all'interno di `GameSystemsState` è cruciale: definisce la pipeline di esecuzione dei 
-sistemi ad ogni ciclo di gioco. L'ordine di esecuzione è fondamentale:ad esempio, il `MovementSystem` viene eseguito 
+sistemi ad ogni ciclo di gioco. L'ordine di esecuzione è fondamentale: ad esempio, il `MovementSystem` viene eseguito 
 prima del `CollisionSystem` per garantire che le collisioni vengano rilevate sulle nuove posizioni, 
 e l'`HealthSystem` viene eseguito dopo, per applicare i danni risultanti. Questa struttura garantisce 
 che le interdipendenze tra i sistemi siano gestite correttamente.
@@ -233,6 +222,32 @@ non solo cambia la vista, ma avvia anche il GameEngine se non è già in esecuzi
       // ... altri casi di eventi
 ```
 
+Inoltre, la `EventQueue` è stata progettata per supportare operazioni composizionali. L'implementazione di metodi 
+come `map` e `flatMap` permette di trasformare il flusso di eventi in modo dichiarativo, preservando l'immutabilità 
+della coda e migliorando l'espressività del codice. Questo approccio funzionale si manifesta anche in metodi come
+`prioritize`, che ordina gli eventi in base alla loro criticità. Anziché iterare e riordinare manualmente la coda, 
+questa operazione viene espressa come una singola trasformazione funzionale sulla collezione sottostante, 
+garantendo che le operazioni più urgenti vengano eseguite per prime.
+
+```scala
+// Operazioni monadiche sulla coda di eventi
+def map(f: GameEvent => GameEvent): EventQueue =
+  copy(queue = queue.map(f))
+
+def flatMap(f: GameEvent => Queue[GameEvent]): EventQueue =
+  copy(queue = queue.flatMap(f))
+
+def fold[B](initial: B)(f: (B, GameEvent) => B): B =
+  queue.foldLeft(initial)(f)
+
+// Prioritizzazione degli eventi
+def prioritize(): EventQueue =
+  copy(queue = Queue.from(queue.toList.sortBy(_.priority)))
+```
+
+Queste operazioni permettono di trasformare e comporre eventi in modo dichiarativo,
+mantenendo l'immutabilità della coda.
+
 Questa architettura a eventi permette di avere un controllo centralizzato e prevedibile sul flusso del gioco, 
 rendendo il sistema più robusto e facile da estendere con nuove funzionalità e interazioni.
 
@@ -305,17 +320,40 @@ avanzando da destra verso sinistra con una velocità definita nel loro `Movement
 Questo comportamento costituisce il fondamento della sfida tattica del gioco, richiedendo 
 un posizionamento strategico delle entità difensive per intercettare l'avanzata nemica.
 
+  ```scala
+  private val linearLeftMovement: MovementStrategy = (pos, movement, _, _, dt) =>
+      val pixelsPerSecond = movement.speed * CELL_WIDTH
+      val minY            = GRID_OFFSET_Y
+      val maxY            = GRID_OFFSET_Y + GRID_ROWS * CELL_HEIGHT - CELL_HEIGHT / 2
+      Position(
+        pos.x - pixelsPerSecond * dt,
+        pos.y
+      )
+  ```
+
 2. **Movimento a zigzag**: Per introdurre una maggiore complessità tattica, è stata implementata una 
 strategia di movimento non lineare per il `Troll Assassino`. Questa entità alterna il proprio percorso 
 tra la corsia di generazione e una corsia adiacente, scelta in modo pseudocasuale. 
 Questo comportamento a zigzag lo rende un bersaglio più elusivo, obbligando il giocatore a 
-considerare un posizionamento difensivo più flessibile.
+considerare un posizionamento difensivo più flessibile. Per implementare questo comportamento `stateful` (il troll deve
+"ricordare" in quale fase del movimento si trova e da quanto tempo) mantenendo il `MovementSystem` completamente
+`stateless` è stato introdotto lo `ZigZagStateComponent`. Questo componente agisce come una piccola macchina a stati 
+associata a ogni singolo Troll Assassino, contenendo informazioni come la riga di spawn, la riga alternativa, la fase 
+corrente del movimento (`OnSpawnRow` o `OnAlternateRow`) e il timestamp di inizio della fase. In questo modo, il 
+`MovementSystem` non deve mantenere alcuno stato interno; ad ogni update, legge semplicemente lo `ZigZagStateComponent` 
+dell'entità per calcolarne la nuova posizione, garantendo che ogni assassino gestisca il proprio ciclo di zigzag in 
+modo indipendente e che la logica di movimento rimanga pura e disaccoppiata.
 
   ```scala
-  private val trollMovementStrategy: TrollTypeComponent => MovementStrategy = trollType =>
-      trollType.trollType match
-        case Assassin => zigzagMovement
-        case _        => linearLeftMovement
+  private val zigzagMovement: MovementStrategy = (pos, movement, entity, world, dt) =>
+      world.getComponent[ZigZagStateComponent](entity) match
+        case Some(state) =>
+          val currentTime = System.currentTimeMillis()
+          val updatedPos  = calculateZigZagPosition(pos, movement.speed, dt, state, currentTime)
+    
+          updatedPos
+        case None =>
+          pos
   ```
 
 Il `MovementSystem` gestisce anche l'interazione con altri sistemi attraverso il sistema a componenti. 
@@ -486,11 +524,11 @@ val world4 = world3.addComponent(wizard, HealthComponent(100, 100))
 
 ### Con DSL (dichiarativo e chiaro):
 ```scala
-val (world, state) = scenario: builder =>
+val (testWorld, _) = scenario: builder =>
   builder
-    .withWizard(WizardType.Fire).at(2, 3)
-    .withTroll(TrollType.Base).at(2, 8)
-    .withElixir(200)
+    .withWizard(WizardType.Fire).at(GRID_ROW_MID, GRID_COL_START)
+    .withTroll(TrollType.Basic).at(GRID_ROW_MID, GRID_COL_END)
+    .withElixir(ELIXIR_START)
 ```
 
 ### Copertura dei Test
