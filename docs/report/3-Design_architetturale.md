@@ -63,7 +63,7 @@ classDiagram
         class EntityFactory {
         }
     }
-    
+
     %% Package Controller
     namespace Controller {
         class GameController
@@ -73,7 +73,7 @@ classDiagram
         }
         class EventQueue
     }
-    
+
     %% Package Engine
     namespace Engine {
         class GameEngine {
@@ -84,7 +84,7 @@ classDiagram
         }
         class GameState
     }
-    
+
     %% Package View
     namespace View {
         class ViewController {
@@ -96,6 +96,15 @@ classDiagram
         class MainMenu {
           <<object>>
         }
+        class InfoMenu {
+          <<object>>
+        }
+        class PauseMenu {
+           <<object>>
+        }
+        class GameResultPanel {
+           <<object>>
+        }
         class ShopPanel {
           <<object>>
         }
@@ -103,38 +112,41 @@ classDiagram
           <<object>>
         }
     }
-    
+
     %% Relationships - Model Internal (ECS Pattern)
     World o-- EntityId
     World o-- Component
     System ..> World
     EntityFactory ..> World
     EntityFactory ..> Component
-    
+
     %% Relationships - Controller Internal
     GameController --> GameSystemsState
     GameController --> EventHandler
     EventHandler --> EventQueue
     EventHandler ..> GameController
     GameSystemsState *-- System
-    
+
     %% Relationships - Engine Internal
     GameEngine --> GameLoop
     GameEngine --> GameState
     GameEngine --> GameController
-    
+
     %% Relationships - View Internal
     ViewController ..> GameView
-    ViewController ..> MenuView
+    ViewController ..> MainMenu
+    ViewController ..> InfoMenu
+    ViewController ..> PauseMenu
+    ViewController ..> GameResultPanel
     GameView ..> ShopPanel
     GameView ..> WavePanel
-    
+
     %% Relationships - Between Packages (MVC)
     GameController --> World
-    GameController --> System
-    GameController --> GameEngine
-    ViewController --> GameController
-    GameView ..> ViewController
+    GameController --> System  // System is in Model_ECS namespace
+    GameController --> GameEngine // GameEngine is in Engine namespace
+    ViewController --> GameController // ViewController is in View, GameController is in Controller
+    GameView ..> ViewController // Both in View namespace
 ```
 
 La struttura del progetto è organizzata in quattro moduli principali, che riflettono una chiara separazione delle 
