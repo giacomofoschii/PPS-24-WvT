@@ -14,18 +14,6 @@ In questa sezione verrà approfondito il design delle componenti chiave del prog
 
 ---
 
-## Pattern Architetturale MVC (Model-View-Controller)
-
-Questo pattern è stato adottato per separare la logica di gioco dalla sua rappresentazione grafica e dall'interazione con l'utente, garantendo modularità e manutenibilità. I tre componenti principali svolgono ruoli specifici:
-
-* **Model**: Rappresenta il cuore dell'applicazione, contenendo i dati e la logica di business del gioco (stato delle entità, regole di combattimento, gestione risorse). È implementato utilizzando il pattern **Entity Component System (ECS)**.
-* **View**: È l'interfaccia utente, responsabile della presentazione dei dati del Model all'utente e della raccolta degli input. Non contiene logica di gioco.
-* **Controller**: Agisce come intermediario tra Model e View. Riceve input dalla View, li elabora, aggiorna il Model e istruisce la View a riflettere i cambiamenti.
-
-Questa separazione permette lo sviluppo e il test indipendente dei componenti e facilita future estensioni.
-
----
-
 ## Model (ECS)
 
 Il Model racchiude e gestisce l'intera logica di business del gioco, implementata tramite il pattern **Entity Component System (ECS)**. Di seguito sono riportate le principali scelte di design e responsabilità.
@@ -72,12 +60,11 @@ classDiagram
 
 La creazione delle diverse entità del gioco (Maghi, Troll, Proiettili) è centralizzata nell'object **`EntityFactory`**. Questo approccio utilizza il pattern **Factory Method** combinato con **Type Classes** (`EntityBuilder`) per assemblare le entità in modo componibile e type-safe.
 
-#### Responsabilità:
-
-* Definire **configurazioni** (`WizardConfig`, `TrollConfig`, `ProjectileConfig`) che descrivono le proprietà base di ciascun tipo di entità.
-* Utilizzare `EntityBuilder` (implementati tramite `given instances`) per costruire la lista di `Component` necessari per ogni configurazione.
-* Fornire **metodi specifici** (es. `createFireWizard`, `createBaseTroll`, `createProjectile`) che prendono il `World` corrente, la posizione e il tipo di entità, restituendo il `World` aggiornato con la nuova entità e il suo `EntityId`.
-* Astrarre i dettagli dell'aggiunta dei singoli componenti al `World`.
+* **Responsabilità**:
+  * Definire **configurazioni** (`WizardConfig`, `TrollConfig`, `ProjectileConfig`) che descrivono le proprietà base di ciascun tipo di entità.
+  * Utilizzare `EntityBuilder` (implementati tramite `given instances`) per costruire la lista di `Component` necessari per ogni configurazione.
+  * Fornire **metodi specifici** (es. `createFireWizard`, `createBaseTroll`, `createProjectile`) che prendono il `World` corrente, la posizione e il tipo di entità, restituendo il `World` aggiornato con la nuova entità e il suo `EntityId`.
+  * Astrarre i dettagli dell'aggiunta dei singoli componenti al `World`.
 
 ```mermaid
 classDiagram
@@ -105,26 +92,25 @@ classDiagram
     EntityBuilder <|.. ImplicitWizardBuilder
     EntityBuilder <|.. ImplicitTrollBuilder
 ```
-## Logica di Gioco (Systems)
+### Logica di Gioco (Systems)
 
 Tutta la logica comportamentale è incapsulata nei **`System`**. Ogni `System` è una `case class` (solitamente stateless) che implementa il trait `System`, definendo un metodo `update(world: World): (World, System)`. Questo metodo prende lo stato attuale del mondo e restituisce il nuovo stato modificato e, potenzialmente, una nuova istanza del sistema (anche se spesso restituisce `this` essendo stateless).
 
 ---
 
-### Strategie di Movimento (MovementSystem)
+#### Strategie di Movimento (MovementSystem)
 
 Questo sistema gestisce lo spostamento di tutte le entità mobili.
 
-#### Responsabilità:
-
-* Aggiornare la `PositionComponent` delle entità in base alla loro `MovementComponent` e al `deltaTime`.
-* Applicare diverse **strategie di movimento** in base al tipo di entità (tramite pattern matching sull' `EntityTypeComponent`):
-    * Movimento lineare a sinistra per i Troll (`linearLeftMovement`).
-    * Movimento lineare a destra per i Proiettili dei Maghi (`projectileRightMovement`).
-    * Movimento lineare a sinistra per i Proiettili dei Troll.
-    * Movimento a zigzag per i Troll Assassini (`zigzagMovement`), gestito tramite lo `ZigZagStateComponent` per mantenere lo stato specifico dell'entità.
-* Considerare gli effetti di stato come il rallentamento (`FreezedComponent`).
-* Rimuovere i proiettili che escono dai limiti dello schermo.
+* **Responsabilità**:
+  * Aggiornare la `PositionComponent` delle entità in base alla loro `MovementComponent` e al `deltaTime`.
+  * Applicare diverse **strategie di movimento** in base al tipo di entità (tramite pattern matching sull' `EntityTypeComponent`):
+      * Movimento lineare a sinistra per i Troll (`linearLeftMovement`).
+      * Movimento lineare a destra per i Proiettili dei Maghi (`projectileRightMovement`).
+      * Movimento lineare a sinistra per i Proiettili dei Troll.
+      * Movimento a zigzag per i Troll Assassini (`zigzagMovement`), gestito tramite lo `ZigZagStateComponent` per mantenere lo stato specifico dell'entità.
+  * Considerare gli effetti di stato come il rallentamento (`FreezedComponent`).
+  * Rimuovere i proiettili che escono dai limiti dello schermo.
 
 ```mermaid
 classDiagram
@@ -150,11 +136,11 @@ classDiagram
 
 Il combattimento è diviso in due fasi gestite da sistemi distinti:
 
-#### `CombatSystem`:
+#### CombatSystem:
 * **Responsabilità**: Iniziare gli attacchi a distanza.
 * **Logica**: Identifica le entità attaccanti (Maghi, Troll Lanciatori), cerca bersagli nel raggio d'azione (`findClosestTarget`), verifica il cooldown (`CooldownComponent`) e, se possibile, crea un'entità `Projectile` usando `EntityFactory` e imposta il cooldown sull'attaccante. Gestisce anche la logica di blocco (`BlockedComponent`) per i Troll Lanciatori. Aggiorna i timer dei `CooldownComponent` e `FreezedComponent`.
 
-#### `CollisionSystem`:
+#### CollisionSystem:
 * **Responsabilità**: Rilevare e risolvere le collisioni fisiche.
 * **Logica**:
     * **Proiettili**: Verifica se la cella di un proiettile coincide con quella di un bersaglio valido. Se sì, distrugge il proiettile e aggiunge un `CollisionComponent` (con il danno) al bersaglio. Applica l'effetto `FreezedComponent` se il proiettile era di ghiaccio.
@@ -205,24 +191,23 @@ classDiagram
 
 Questo sistema gestisce l'apparizione dei Troll sulla mappa.
 
-#### Responsabilità:
-
-* Schedulare e generare ondate di Troll (`SpawnEvent`).
-* Attivarsi solo dopo il posizionamento del primo Mago.
-* Incrementare la difficoltà (`WaveLevel`) aumentando numero, tipo e statistiche dei Troll generati.
-* Generare Troll in "batch" a intervalli variabili per un flusso meno prevedibile.
-* Applicare lo scaling delle statistiche ai Troll creati in base all'ondata corrente.
-* Gestire la pausa del gioco sospendendo e riprendendo correttamente la generazione.
+* **Responsabilità**:
+  * Schedulare e generare ondate di Troll (`SpawnEvent`).
+  * Attivarsi solo dopo il posizionamento del primo Mago.
+  * Incrementare la difficoltà (`WaveLevel`) aumentando numero, tipo e statistiche dei Troll generati.
+  * Generare Troll in "batch" a intervalli variabili per un flusso meno prevedibile.
+  * Applicare lo scaling delle statistiche ai Troll creati in base all'ondata corrente.
+  * Gestire la pausa del gioco sospendendo e riprendendo correttamente la generazione.
 
 ---
 
 ### Gestione Risorse ed Effetti (ElixirSystem, HealthSystem)
 
-#### `ElixirSystem`:
+#### ElixirSystem:
 * **Responsabilità**: Gestire la risorsa Elixir del giocatore.
 * **Logica**: Traccia l'ammontare corrente (`totalElixir`), gestisce la generazione periodica automatica e quella dei Maghi Generatori (interagendo con `CooldownComponent`), permette di spendere (`spendElixir`) e aggiungere (`addElixir`) elisir, rispettando il cap massimo (`MAX_ELIXIR`).
 
-#### `HealthSystem`:
+#### HealthSystem:
 * **Responsabilità**: Gestire la salute delle entità e le conseguenze del danno.
 * **Logica**: Processa i `CollisionComponent` aggiunti dal `CollisionSystem`, sottrae la salute dalla `HealthComponent`, rimuove il `CollisionComponent`. Se la salute scende a zero:
     * Marca l'entità per la rimozione.
