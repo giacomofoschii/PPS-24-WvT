@@ -215,10 +215,6 @@ Il risultato è una lista di entità che sono morte ma non ancora rimosse. La si
 - **Scalabilità**: i parametri dei troll (salute, velocità, danno) aumentano con le ondate per rendere il gioco sempre più sfidante
 - **Bilanciamento**: gli intervalli di spawn diminuiscono progressivamente, aumentando la pressione sul giocatore
 
-Ho implementato `WaveLevel` come un oggetto contenente esclusivamente funzioni pure, seguendo un approccio completamente dichiarativo. Ogni aspetto della progressione è determinato da calcoli matematici basati sul numero dell'ondata corrente, senza alcuno stato mutabile. Questo design garantisce:
-- **Prevedibilità**: dato un numero di ondata, il comportamento è sempre lo stesso
-- **Testabilità**: ogni funzione può essere testata indipendentemente con semplici asserzioni
-- **Manutenibilità**: modificare il bilanciamento richiede solo l'aggiustamento di costanti o formule matematiche
 
 
 
