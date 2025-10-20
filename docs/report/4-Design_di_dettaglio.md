@@ -302,7 +302,6 @@ La **View** si occupa della presentazione grafica dello stato del gioco e dell'i
     * `ImageFactory`: Carica e gestisce `ImageView`, implementando un sistema di caching per ottimizzare l'uso della memoria e i tempi di caricamento.
     * `ShopPanel`, `WavePanel`: Creano e gestiscono i pannelli specifici dell'HUD (negozio e informazioni sull'ondata).
 
----
 
 ```mermaid
 classDiagram
@@ -433,8 +432,6 @@ Il **Controller** agisce come collante, orchestrando il flusso di dati e la logi
     * `InputProcessor`: Contiene la logica per verificare se un click (`MouseClick`) ricade all'interno dell'area valida della griglia (`isInGridArea`).
     * `ClickResult`: `case class` che rappresenta l'esito della validazione dell'input (posizione valida/invalida, eventuale messaggio di errore).
     * `GridMapper`: Utilizzato per convertire le coordinate fisiche (pixel) in coordinate logiche (riga/colonna) se il click è valido. L'`EventHandler` riceverà poi un `GridClicked` event con le coordinate logiche.
-
----
 
 ```mermaid
 sequenceDiagram
