@@ -323,45 +323,46 @@ classDiagram
         class GameController
     }
 
-View.ViewController -- Controller.GameController : uses
-View.ViewController -- View.GameView : creates/updates
-View.ViewController -- View.MainMenu : creates
-View.ViewController -- View.InfoMenu : creates
-View.ViewController -- View.PauseMenu : creates
-View.ViewController -- View.GameResultPanel : creates
-View.ViewController -- View.ViewState : manages
+%% Relationships corrected to remove prefixes like View. or Controller.
+    ViewController -- GameController : uses
+    ViewController -- GameView : creates/updates
+    ViewController -- MainMenu : creates
+    ViewController -- InfoMenu : creates
+    ViewController -- PauseMenu : creates
+    ViewController -- GameResultPanel : creates
+    ViewController -- ViewState : manages
 
-View.GameView ..> View.ViewController : calls requests
-View.GameView *-- View.ShopPanel : creates/uses
-View.GameView *-- View.WavePanel : creates/uses
-View.GameView ..> View.ButtonFactory : uses
-View.GameView ..> View.ImageFactory : uses
-View.GameView ..> Utilities.GridMapper : uses
-View.GameView ..> Utilities.Position : uses
+    GameView ..> ViewController : calls requests
+    GameView *-- ShopPanel : creates/uses
+    GameView *-- WavePanel : creates/uses
+    GameView ..> ButtonFactory : uses
+    GameView ..> ImageFactory : uses
+    GameView ..> GridMapper : uses
+    GameView ..> Position : uses
 
-View.MainMenu ..> View.ButtonFactory : uses
-View.MainMenu ..> View.ImageFactory : uses
-View.MainMenu ..> View.ViewController : calls requests
+    MainMenu ..> ButtonFactory : uses
+    MainMenu ..> ImageFactory : uses
+    MainMenu ..> ViewController : calls requests
 
-View.InfoMenu ..> View.ButtonFactory : uses
-View.InfoMenu ..> View.ImageFactory : uses
-View.InfoMenu ..> View.ViewController : calls requests
+    InfoMenu ..> ButtonFactory : uses
+    InfoMenu ..> ImageFactory : uses
+    InfoMenu ..> ViewController : calls requests
 
-View.PauseMenu ..> View.ButtonFactory : uses
-View.PauseMenu ..> View.ImageFactory : uses
-View.PauseMenu ..> View.ViewController : calls requests
+    PauseMenu ..> ButtonFactory : uses
+    PauseMenu ..> ImageFactory : uses
+    PauseMenu ..> ViewController : calls requests
 
-View.GameResultPanel ..> View.ButtonFactory : uses
-View.GameResultPanel ..> View.ImageFactory : uses
-View.GameResultPanel ..> View.ViewController : calls requests
+    GameResultPanel ..> ButtonFactory : uses
+    GameResultPanel ..> ImageFactory : uses
+    GameResultPanel ..> ViewController : calls requests
 
-View.ShopPanel ..> View.ButtonFactory : uses
-View.ShopPanel ..> View.ImageFactory : uses
-View.ShopPanel ..> View.ViewController : calls requests / gets state
+    ShopPanel ..> ButtonFactory : uses
+    ShopPanel ..> ImageFactory : uses
+    ShopPanel ..> ViewController : calls requests / gets state
 
-View.WavePanel ..> View.ViewController : gets state
+    WavePanel ..> ViewController : gets state
 
-View.ButtonFactory ..> View.ViewController : calls requests
+    ButtonFactory ..> ViewController : calls requests
 ```
 
 ## Controller

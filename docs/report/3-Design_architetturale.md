@@ -48,69 +48,61 @@ Questa scelta architetturale è stata motivata da diversi fattori:
 
 ``` mermaid
 classDiagram
-    %% Package Model - ECS
-    namespace Model_ECS {
-        class World {
-        }
-        class EntityId {
-        }
-        class Component {
-            <<trait>>
-        }
-        class System {
-            <<trait>>
-        }
-        class EntityFactory {
-        }
+    %% Model - ECS
+    class World
+    class EntityId {
+        <<Opaque Type>>
+        +value: Long
     }
-
-    %% Package Controller
-    namespace Controller {
-        class GameController
-        class GameSystemsState
-        class EventHandler {
-          <<trait>>
-        }
-        class EventQueue
+    class Component {
+        <<trait>>
     }
-
-    %% Package Engine
-    namespace Engine {
-        class GameEngine {
-          <<trait>>
-        }
-        class GameLoop {
-          <<trait>>
-        }
-        class GameState
+    class System {
+        <<trait>>
     }
+    class EntityFactory
 
-    %% Package View
-    namespace View {
-        class ViewController {
-          <<object>>
-        }
-        class GameView {
-          <<object>>
-        }
-        class MainMenu {
-          <<object>>
-        }
-        class InfoMenu {
-          <<object>>
-        }
-        class PauseMenu {
-           <<object>>
-        }
-        class GameResultPanel {
-           <<object>>
-        }
-        class ShopPanel {
-          <<object>>
-        }
-        class WavePanel {
-          <<object>>
-        }
+    %% Controller
+    class GameController
+    class GameSystemsState
+    class EventHandler {
+      <<trait>>
+    }
+    class EventQueue
+
+    %% Engine
+    class GameEngine {
+      <<trait>>
+    }
+    class GameLoop {
+      <<trait>>
+    }
+    class GameState
+
+    %% View
+    class ViewController {
+      <<object>>
+    }
+    class GameView {
+      <<object>>
+    }
+    class MainMenu {
+      <<object>>
+    }
+    class InfoMenu {
+      <<object>>
+    }
+    class PauseMenu {
+       <<object>>
+    }
+    class GameResultPanel {
+       <<object>>
+    }
+    class ShopPanel {
+      <<object>>
+    }
+    class WavePanel {
+      <<object>>
     }
 
     %% Relationships - Model Internal (ECS Pattern)
@@ -143,10 +135,10 @@ classDiagram
 
     %% Relationships - Between Packages (MVC)
     GameController --> World
-    GameController --> System  // System is in Model_ECS namespace
-    GameController --> GameEngine // GameEngine is in Engine namespace
-    ViewController --> GameController // ViewController is in View, GameController is in Controller
-    GameView ..> ViewController // Both in View namespace
+    GameController --> System
+    GameController --> GameEngine
+    ViewController --> GameController
+    GameView ..> ViewController
 ```
 
 La struttura del progetto è organizzata in quattro moduli principali, che riflettono una chiara separazione delle 
