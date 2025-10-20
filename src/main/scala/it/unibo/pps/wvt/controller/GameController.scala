@@ -255,18 +255,17 @@ class GameController(private var world: World):
     * The placement grid is hidden and the view is re-rendered.
     */
   def handleNewGame(): Unit =
-    Option.when(gameEngine.isRunning):
-      gameEngine.stop()
-
-    Thread.sleep(50)
-
     synchronized:
+      Option.when(gameEngine.isRunning):
+        gameEngine.stop()
+
+      Thread.sleep(100)
+
       world = World.empty
       state = state.reset()
       pendingActions.clear()
-      isInitialized = false
+      eventHandler.clearQueue()
 
-    initialize()
     notifyWaveChange(state.getCurrentWave)
     ViewController.hidePlacementGrid()
     ViewController.render()
