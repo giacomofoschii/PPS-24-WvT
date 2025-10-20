@@ -291,125 +291,79 @@ La **View** si occupa della presentazione grafica dello stato del gioco e dell'i
 ```mermaid
 classDiagram
     namespace View {
-        class ViewController {
-            <<object>>
-            +start()
-            +stopApp()
-            +updateView(ViewState)
-            +requestMainMenu()
-            +requestGameView()
-            +getController(): Option~GameController~
-            +render()
-            +drawPlacementGrid(Seq~Position~, Seq~Position~)
-            +hidePlacementGrid()
-        }
-        class GameView {
-            <<object>>
-            +apply(): Parent
-            +renderEntities(Seq~Tuple2_Position_String~)
-            +renderHealthBars(Seq~Tuple6_Position_Double_Color_Double_Double_Double~)
-            +drawGrid(Seq~Position~, Seq~Position~)
-            +clearGrid()
-            +showError(String)
-            #handleMouseClick(Double, Double)
-        }
-        class MainMenu {
-            <<object>>
-            +apply(): Parent
-        }
-        class InfoMenu {
-            <<object>>
-            +apply(): Parent
-        }
-        class PauseMenu {
-            <<object>>
-            +apply(): Parent
-        }
-        class GameResultPanel {
-            <<object>>
-            +apply(ResultType): Parent
-        }
-        class ShopPanel {
-            <<object>>
-            +createShopPanel(): VBox
-            +updateElixir()
-        }
-        class WavePanel {
-            <<object>>
-            +createWavePanel(): VBox
-            +updateWave()
-        }
-        class ButtonFactory {
-            <<object>>
-            +createStyledButton(ButtonConfig): Button
-            +handleAction(ButtonAction)
-        }
-        class ImageFactory {
-            <<object>>
-            +createImageView(String, Int): Either
-            +createBackgroundView(String, Double): Option
-        }
-        class ViewState { <<Sealed Trait>> }
-    }
-    namespace Utilities {
-        class GridMapper {
-            <<object>>
-            +logicalToPhysical(LogicalCoords): Option~Position~
-            +physicalToLogical(Position): Option~LogicalCoords~
-            +getCellBounds(Int, Int): Tuple4~Double_Double_Double_Double~
-            +isInCell(Position): Boolean
-        }
-        class Position {
-            +x: Double
-            +y: Double
-            +isInCell(): Boolean
-            +isValid(): Boolean
-        }
-    }
-    namespace Controller {
-        class GameController
-        class GameEvent
-    }
-            
-    ViewController --> GameController : uses
-    ViewController --> GameView : creates/updates
-    ViewController --> MainMenu : creates
-    ViewController --> InfoMenu : creates
-    ViewController --> PauseMenu : creates
-    ViewController --> GameResultPanel : creates
-    ViewController --> ViewState : manages
-    
-    GameView ..> ViewController : calls requests
-    GameView *-- ShopPanel : creates/uses
-    GameView *-- WavePanel : creates/uses
-    GameView ..> ButtonFactory : uses
-    GameView ..> ImageFactory : uses
-    GameView ..> GridMapper : uses
-    GameView ..> Position : uses
-    
-    MainMenu ..> ButtonFactory : uses
-    MainMenu ..> ImageFactory : uses
-    MainMenu ..> ViewController : calls requests
-    
-    InfoMenu ..> ButtonFactory : uses
-    InfoMenu ..> ImageFactory : uses
-    InfoMenu ..> ViewController : calls requests
-    
-    PauseMenu ..> ButtonFactory : uses
-    PauseMenu ..> ImageFactory : uses
-    PauseMenu ..> ViewController : calls requests
-    
-    GameResultPanel ..> ButtonFactory : uses
-    GameResultPanel ..> ImageFactory : uses
-    GameResultPanel ..> ViewController : calls requests
-    
-    ShopPanel ..> ButtonFactory : uses
-    ShopPanel ..> ImageFactory : uses
-    ShopPanel ..> ViewController : calls requests / gets state
-    
-    WavePanel ..> ViewController : gets state
-    
-    ButtonFactory ..> ViewController : calls requests via handleAction
+class ViewController {
+<<object>>
++updateView(ViewState)
++requestMainMenu()
++requestGameView()
++render()
++drawPlacementGrid()
++hidePlacementGrid()
+}
+class GameView {
+<<object>>
++apply(): Parent
++renderEntities()
++renderHealthBars()
++drawGrid()
+}
+class MainMenu { <<object>> }
+class InfoMenu { <<object>> }
+class PauseMenu { <<object>> }
+class GameResultPanel { <<object>> }
+class ShopPanel { <<object>> }
+class WavePanel { <<object>> }
+class ButtonFactory { <<object>> }
+class ImageFactory { <<object>> }
+class ViewState { <<Sealed Trait>> }
+}
+namespace Utilities {
+class GridMapper { <<object>> }
+class Position
+}
+namespace Controller {
+class GameController
+}
+
+ViewController --> GameController : uses
+ViewController --> GameView : creates/updates
+ViewController --> MainMenu : creates
+ViewController --> InfoMenu : creates
+ViewController --> PauseMenu : creates
+ViewController --> GameResultPanel : creates
+ViewController --> ViewState : manages
+
+GameView ..> ViewController : calls requests
+GameView *-- ShopPanel : creates/uses
+GameView *-- WavePanel : creates/uses
+GameView ..> ButtonFactory : uses
+GameView ..> ImageFactory : uses
+GameView ..> GridMapper : uses
+GameView ..> Position : uses
+
+MainMenu ..> ButtonFactory : uses
+MainMenu ..> ImageFactory : uses
+MainMenu ..> ViewController : calls requests
+
+InfoMenu ..> ButtonFactory : uses
+InfoMenu ..> ImageFactory : uses
+InfoMenu ..> ViewController : calls requests
+
+PauseMenu ..> ButtonFactory : uses
+PauseMenu ..> ImageFactory : uses
+PauseMenu ..> ViewController : calls requests
+
+GameResultPanel ..> ButtonFactory : uses
+GameResultPanel ..> ImageFactory : uses
+GameResultPanel ..> ViewController : calls requests
+
+ShopPanel ..> ButtonFactory : uses
+ShopPanel ..> ImageFactory : uses
+ShopPanel ..> ViewController : calls requests / gets state
+
+WavePanel ..> ViewController : gets state
+
+ButtonFactory ..> ViewController : calls requests
 ```
 
 ## Controller
@@ -448,35 +402,40 @@ Il **Controller** agisce come collante, orchestrando il flusso di dati e la logi
 
 ```mermaid
 sequenceDiagram
-    participant GameLoop
-    participant GameEngine
-    participant GameController
-    participant GameSystemsState
-    participant World
-    participant EventHandler
-    participant View
+    participant GL as GameLoop
+    participant GE as GameEngine
+    participant GC as GameController
+    participant GSS as GameSystemsState
+    participant W as World
+    participant EH as EventHandler
+    participant V as View
+    participant EF as EntityFactory
 
-    GameLoop->>GameEngine: update(deltaTime)
-    GameEngine->>GameController: update()
-    GameController->>GameSystemsState: updateAll(currentWorld)
-    GameSystemsState->>MovementSystem: update(world)
-    Note right of GameSystemsState: Esegue tutti i sistemi in ordine...
-    GameSystemsState-->>GameController: (newWorld, newSystemsState)
-    GameController->>GameController: Aggiorna World e State
-    GameController->>EventHandler: checkGameConditions(newWorld)
-    alt Condizione Vittoria/Sconfitta
-        EventHandler->>GameController: postEvent(GameWon/GameLost)
+    GL->>GE: update(deltaTime)
+    GE->>GC: update()
+    GC->>GSS: updateAll(currentWorld)
+    GSS->>W: Reads state
+    Note right of GSS: Executes MovementSystem, CombatSystem, etc. updates...
+    GSS-->>GC: (newWorld, newSystemsState)
+    GC->>GC: Updates internal World & State refs
+    GC->>EH: checkGameConditions(newWorld)
+    alt Win/Loss Condition Met
+        EH->>GC: postEvent(GameWon/GameLost)
     end
-    GameController->>View: render()
+    GC->>V: render()
 
-    View->>EventHandler: postEvent(GridClicked)
-    GameEngine->>EventHandler: processEvents()
-    EventHandler->>GameController: handleGridClick(position)
-    GameController->>World: hasWizardAt(position)?
-    GameController->>GameSystemsState: canAfford(cost)?
-    opt Può piazzare
-        GameController->>EntityFactory: createWizard(...)
-        GameController->>World: addComponent(...)
-        GameController->>GameSystemsState: spendElixir(cost)
+    V->>EH: postEvent(GridClicked)
+    GE->>EH: processEvents()
+    EH->>GC: handleGridClick(position)
+    GC->>W: hasWizardAt(position)?
+    GC->>GSS: canAfford(cost)?
+    opt Can Place Wizard
+        GC->>EF: createWizard(...)
+        EF->>W: createEntity()
+        EF->>W: addComponent(...) x N
+        W-->>EF: (updatedWorld, entityId)
+        EF-->>GC: (updatedWorld, entityId)
+        GC->>GSS: spendElixir(cost)
+        GSS-->>GC: updatedState
     end
 ```
