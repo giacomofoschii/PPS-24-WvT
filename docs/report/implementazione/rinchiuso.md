@@ -1,3 +1,9 @@
+---
+title: Giovanni Pisoni
+nav_order: 2
+parent: Implementazione
+---
+
 # Implementazione - Giovanni Rinchiuso
 
 ## Panoramica dei Contributi
