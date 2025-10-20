@@ -17,50 +17,54 @@ La scadenza dello sprint è il 16 settembre.
 
 ## Backlog
 
-| Nome | Descrizione | Sprint Task | Volontario         |
-|------|-------------|-------------|--------------------|
-| **Project Setup** | Configurazione iniziale del progetto per adattarsi alla metodologia agile SCRUM | Configurazione repository | Giacomo Foschi     |
-| | | Setup build SBT | Giacomo Foschi     |
-| | | Definizione architettura MVC | Giacomo Foschi     |
-| | | Setup CI/CD | Giacomo Foschi     |
-| **Game Engine Core** | Implementazione del cuore del game engine | Implementazione `GameState` | Giovanni Pisoni    |
-| | | Definizione trait `GameEngine` | Giovanni Pisoni    |
-| | | Implementazione architettura base engine | Giovanni Pisoni    |
-| **Game Loop** | Creazione del main loop di gioco | Implementazione main loop | Giovanni Pisoni    |
-| | | Implementazione gestione delta time | Giovanni Pisoni    |
-| | | Implementazione cicli di aggiornamento | Giovanni Pisoni    |
-| **Event System** | Sistema di gestione eventi | Definizione eventi | Giovanni Pisoni    |
-| | | Implementazione coda eventi | Giovanni Pisoni    |
-| | | Implementazione processamento eventi | Giovanni Pisoni    |
-| **Game Loop Rendering** | Integrazione del sistema di rendering nel game loop principale | Integrazione rendering nel loop principale | Giovanni Pisoni    |
-| **UI Framework Setup** | Implementazione del sistema base di rendering | Implementazione sistema base di rendering | Giacomo Foschi     |
-| | | Implementazione gestione finestra | Giacomo Foschi     |
-| **Main Menu UI** | Realizzazione della schermata principale del gioco | Creazione schermata principale | Giacomo Foschi     |
-| | | Implementazione bottone Start | Giacomo Foschi     |
-| | | Implementazione bottone Info | Giacomo Foschi     |
-| | | Implementazione bottone Exit | Giacomo Foschi     |
-| **Info Menu UI** | Creazione della schermata informativa | Implementazione schermata regole | Giovanni Rinchiuso |
-| | | Implementazione descrizione maghi | Giovanni Rinchiuso |
-| | | Implementazione descrizione troll | Giovanni Rinchiuso |
-| **Menu State Management** | Gestione della navigazione tra i vari menu | Implementazione gestione navigazione tra menu | Giovanni Rinchiuso |
-| | | Implementazione transizioni di stato | Giovanni Pisoni    |
-| **Input Handling System** | Sistema di gestione degli input dell'utente | Implementazione gestione input utente | Giovanni Rinchiuso |
-| | | Implementazione validazione input | Giovanni Rinchiuso |
-| | | Implementazione key mapping | Giovanni Rinchiuso |
-| **ECS Base Models** | Definizione dei modelli base per l'Entity Component System | Definizione trait `Entity` | Giovanni Rinchiuso |
-| | | Definizione trait `World` | Giovanni Rinchiuso |
-| | | Definizione trait `System` | Giovanni Rinchiuso |
-| | | Definizione enum base | Giovanni Rinchiuso |
-| **Grid Logic** | Implementazione della struttura dati per la griglia di gioco (5x9) | Implementazione struttura dati griglia | Giacomo Foschi     |
-| | | Implementazione logica di posizionamento | Giacomo Foschi     |
-| | | Implementazione validazioni | Giacomo Foschi     |
-| **Basic Grid Visualization** | Rendering base della griglia vuota | Implementazione visualizzazione griglia | Giacomo Foschi     |
-| | | Implementazione rendering celle | Giacomo Foschi     |
-| | | Implementazione sistema coordinate | Giacomo Foschi     |
-| **Configuration System** | Sistema di gestione delle configurazioni | Definizione costanti di gioco | Giacomo Foschi     |
-| | | Definizione valori di bilanciamento | Giacomo Foschi     |
-| | | Implementazione gestione impostazioni | Giacomo Foschi     |
-| | | Implementazione creazione componenti | Giacomo Foschi     |
+| Nome                         | Descrizione                                                                     | Sprint Task                                   | Volontario         |
+|------------------------------|---------------------------------------------------------------------------------|-----------------------------------------------|--------------------|
+| **Project Setup**            | Configurazione iniziale del progetto per adattarsi alla metodologia agile SCRUM | Configurazione repository                     | Giacomo Foschi     |
+|                              |                                                                                 | Setup build SBT                               | Giacomo Foschi     |
+|                              |                                                                                 | Definizione architettura MVC                  | Giacomo Foschi     |
+|                              |                                                                                 | Setup CI/CD                                   | Giacomo Foschi     |
+| **Game Engine Core**         | Implementazione del cuore del game engine                                       | Implementazione `GameState`                   | Giovanni Pisoni    |
+|                              |                                                                                 | Definizione trait `GameEngine`                | Giovanni Pisoni    |
+|                              |                                                                                 | Implementazione architettura base engine      | Giovanni Pisoni    |
+|                              |                                                                                 | Implementazione logica pausa gioco            | Giovanni Pisoni    |
+| **Game Loop**                | Creazione del main loop di gioco                                                | Implementazione main loop                     | Giovanni Pisoni    |
+|                              |                                                                                 | Implementazione gestione delta time           | Giovanni Pisoni    |
+|                              |                                                                                 | Implementazione cicli di aggiornamento        | Giovanni Pisoni    |
+| **Event System**             | Sistema di gestione eventi                                                      | Definizione eventi                            | Giovanni Pisoni    |
+|                              |                                                                                 | Implementazione coda eventi                   | Giovanni Pisoni    |
+|                              |                                                                                 | Implementazione processamento eventi          | Giovanni Pisoni    |
+| **Game Loop Rendering**      | Integrazione del sistema di rendering nel game loop principale                  | Integrazione rendering nel loop principale    | Giovanni Pisoni    |
+| **UI Framework Setup**       | Implementazione del sistema base di rendering                                   | Implementazione sistema base di rendering     | Giacomo Foschi     |
+|                              |                                                                                 | Implementazione gestione finestra             | Giacomo Foschi     |
+| **Main Menu UI**             | Realizzazione della schermata principale del gioco                              | Creazione schermata principale                | Giacomo Foschi     |
+|                              |                                                                                 | Implementazione bottone Start                 | Giacomo Foschi     |
+|                              |                                                                                 | Implementazione bottone Info                  | Giacomo Foschi     |
+|                              |                                                                                 | Implementazione bottone Exit                  | Giacomo Foschi     |
+| **Pause Menu UI**            | Realizzazione della schermata di pausa                                          | Creazione schermata di pausa                  | Giacomo Foschi     |
+|                              |                                                                                 | Implementazione bottone Resume                | Giovanni Pisoni    |
+|                              |                                                                                 | Implementazione bottone Exit                  | Giovanni Pisoni    |
+| **Info Menu UI**             | Creazione della schermata informativa                                           | Implementazione schermata regole              | Giovanni Rinchiuso |
+|                              |                                                                                 | Implementazione descrizione maghi             | Giovanni Rinchiuso |
+|                              |                                                                                 | Implementazione descrizione troll             | Giovanni Rinchiuso |
+| **Menu State Management**    | Gestione della navigazione tra i vari menu                                      | Implementazione gestione navigazione tra menu | Giovanni Rinchiuso |
+|                              |                                                                                 | Implementazione transizioni di stato          | Giovanni Pisoni    |
+| **Input Handling System**    | Sistema di gestione degli input dell'utente                                     | Implementazione gestione input utente         | Giovanni Rinchiuso |
+|                              |                                                                                 | Implementazione validazione input             | Giovanni Rinchiuso |
+|                              |                                                                                 | Implementazione key mapping                   | Giovanni Rinchiuso |
+| **ECS Base Models**          | Definizione dei modelli base per l'Entity Component System                      | Definizione trait `Entity`                    | Giovanni Rinchiuso |
+|                              |                                                                                 | Definizione trait `World`                     | Giovanni Rinchiuso |
+|                              |                                                                                 | Definizione trait `System`                    | Giovanni Rinchiuso |
+|                              |                                                                                 | Definizione enum base                         | Giovanni Rinchiuso |
+| **Grid Logic**               | Implementazione della struttura dati per la griglia di gioco (5x9)              | Implementazione struttura dati griglia        | Giacomo Foschi     |
+|                              |                                                                                 | Implementazione logica di posizionamento      | Giacomo Foschi     |
+|                              |                                                                                 | Implementazione validazioni                   | Giacomo Foschi     |
+| **Basic Grid Visualization** | Rendering base della griglia vuota                                              | Implementazione visualizzazione griglia       | Giacomo Foschi     |
+|                              |                                                                                 | Implementazione rendering celle               | Giacomo Foschi     |
+|                              |                                                                                 | Implementazione sistema coordinate            | Giacomo Foschi     |
+| **Configuration System**     | Sistema di gestione delle configurazioni                                        | Definizione costanti di gioco                 | Giacomo Foschi     |
+|                              |                                                                                 | Definizione valori di bilanciamento           | Giacomo Foschi     |
+|                              |                                                                                 | Implementazione gestione impostazioni         | Giacomo Foschi     |
+|                              |                                                                                 | Implementazione creazione componenti          | Giacomo Foschi     |
 
 ## Sprint Review
 
