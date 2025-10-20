@@ -335,9 +335,8 @@ Un elemento centrale di questa implementazione è `ClickResult`, che ho implemen
 
 Come mostrato nella sezione precedente, `ClickResult` incapsula il risultato di un click del mouse, memorizzando la posizione, un flag di validità e un messaggio di errore opzionale. Ho implementato le tre operazioni monadiche fondamentali (`map`, `flatMap` e `filter`) che permettono di comporre validazioni in modo fluente.
 
-Queste operazioni seguono le leggi delle monadi, garantendo un comportamento predicibile e componibile. L'operazione `map` permette di trasformare la posizione contenuta se il risultato è valido, lasciando inalterati i risultati invalidi. `flatMap` consente di concatenare validazioni che a loro volta producono `ClickResult`, implementando così il pattern della "railway-oriented programming" dove un errore in qualsiasi punto della catena cortocircuita le operazioni successive. `filter` aggiunge la capacità di validare predicati sulla posizione, convertendo un risultato valido in invalido se il predicato fallisce.
+L'operazione `map` permette di trasformare la posizione contenuta se il risultato è valido, lasciando inalterati i risultati invalidi. `flatMap` consente di concatenare validazioni che a loro volta producono `ClickResult`, implementando così il pattern della "railway-oriented programming" dove un errore in qualsiasi punto della catena cortocircuita le operazioni successive. `filter` aggiunge la capacità di validare predicati sulla posizione, convertendo un risultato valido in invalido se il predicato fallisce.
 
-Questo design permette di scrivere validazioni in modo dichiarativo e componibile:
 ```scala
 result
   .map(pos => pos.normalize())
