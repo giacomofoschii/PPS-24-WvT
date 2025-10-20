@@ -446,7 +446,6 @@ Il **Controller** agisce come collante, orchestrando il flusso di dati e la logi
     * `ClickResult`: `case class` che rappresenta l'esito della validazione dell'input (posizione valida/invalida, eventuale messaggio di errore).
     * `GridMapper`: Utilizzato per convertire le coordinate fisiche (pixel) in coordinate logiche (riga/colonna) se il click è valido. L'`EventHandler` riceverà poi un `GridClicked` event con le coordinate logiche.
 
-```markdown
 ```mermaid
 sequenceDiagram
     participant GameLoop
@@ -480,5 +479,4 @@ sequenceDiagram
         GameController->>World: addComponent(...)
         GameController->>GameSystemsState: spendElixir(cost)
     end
-```
 ```
