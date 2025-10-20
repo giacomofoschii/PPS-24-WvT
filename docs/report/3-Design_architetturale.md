@@ -172,11 +172,8 @@ L'intero progetto è stato sviluppato seguendo principi di programmazione funzio
 
 * **Composizione su Ereditarietà**: L'ECS favorisce la composizione tramite Component invece di gerarchie di classi rigide.
 
-* **Funzioni Pure**: I System sono implementati come funzioni il più possibile pure: dato un input (World), producono un output (nuovo World) in modo deterministico.
+* **Pure Function**: I System sono implementati come funzioni il più possibile pure: dato un input (World), producono un output (nuovo World) in modo deterministico.
 
 * **Type Classes**: Utilizzo di given instances e type classes per il polimorfismo ad-hoc nella creazione delle entità, garantendo type-safety ed estensibilità.
 
 * **Opaque Types**: Utilizzo di opaque types (EntityId) per type-safety senza overhead runtime.
-
-
-Questo approccio combina performance e correttezza, garantendo stabilità anche con thread multipli.

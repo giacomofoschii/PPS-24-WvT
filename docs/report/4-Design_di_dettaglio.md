@@ -94,7 +94,7 @@ classDiagram
 ```
 ### Logica di Gioco (Systems)
 
-Tutta la logica comportamentale è incapsulata nei **`System`**. Ogni `System` è una `case class` (solitamente stateless) che implementa il trait `System`, definendo un metodo `update(world: World): (World, System)`. Questo metodo prende lo stato attuale del mondo e restituisce il nuovo stato modificato e, potenzialmente, una nuova istanza del sistema (anche se spesso restituisce `this` essendo stateless).
+Tutta la logica comportamentale è incapsulata nei **`System`**. Ogni `System` è una `case class` (stateless) che implementa il trait `System`, definendo un metodo `update(world: World): (World, System)`. Questo metodo prende lo stato attuale del mondo e restituisce il nuovo stato modificato e, potenzialmente, una nuova istanza del sistema (anche se spesso restituisce `this` essendo stateless).
 
 ---
 
@@ -377,7 +377,12 @@ Il **Controller** agisce come collante, orchestrando il flusso di dati e la logi
 * **Componenti**:
     * `GameController`: Riceve l'impulso (`update()`) dal `GameEngine` (tramite il `GameLoop`). Mantiene lo stato corrente dei sistemi (`GameSystemsState`). Chiama il metodo `updateAll()` di `GameSystemsState` per eseguire la pipeline dei sistemi ECS nell'ordine corretto. Gestisce le azioni del giocatore ricevute come `GameEvent` dall'`EventHandler`.
     * `GameSystemsState`: Raggruppa tutti i sistemi ECS e definisce l'ordine di update. Contiene anche metodi per verificare le condizioni di fine partita (`checkWinCondition`, `checkLoseCondition`).
-    * `GameEngine` / `GameLoop`: (Esterni al Controller ma lo invocano) Forniscono il "battito cardiaco" del gioco, garantendo che `GameController.update()` sia chiamato a intervalli regolari (timestep fisso).
+    * `GameEngine` / `GameLoop`: Componenti architetturali che implementano il ciclo di vita principale dell'applicazione. 
+      La loro funzione è orchestrare la progressione temporale dello stato di gioco. A tal fine, invocano il metodo 
+      `GameController.update()` in modo periodico e a intervalli di tempo discreti e costanti (fixed timestep). 
+      Questo approccio garantisce che la logica di gioco evolva in maniera deterministica e disaccoppiata dalla 
+      frequenza di rendering (frame rate), assicurando un comportamento consistente indipendentemente dalle prestazioni dell'hardware. 
+      Sebbene operino a un livello architetturale superiore e siano esterni al GameController, ne governano l'esecuzione.
 
 ---
 
