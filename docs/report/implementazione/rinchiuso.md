@@ -6,6 +6,8 @@ parent: Implementazione
 
 # Implementazione - Giovanni Rinchiuso
 
+---
+
 ## Panoramica dei Contributi
 
 Il mio contributo al progetto si è focalizzato sulle seguenti aree:
@@ -49,9 +51,6 @@ def spendElixir(amount: Int): (ElixirSystem, Boolean) =
 
 Questo approccio rende lo stato del gioco consistente.
 
-
-#### Composizione Funzionale con Option
-
 L'aggiornamento del system utilizza `Option.when` per gestire la logica condizionale:
 ```scala
 override def update(world: World): (World, System) =
@@ -63,7 +62,7 @@ override def update(world: World): (World, System) =
 
 Se il primo mago non è stato ancora piazzato, il sistema semplicemente restituisce lo stato attuale senza eseguire alcuna elaborazione. Questo pattern elimina la necessità di statement `if-else` espliciti, rendendo il codice più dichiarativo.
 
-La generazione periodica utilizza un chain di `Option` per gestire l'inizializzazione e i controlli temporali:
+La generazione periodica utilizza `Option` per gestire l'inizializzazione e i controlli temporali:
 ```scala
 private def updatePeriodicElixirGeneration(): ElixirSystem =
   val currentTime = System.currentTimeMillis()
@@ -77,9 +76,8 @@ private def updatePeriodicElixirGeneration(): ElixirSystem =
   .getOrElse(this)
 ```
 
-Il pattern `orElse` permette di concatenare logiche alternative in modo fluido: se è la prima generazione, inizializza i timestamp; altrimenti, controlla se è il momento di generare elisir.
+Il pattern `orElse` permette di concatenare logiche alternative: se è la prima generazione, inizializza i timestamp; altrimenti, controlla se è il momento di generare elisir.
 
-#### For-Comprehension per Validazione a Cascata
 
 Per l'elaborazione dei maghi generatori, ho utilizzato for-comprehension per validare le condizioni in sequenza, fermandosi alla prima che fallisce:
 ```scala
@@ -104,8 +102,6 @@ Questa implementazione verifica che:
 
 Se una qualsiasi di queste verifiche fallisce, il for-comprehension termina e restituisce lo stato originale tramite `getOrElse`. Questo approccio è molto più sicuro e leggibile rispetto a una serie di statement `if` annidati.
 
-#### FoldLeft per elaborazione sequenziale
-
 Per processare tutti i maghi generatori nel mondo, utilizzo `foldLeft` per accumulare i cambiamenti attraverso tutte le entità:
 ```scala
 private def updateGeneratorWizardElixir(world: World): (World, ElixirSystem) =
@@ -125,9 +121,6 @@ Il `foldLeft` accumula sia il `World` aggiornato che l'`ElixirSystem` aggiornato
 
 `HealthSystem` è responsabile della gestione delle collisioni, dei danni, della morte delle entità e delle ricompense. 
 
-
-#### Pipeline Funzionale di Elaborazione
-
 L'update del sistema segue un pattern di pipeline funzionale, dove ogni fase trasforma lo stato e lo passa alla successiva:
 ```scala
 override def update(world: World): (World, System) =
@@ -144,8 +137,6 @@ Ogni funzione nella pipeline:
 
 Questo approccio garantisce che ogni fase sia isolata e testabile indipendentemente, seguendo il principio di Single Responsibility (SRP).
 
-#### Elaborazione Collisioni con FoldLeft
-
 Per processare tutte le entità con componenti di collisione, utilizzo `foldLeft` per accumulare i cambiamenti:
 ```scala
 private def processCollisionComponents(world: World): (World, HealthSystem) =
@@ -160,8 +151,6 @@ private def processCollisionComponents(world: World): (World, HealthSystem) =
 ```
 
 Il pattern utilizzato qui combina `foldLeft` con `map` su `Option`: per ogni entità, tentiamo di ottenere il componente di collisione. Se presente, applichiamo il danno e rimuoviamo il componente; altrimenti, manteniamo lo stato corrente. Questo evita la necessità di controlli null o eccezioni.
-
-#### Applicazione Danni con Option Chaining
 
 L'applicazione del danno utilizza `Option` e `filter` per validare lo stato dell'entità prima di applicare modifiche:
 ```scala
@@ -182,8 +171,6 @@ private def applyCollisionToEntity(
 
 Il `filter(_.isAlive)` garantisce che il danno venga applicato solo alle entità vive, mentre il pattern `map`-`getOrElse` gestisce l'assenza del componente senza eccezioni.
 
-#### Pattern Matching per Ricompense
-
 Il calcolo delle ricompense utilizza pattern matching per mappare i tipi di troll alle ricompense appropriate. Questo approccio è più sicuro e leggibile rispetto a una serie di if-else:
 ```scala
 private def calculateElixirReward(world: World, entityId: EntityId): Int =
@@ -198,8 +185,6 @@ private def calculateElixirReward(world: World, entityId: EntityId): Int =
 ```
 
 Se l'entità non è un troll (non ha `TrollTypeComponent`), restituisce 0. Il compilatore Scala verifica che tutti i casi siano gestiti, prevenendo bug a runtime.
-
-#### For-Comprehension per selezione di entità morte
 
 Per identificare le entità morte, utilizzo for-comprehension con filtri multipli:
 ```scala
