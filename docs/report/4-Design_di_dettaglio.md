@@ -199,6 +199,74 @@ Questo sistema gestisce l'apparizione dei Troll sulla mappa.
   * Applicare lo scaling delle statistiche ai Troll creati in base all'ondata corrente.
   * Gestire la pausa del gioco sospendendo e riprendendo correttamente la generazione.
 
+```mermaid
+classDiagram
+    direction LR
+    class SpawnSystem {
+        <<System>>
+        +isActive: Boolean
+        +getPendingSpawnsCount(): Int
+        +getNextSpawnTime(): Option~Long~
+        +getTrollsSpawned(): Int
+        +getMaxTrolls(): Int
+        +update(World): Tuple2~World, System~
+        #handlePauseResume(Long): SpawnSystem
+        #hasWizardBeenPlaced(World): Boolean
+        #getFirstWizardRow(World): Option~Int~
+        #processScheduledSpawns(World, Long): Tuple2~World, SpawnSystem~
+        #generateNewSpawnsIfNeeded(World, Long): Tuple2~World, SpawnSystem~
+        #shouldGenerateNewSpawn(Long): Boolean
+        #generateSpawnBatch(Long, Option~Int~, Int): List~SpawnEvent~
+        #generateSingleSpawn(Long, Boolean, Option~Int~): SpawnEvent
+        #spawnTroll(SpawnEvent, World): Tuple2~World, EntityId~
+        #applyWaveScaling(World, EntityId, TrollType): World
+    }
+    class SpawnEvent {
+        +trollType: TrollType
+        +position: Position
+        +scheduledTime: Long
+    }
+    class World
+    class EntityFactory
+    class WaveLevel {
+        <<object>>
+        +calculateSpawnInterval(Int): Long
+        +calculateTrollDistribution(Int): Map~TrollType, Double~
+        +selectRandomTrollType(Map~TrollType, Double~): TrollType
+        +applyMultipliers(Int, Double, Int, Int): Tuple3~Int, Double, Int~
+        +maxTrollsPerWave(Int): Int
+    }
+    class GameEngine {
+        +isPaused(): Boolean
+    }
+    class GridMapper {
+        <<object>>
+        +logicalToPhysical(Int, Int): Option~Position~
+        +physicalToLogical(Position): Option~Tuple2~Int,Int~~
+    }
+    class Random
+    class PositionComponent
+    class TrollTypeComponent
+    class HealthComponent
+    class MovementComponent
+    class AttackComponent
+    class Position
+
+    SpawnSystem *-- SpawnEvent : manages
+    SpawnSystem ..> World : reads/updates
+    SpawnSystem ..> EntityFactory : uses
+    SpawnSystem ..> WaveLevel : uses configuration
+    SpawnSystem ..> GameEngine : checks status
+    SpawnSystem ..> GridMapper : uses for positioning
+    SpawnSystem ..> Random : uses for randomization
+    SpawnSystem ..> PositionComponent : reads
+    SpawnSystem ..> TrollTypeComponent : reads
+    SpawnSystem ..> HealthComponent : reads/updates
+    SpawnSystem ..> MovementComponent : reads/updates
+    SpawnSystem ..> AttackComponent : reads/updates
+    SpawnSystem ..> Position : uses
+```
+
 ---
 
 ### Gestione Risorse ed Effetti (ElixirSystem, HealthSystem)
@@ -288,86 +356,15 @@ La **View** si occupa della presentazione grafica dello stato del gioco e dell'i
     * `ShopPanel`, `WavePanel`: Creano e gestiscono i pannelli specifici dell'HUD (negozio e informazioni sull'ondata).
 
 
-```mermaid
-classDiagram
-    namespace View {
-        class ViewController {
-            +updateView(ViewState)
-            +requestMainMenu()
-            +requestGameView()
-            +render()
-            +drawPlacementGrid()
-            +hidePlacementGrid()
-        }
-        class GameView {
-            +apply(): Parent
-            +renderEntities()
-            +renderHealthBars()
-            +drawGrid()
-        }
-        class MainMenu
-        class InfoMenu
-        class PauseMenu
-        class GameResultPanel
-        class ShopPanel
-        class WavePanel
-        class ButtonFactory
-        class ImageFactory
-        class ViewState
-    }
-    namespace Utilities {
-        class GridMapper
-        class Position
-    }
-    namespace Controller {
-        class GameController
-    }
-
-%% Relationships corrected to remove prefixes like View. or Controller.
-    ViewController -- GameController : uses
-    ViewController -- GameView : creates/updates
-    ViewController -- MainMenu : creates
-    ViewController -- InfoMenu : creates
-    ViewController -- PauseMenu : creates
-    ViewController -- GameResultPanel : creates
-    ViewController -- ViewState : manages
-
-    GameView ..> ViewController : calls requests
-    GameView *-- ShopPanel : creates/uses
-    GameView *-- WavePanel : creates/uses
-    GameView ..> ButtonFactory : uses
-    GameView ..> ImageFactory : uses
-    GameView ..> GridMapper : uses
-    GameView ..> Position : uses
-
-    MainMenu ..> ButtonFactory : uses
-    MainMenu ..> ImageFactory : uses
-    MainMenu ..> ViewController : calls requests
-
-    InfoMenu ..> ButtonFactory : uses
-    InfoMenu ..> ImageFactory : uses
-    InfoMenu ..> ViewController : calls requests
-
-    PauseMenu ..> ButtonFactory : uses
-    PauseMenu ..> ImageFactory : uses
-    PauseMenu ..> ViewController : calls requests
-
-    GameResultPanel ..> ButtonFactory : uses
-    GameResultPanel ..> ImageFactory : uses
-    GameResultPanel ..> ViewController : calls requests
-
-    ShopPanel ..> ButtonFactory : uses
-    ShopPanel ..> ImageFactory : uses
-    ShopPanel ..> ViewController : calls requests / gets state
-
-    WavePanel ..> ViewController : gets state
-
-    ButtonFactory ..> ViewController : calls requests
-```
+![View Diagram](./assets/img/view.png)   
+ 
+---
 
 ## Controller
 
 Il **Controller** agisce come collante, orchestrando il flusso di dati e la logica applicativa tra il Model e la View.
+
+![Controller Diagram](./assets/img/controller.png)
 
 ---
 
@@ -398,43 +395,3 @@ Il **Controller** agisce come collante, orchestrando il flusso di dati e la logi
     * `InputProcessor`: Contiene la logica per verificare se un click (`MouseClick`) ricade all'interno dell'area valida della griglia (`isInGridArea`).
     * `ClickResult`: `case class` che rappresenta l'esito della validazione dell'input (posizione valida/invalida, eventuale messaggio di errore).
     * `GridMapper`: Utilizzato per convertire le coordinate fisiche (pixel) in coordinate logiche (riga/colonna) se il click è valido. L'`EventHandler` riceverà poi un `GridClicked` event con le coordinate logiche.
-
-```mermaid
-sequenceDiagram
-    participant GL as GameLoop
-    participant GE as GameEngine
-    participant GC as GameController
-    participant GSS as SystemsState
-    participant W as World
-    participant EH as EventHandler
-    participant V as View
-    participant EF as EntityFactory
-
-    GL->>GE: update(deltaTime)
-    GE->>GC: update()
-    GC->>GSS: updateAll(currentWorld)
-    GSS->>W: Reads state
-    Note right of GSS: Executes System updates...
-    GSS-->>GC: (newWorld, newSystemsState)
-    GC->>GC: Updates internal refs
-    GC->>EH: checkGameConditions(newWorld)
-    alt Win/Loss Condition
-        EH->>GC: postEvent(GameWon / GameLost)
-    end
-    GC->>V: render()
-
-    V->>EH: postEvent(GridClicked)
-    GE->>EH: processEvents()
-    EH->>GC: handleGridClick(position)
-    GC->>W: hasWizardAt(position)?
-    GC->>GSS: canAfford(cost)?
-    opt Can Place Wizard
-        GC->>EF: createWizard(...)
-        EF->>W: createEntity()
-        EF->>W: addComponent(...) x N
-        W-->>EF: (updatedWorld, entityId)
-        EF-->>GC: (updatedWorld, entityId)
-        GC->>GSS: spendElixir(cost)
-        GSS-->>GC: updatedState
-    end
-```
