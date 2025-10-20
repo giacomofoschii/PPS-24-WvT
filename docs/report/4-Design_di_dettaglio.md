@@ -307,97 +307,97 @@ La **View** si occupa della presentazione grafica dello stato del gioco e dell'i
 ```mermaid
 classDiagram
     namespace View {
-        class ViewController {
-            <<object>>
-            +start()
-            +stopApp()
-            +updateView(ViewState)
-            +requestMainMenu()
-            +requestGameView()
-            +getController(): Option~GameController~
-            +render()
-            +drawPlacementGrid(Seq~Position~, Seq~Position~)
-            +hidePlacementGrid()
-        }
-        class GameView {
-            <<object>>
-            +apply(): Parent
-            +renderEntities(Seq~Tuple2~Position, String~~)
-            +renderHealthBars(Seq~Tuple6~...~~)
-            +drawGrid(Seq~Position~, Seq~Position~)
-            +clearGrid()
-            +showError(String)
-            #handleMouseClick(Double, Double)
-        }
-        class MainMenu { <<object>> ; +apply(): Parent }
-        class InfoMenu { <<object>> ; +apply(): Parent }
-        class PauseMenu { <<object>> ; +apply(): Parent }
-        class GameResultPanel { <<object>> ; +apply(ResultType): Parent }
-        class ShopPanel { <<object>> ; +createShopPanel(): VBox; +updateElixir() }
-        class WavePanel { <<object>> ; +createWavePanel(): VBox; +updateWave() }
-        class ButtonFactory { <<object>> ; +createStyledButton(...): Button; +handleAction(ButtonAction) }
-        class ImageFactory { <<object>> ; +createImageView(...): Either; +createBackgroundView(...): Option }
-        class ViewState { <<Sealed Trait>> }
+class ViewController {
+<<object>>
++start()
++stopApp()
++updateView(ViewState)
++requestMainMenu()
++requestGameView()
++getController(): Option~GameController~
++render()
++drawPlacementGrid(Seq~Position~, Seq~Position~)
++hidePlacementGrid()
+}
+class GameView {
+<<object>>
++apply(): Parent
++renderEntities(Seq~Tuple2~Position, String~~)
++renderHealthBars(Seq~Tuple6~...~~)
++drawGrid(Seq~Position~, Seq~Position~)
++clearGrid()
++showError(String)
+#handleMouseClick(Double, Double)
+}
+class MainMenu { <<object>> ; +apply(): Parent }
+class InfoMenu { <<object>> ; +apply(): Parent }
+class PauseMenu { <<object>> ; +apply(): Parent }
+class GameResultPanel { <<object>> ; +apply(ResultType): Parent }
+class ShopPanel { <<object>> ; +createShopPanel(): VBox; +updateElixir() }
+class WavePanel { <<object>> ; +createWavePanel(): VBox; +updateWave() }
+class ButtonFactory { <<object>> ; +createStyledButton(...): Button; +handleAction(ButtonAction) }
+class ImageFactory { <<object>> ; +createImageView(...): Either; +createBackgroundView(...): Option }
+class ViewState { <<Sealed Trait>> }
+}
+namespace Utilities {
+class GridMapper {
+<<object>>
++logicalToPhysical(LogicalCoords): Option~Position~
++physicalToLogical(Position): Option~LogicalCoords~
++getCellBounds(Int, Int): Tuple4~...~
++isInCell(Position): Boolean
+}
+class Position {
++x: Double
++y: Double
++isInCell(): Boolean
++isValid(): Boolean
+}
     }
-    namespace Utilities {
-        class GridMapper {
-             <<object>>
-             +logicalToPhysical(LogicalCoords): Option~Position~
-             +physicalToLogical(Position): Option~LogicalCoords~
-             +getCellBounds(Int, Int): Tuple4~...~
-             +isInCell(Position): Boolean
-        }
-        class Position {
-             +x: Double
-             +y: Double
-             +isInCell(): Boolean
-             +isValid(): Boolean
-        }
-    }
-    namespace Controller {
-        class GameController
-        class GameEvent
-    }
+namespace Controller {
+class GameController
+class GameEvent
+}
 
-    ViewController --> GameController : uses
-    ViewController --> GameView : creates/updates
-    ViewController --> MainMenu : creates
-    ViewController --> InfoMenu : creates
-    ViewController --> PauseMenu : creates
-    ViewController --> GameResultPanel : creates
-    ViewController --> ViewState : manages
+ViewController --> GameController : uses
+ViewController --> GameView : creates/updates
+ViewController --> MainMenu : creates
+ViewController --> InfoMenu : creates
+ViewController --> PauseMenu : creates
+ViewController --> GameResultPanel : creates
+ViewController --> ViewState : manages
 
-    GameView ..> ViewController : calls requests
-    GameView *-- ShopPanel : creates/uses
-    GameView *-- WavePanel : creates/uses
-    GameView ..> ButtonFactory : uses
-    GameView ..> ImageFactory : uses
-    GameView ..> GridMapper : uses
-    GameView ..> Position : uses
+GameView ..> ViewController : calls requests
+GameView *-- ShopPanel : creates/uses
+GameView *-- WavePanel : creates/uses
+GameView ..> ButtonFactory : uses
+GameView ..> ImageFactory : uses
+GameView ..> GridMapper : uses
+GameView ..> Position : uses
 
-    MainMenu ..> ButtonFactory : uses
-    MainMenu ..> ImageFactory : uses
-    MainMenu ..> ViewController : calls requests
+MainMenu ..> ButtonFactory : uses
+MainMenu ..> ImageFactory : uses
+MainMenu ..> ViewController : calls requests
 
-    InfoMenu ..> ButtonFactory : uses
-    InfoMenu ..> ImageFactory : uses
-    InfoMenu ..> ViewController : calls requests
+InfoMenu ..> ButtonFactory : uses
+InfoMenu ..> ImageFactory : uses
+InfoMenu ..> ViewController : calls requests
 
-    PauseMenu ..> ButtonFactory : uses
-    PauseMenu ..> ImageFactory : uses
-    PauseMenu ..> ViewController : calls requests
+PauseMenu ..> ButtonFactory : uses
+PauseMenu ..> ImageFactory : uses
+PauseMenu ..> ViewController : calls requests
 
-    GameResultPanel ..> ButtonFactory : uses
-    GameResultPanel ..> ImageFactory : uses
-    GameResultPanel ..> ViewController : calls requests
+GameResultPanel ..> ButtonFactory : uses
+GameResultPanel ..> ImageFactory : uses
+GameResultPanel ..> ViewController : calls requests
 
-    ShopPanel ..> ButtonFactory : uses
-    ShopPanel ..> ImageFactory : uses
-    ShopPanel ..> ViewController : calls requests / gets state
+ShopPanel ..> ButtonFactory : uses
+ShopPanel ..> ImageFactory : uses
+ShopPanel ..> ViewController : calls requests / gets state
 
-    WavePanel ..> ViewController : gets state
+WavePanel ..> ViewController : gets state
 
-    ButtonFactory ..> ViewController : calls requests via handleAction
+ButtonFactory ..> ViewController : calls requests via handleAction
 ```
 
 ## Controller
