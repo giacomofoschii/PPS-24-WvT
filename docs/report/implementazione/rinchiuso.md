@@ -313,23 +313,23 @@ aggiorna la somma cumulativa e verifica se il valore random cade in questo "segm
 Infine, `._2.getOrElse(TrollType.Base)` estrae il tipo selezionato dall'Option, fornendo un fallback sicuro nel caso improbabile che nessun tipo venga selezionato (ad esempio, se tutte le probabilità fossero 0).
 
 
-# Sistema di Input: InputProcessor, InputSystem e InputTypes
+## Sistema di Input: InputProcessor, InputSystem e InputTypes
 
 Ho implementato un'architettura a tre livelli che separa le responsabilità nella gestione degli input dell'utente. Questa struttura garantisce una chiara separazione delle responsabilità, facilita il testing e rende il sistema facilmente estendibile.
 
-### 1. InputTypes: Definizione dei Tipi Fondamentali
+### 1. InputTypes
 
 Il livello più basso dell'architettura definisce i tipi di dato fondamentali utilizzati nel sistema di input. `MouseClick` rappresenta un evento di click del mouse con coordinate `(x, y)`, mentre `ClickResult` incapsula il risultato della validazione di un click, contenendo la posizione, un flag di validità e un messaggio di errore opzionale.
 
-### 2. InputProcessor: Validazione e Processamento
+### 2. InputProcessor
 
 Il livello intermedio è responsabile della logica di validazione vera e propria. Implementa metodi per verificare se un click cade all'interno dei bounds della griglia, convertire coordinate dello schermo in posizioni di gioco e validare le posizioni risultanti. La separazione tra processamento e validazione permette di testare facilmente la logica di validazione in isolamento.
 
-### 3. InputSystem: Interfaccia di Alto Livello
+### 3. InputSystem
 
 Il livello più alto fornisce un'interfaccia per l'utilizzo del sistema. Utilizza `InputProcessor` internamente nascondendo i dettagli implementativi e offre metodi come `handleMouseClick` che accettano coordinate dello schermo e restituiscono un `ClickResult`. Inoltre, fornisce metodi utility come `processClicks` per elaborare batch di click, `validPositions` per filtrare solo le posizioni valide, e `partitionClicks` per separare click validi e invalidi.
 
-## ClickResult: Una Monade per la Validazione
+### ClickResult
 
 Un elemento centrale di questa implementazione è `ClickResult`, che ho implementato seguendo il pattern delle monadi per comporre validazioni. Questo approccio permette di concatenare multiple validazioni evitando nested if-else e gestione esplicita degli errori, rendendo il codice più leggibile ed estendibile.
 
@@ -370,7 +370,7 @@ def processClickWithValidation(click: MouseClick): ClickResult =
 
 In questo esempio, la posizione viene validata contro due predicati: prima si verifica che la posizione sia valida in sé, poi si controlla che cada all'interno dell'area della griglia. Se una qualsiasi validazione fallisce, il `ClickResult` diventa invalido con il messaggio di errore appropriato, e le validazioni successive vengono comunque eseguite (anche se il loro risultato viene ignorato) per completare il fold.
 
-## Extension Methods
+### Extension Methods in MouseClick
 
 Ho utilizzato le extension methods di Scala 3 per arricchire il tipo `MouseClick` con metodi di validazione, rendendo l'API più fluente e intuitiva:
 ```scala
@@ -399,11 +399,11 @@ click.validate(processor)
 
 Questa catena di operazioni valida il click, filtra per verificare che sia in una cella, e trasforma le coordinate. Se qualsiasi passo fallisce, l'errore si propaga automaticamente e il risultato finale sarà un `ClickResult` invalido con il messaggio di errore appropriato.
 
-# Interfaccia Utente: InfoMenu, ShopPanel e WavePanel
+## Interfaccia Utente: InfoMenu, ShopPanel e WavePanel
 
 Ho sviluppato diversi componenti dell'interfaccia utente che costituiscono l'esperienza visiva e interattiva del gioco. 
 
-## InfoMenu: Navigazione tra Contenuti Informativi
+### InfoMenu
 
 L'`InfoMenu` fornisce al giocatore informazioni dettagliate sulle meccaniche di gioco, sui diversi tipi di maghi e sui vari tipi di troll. La sua implementazione si basa su una struttura a tab che permette di navigare tra diverse sezioni informative: regole del gioco, caratteristiche dei maghi e caratteristiche dei troll.
 
@@ -411,7 +411,7 @@ La gestione dello stato della navigazione è implementata attraverso una closure
 
 Per maghi e troll vengono mostrate delle card informative contenenti le statistiche (salute, danno, costo/ricompensa) e l'immagine rappresentativa di ogni tipologia.
 
-## ShopPanel: Gestione Stato Reattiva
+### ShopPanel
 
 Lo `ShopPanel` è il componente dell'interfaccia che permette al giocatore di acquistare i maghi durante la partita. Questo pannello mostra tutte le tipologie di maghi disponibili, con le loro icone e i rispettivi costi in elisir.
 
@@ -419,18 +419,16 @@ La caratteristica principale dello `ShopPanel` è la sua capacità di aggiornars
 
 Lo stato del pannello è modellato attraverso una struttura dati immutabile che mantiene l'ammontare corrente di elisir, lo stato di apertura/chiusura del pannello e una mappa che associa ogni tipo di mago al suo stato di disponibilità. Questa architettura garantisce che il pannello rimanga sempre sincronizzato con lo stato del gioco, fornendo al giocatore un feedback visivo immediato sulle opzioni di acquisto disponibili.
 
-## WavePanel: Visualizzazione Reattiva dello Stato di Gioco
+### WavePanel
 
 Il `WavePanel` mostra informazioni sull'ondata corrente e si aggiorna automaticamente quando il gioco progredisce. 
 
 Lo stato del pannello mantiene l'ultimo numero di ondata renderizzato (per evitare aggiornamenti ridondanti), un riferimento opzionale al componente `Text` che mostra il numero e un riferimento opzionale al pannello stesso. Il metodo `updateWaveNumber` implementa un pattern di aggiornamento ottimizzato che garantisce che l'interfaccia venga aggiornata solo quando il numero dell'ondata effettivamente cambia, evitando rendering inutili e migliorando le performance.
 
-# Testing: Validazione dei Sistemi Implementati
+## Testing: Validazione dei Sistemi Implementati
 
 La validazione della correttezza delle implementazioni è stata una componente fondamentale del mio lavoro. Ho sviluppato test per i principali sistemi di cui mi sono occupato: `ElixirSystem`, `HealthSystem`, `InputProcessor` e `InputSystem`.
 Anche se non ho seguito rigorosamente il Test-Driven Development, ho scritto i test in modo sistematico parallelamente o immediatamente dopo l'implementazione di ogni funzionalità. Per semplificare la scrittura dei test e renderli più leggibili, ho utilizzato il DSL creato da Giovanni Pisoni che permette di definire scenari di test in modo dichiarativo.
-
-## Esempi di Test
 
 Un esempio significativo dai test dell'`ElixirSystem` mostra come il DSL semplifichi la configurazione degli scenari:
 ```scala
