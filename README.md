@@ -55,12 +55,12 @@ _Fonte Dati: GameConstants.scala, EntityFactory.scala_
 
 ## 👹 I Trolls
 
-| 👹 Troll        | ❤️ Vita | 🏃 Velocità | ⚔️ Danno | 🎯 Gittata | ⏳ Cooldown | 📜 Caratteristica                |
-| :-------------- | :------ | :---------- | :------- | :--------- | :--------- | :------------------------------- |
-| **👤 Base** | 100     | 0.10        | 20       | 1.0        | 1s         | Troll standard bilanciato      |
-| **⚔️ Guerriero** | 130     | 0.15        | 30       | 0.5        | 1.5s       | Tank resistente, attacco ravvicinato |
-| **🗡️ Sicario** | 70      | 0.20        | 60       | 1.5        | 0.8s       | Veloce, attacca in mischia, si muove a zigzag |
-| **🏹 Lanciatore**| 40      | 0.10        | 10       | 5.0        | 3s         | Attacca dalla distanza         |
+| 👹 Troll        | ❤️ Vita | 🏃 Velocità | ⚔️ Danno | 🎯 Gittata | ⏳ Cooldown | 📜 Caratteristica                                        |
+| :-------------- | :------ | :---------- | :------- | :--------- | :--------- |:---------------------------------------------------------|
+| **👤 Base** | 100     | 0.10        | 20       | 1.0        | 1s         | Troll standard                                           |
+| **⚔️ Guerriero** | 130     | 0.15        | 30       | 0.5        | 1.5s       | Tank resistente, attacco ravvicinato                     |
+| **🗡️ Sicario** | 70      | 0.20        | 60       | 1.5        | 0.8s       | Veloce, danno alto ma poca resistenza, si muove a zigzag |
+| **🏹 Lanciatore**| 40      | 0.10        | 10       | 5.0        | 3s         | Attacca dalla distanza                                   |
 
 _Fonte Dati: GameConstants.scala, EntityFactory.scala, MovementSystem.scala_
 
@@ -89,11 +89,7 @@ _Fonte Dati: GameConstants.scala, EntityFactory.scala, MovementSystem.scala_
 
 ## 📚 Documentazione
 
--   📖 [Sito Web Documentazione](https://giacomofoschii.github.io/PPS-24-WvT/)
--   🏗️ Architettura (incluso nel sito)
--   🎮 Game Design Document (incluso nel sito)
--   📊 Relazione Tecnica (incluso nel sito)
--   🔄 Sprint Reports (incluso nel sito)
+-   📖 [Documentazione](https://giacomofoschii.github.io/PPS-24-WvT/)
 
 ## 📄 Licenza
 
