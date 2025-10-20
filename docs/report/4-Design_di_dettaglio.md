@@ -356,7 +356,7 @@ La **View** si occupa della presentazione grafica dello stato del gioco e dell'i
     * `ShopPanel`, `WavePanel`: Creano e gestiscono i pannelli specifici dell'HUD (negozio e informazioni sull'ondata).
 
 
-![View Diagram](./assets/img/view.png)   
+![View Diagram](../assets/img/view.png)   
  
 ---
 
@@ -364,7 +364,7 @@ La **View** si occupa della presentazione grafica dello stato del gioco e dell'i
 
 Il **Controller** agisce come collante, orchestrando il flusso di dati e la logica applicativa tra il Model e la View.
 
-![Controller Diagram](./assets/img/controller.png)
+![Controller Diagram](../assets/img/controller.png)
 
 ---
 

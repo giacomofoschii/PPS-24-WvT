@@ -46,7 +46,7 @@ Questa scelta architetturale è stata motivata da diversi fattori:
 
 ## Struttura del Progetto
 
-![Architettura del Progetto](./assets/img/architecture.png)
+![Architettura del Progetto](../assets/img/architecture.png)
 
 La struttura del progetto è organizzata in quattro moduli principali, che riflettono una chiara separazione delle 
 responsabilità ispirata al pattern Model-View-Controller (MVC), con una distinzione esplicita per il motore di 
