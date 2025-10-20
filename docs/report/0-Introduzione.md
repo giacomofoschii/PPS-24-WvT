@@ -9,7 +9,7 @@ parent: Report
 ## Obiettivo
 L'obiettivo di questo progetto è realizzare un videogioco tower defense ispirato a Plants vs Zombies, denominato **Wizards vs Trolls**.
 
-Il giocatore ha il compito di difendere la propria torre dall'invasione continua di ondate di Troll, posizionando strategicamente diversi tipi di Maghi all'interno di una griglia di gioco. La partita prosegue indefinitamente con difficoltà crescente finché un Troll non riesce a raggiungere la torre, decretando la sconfitta del giocatore.
+Il giocatore ha il compito di difendere il castello dall'invasione continua di ondate di Troll, posizionando strategicamente diversi tipi di Maghi all'interno di una griglia di gioco. La partita prosegue indefinitamente con difficoltà crescente finché un Troll non riesce a raggiungere la torre, decretando la sconfitta del giocatore.
 
 L'applicazione permetterà di:
 * gestire strategicamente le risorse (elisir) che si rigenerano automaticamente nel tempo;

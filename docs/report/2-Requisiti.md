@@ -51,10 +51,10 @@ Unità nemica che avanza verso la torre.
 * Viene rimosso quando la salute raggiunge zero.
 * Rilascia elisir come ricompensa quando eliminato.
 * Esistono quattro tipi di troll:
-    * **Troll Base**: Statistiche equilibrate. Vita: 100, Vel: 0.10, Danno: 20, Gittata: 1.0, CD: 1s.
-    * **Troll Guerriero**: Alta salute e danno, movimento più veloce, corto raggio. Vita: 130, Vel: 0.15, Danno: 30, Gittata: 0.5, CD: 1.5s.
-    * **Troll Assassino**: Altissima velocità e danno ma bassa salute, si muove a zigzag. Vita: 70, Vel: 0.2, Danno: 60, Gittata: 1.5, CD: 0.8s.
-    * **Troll Lanciatore**: Attacca i maghi a distanza, rimanendo fermo. Vita: 40, Vel: 0.10, Danno: 10, Gittata: 5.0, CD: 3s.
+    * **Troll Base**: Statistiche equilibrate. Vita: 100, Vel: 0.10, Danno: 20, Gittata: 1.0, Cooldown: 1s.
+    * **Troll Guerriero**: Alta salute e danno, movimento più veloce, corto raggio. Vita: 130, Vel: 0.15, Danno: 30, Gittata: 0.5, Cooldown: 1.5s.
+    * **Troll Assassino**: Altissima velocità e danno ma bassa salute, si muove a zigzag. Vita: 70, Vel: 0.2, Danno: 60, Gittata: 1.5, Cooldown: 0.8s.
+    * **Troll Lanciatore**: Attacca i maghi a distanza, rimanendo fermo. Vita: 40, Vel: 0.10, Danno: 10, Gittata: 5.0, Cooldown: 3s.
 
 ### Elixir
 
@@ -66,7 +66,7 @@ Risorsa economica gestita dal giocatore.
 * Può essere generato dai Maghi Generatori (+25 elisir ogni 10 secondi).
 * Determina quali maghi possono essere posizionati in un dato momento.
 
-### Tower
+### Castle
 
 Obiettivo da difendere (non una vera entità, ma la condizione di sconfitta).
 * Rappresenta la meta finale del percorso dei troll (lato sinistro della griglia).
@@ -111,10 +111,10 @@ Dal punto di vista dell'utente, il sistema deve consentire:
     * Visualizzare in tempo reale:
         * Quantità di elisir disponibile.
         * Numero dell'ondata corrente.
-        * Barre della vita sopra maghi e troll (quando non a vita piena).
+        * Barre della vita di maghi e troll (quando non a vita piena o uguale a 0).
         * Proiettili in movimento.
     * Ricevere feedback immediato per:
-        * Tentativi di posizionamento non validi (cella occupata, elisir insufficiente).
+        * Tentativi di posizionamento non validi (cella occupata, elisir insufficiente, mago non selezionato).
         * Inizio di nuove ondate.
     * Mettere in pausa il gioco e riprendere.
 
@@ -138,7 +138,7 @@ Il sistema dovrà occuparsi di:
     * Inizializzare l'elisir al valore predefinito (200) all'inizio della partita.
     * Rigenerare elisir automaticamente a intervalli regolari (+100 ogni 10s).
     * Rispettare il limite massimo di elisir accumulabile (1000).
-    * Verificare che il giocatore abbia elisir sufficiente prima di permettere il posizionamento.
+    * Verificare che il giocatore abbia elisir sufficiente prima di permettere il posizionamento di maghi.
     * Sottrarre il costo corretto quando un mago viene posizionato.
     * Aggiungere elisir quando un troll viene eliminato (quantità variabile).
     * Gestire la generazione periodica di elisir dai Maghi Generatori (+25 ogni 10s).
@@ -152,52 +152,48 @@ Il sistema dovrà occuparsi di:
 * **Gestione del movimento**:
     * Aggiornare continuamente le posizioni dei troll (da destra a sinistra) e dei proiettili (direzione opposta) in base alla loro velocità e al delta time.
     * Implementare il movimento a zigzag per i Troll Assassini.
-    * Applicare gli effetti di rallentamento (`FreezedComponent`) quando un troll viene colpito dal ghiaccio, riducendone la velocità.
+    * Applicare gli effetti di rallentamento quando un troll viene colpito dal ghiaccio, riducendone la velocità.
     * Rilevare quando un troll raggiunge il lato sinistro della griglia.
     * Rimuovere i proiettili che escono dai bordi dello schermo.
 
 * **Gestione del combattimento**:
     * Implementare il targeting automatico: maghi attaccano il troll più vicino sulla stessa riga nel loro range; Troll Lanciatori attaccano il mago più vicino sulla stessa riga nel loro range.
-    * Gestire i tempi di ricarica (`CooldownComponent`) per ogni entità attaccante.
+    * Gestire i tempi di ricarica per ogni entità attaccante.
     * Creare proiettili quando un'entità effettua un attacco a distanza.
-    * Gestire gli attacchi in mischia dei Troll non-lanciatori quando entrano nella stessa cella di un mago.
-    * Rilevare le collisioni tra proiettili e bersagli nella stessa cella.
-    * Aggiungere un `CollisionComponent` all'entità colpita.
-    * Applicare effetti speciali (rallentamento del ghiaccio tramite `FreezedComponent`) alla collisione.
-    * Gestire il blocco del movimento (`BlockedComponent`) per i Troll che attaccano in mischia.
+    * Rilevare le collisioni tra entità e bersagli nella stessa cella e gestirne l'effetto (meleeAttack o projectile-entity collision).
+    * Applicare effetti speciali alla collisione.
+    * Gestire il blocco del movimento per i Troll che attaccano in mischia.
 
 * **Gestione della salute**:
-    * Processare i `CollisionComponent` per ridurre la `HealthComponent` delle entità.
+    * Processare le collisioni per ridurre la vita delle entità.
     * Rilevare quando un'entità raggiunge salute zero o inferiore.
     * Rimuovere le entità morte dal gioco.
-    * Assegnare ricompense in elisir tramite `ElixirSystem` quando un troll viene eliminato.
-    * Gestire la rimozione a cascata dei `BlockedComponent` quando l'entità bloccante muore.
+    * Assegnare ricompense in elisir quando un troll viene eliminato.
 
 * **Gestione delle ondate**:
     * Iniziare a generare ondate di troll solo dopo che il primo mago è stato piazzato.
     * Determinare la composizione di ogni ondata (numero e tipi di troll) proceduralmente in base al numero dell'ondata.
     * Aumentare progressivamente la difficoltà:
-        * Incrementare il numero massimo di troll per ondata.
-        * Aumentare le statistiche base (salute, velocità, danno) dei troll generati.
-        * Diminuire l'intervallo tra le generazioni.
-        * Modificare la probabilità di apparizione dei tipi di troll.
-    * Generare troll in "batch" a intervalli leggermente randomizzati.
-    * Continuare la generazione all'infinito senza limite massimo.
+        * Incrementando il numero massimo di troll per ondata.
+        * Aumententando le statistiche base (salute, velocità, danno) dei troll generati.
+        * Diminuendo l'intervallo tra le generazioni.
+        * Modificando la probabilità di apparizione dei tipi di troll.
+    * Generare troll in "batch" a intervalli randomizzati.
     * Rilevare il completamento di un'ondata (spawn terminato e nessun troll rimasto).
 
 * **Ciclo di gioco principale**:
-    * Aggiornare costantemente lo stato del gioco tramite un game loop a timestep fisso.
-    * Processare tutti gli aggiornamenti dei sistemi ECS in un ordine definito (`GameSystemsState`).
+    * Mantenere aggiornato e consistente lo stato del gioco.
+    * Processare tutti gli aggiornamenti dei sistemi ECS in un ordine definito.
     * Gestire correttamente la pausa e la ripresa del gioco, sospendendo gli aggiornamenti e la generazione di spawn.
     * Rilevare le condizioni di vittoria e sconfitta e terminare/procedere la partita.
 
 * **Rendering e interfaccia**:
     * Disegnare la mappa di gioco e la griglia.
-    * Visualizzare tutte le entità (maghi, troll, proiettili) nelle loro posizioni con le loro immagini/sprite.
+    * Visualizzare tutte le entità (maghi, troll, proiettili) nelle loro posizioni con le loro icone.
     * Mostrare l'effetto visivo per le entità congelate.
-    * Disegnare le barre della vita sopra le entità con salute non piena.
+    * Disegnare le barre della vita delle entità con salute non piena.
     * Mostrare l'HUD con informazioni su elisir, ondata corrente, pannello shop.
-    * Gestire la visualizzazione e l'interazione con i menu (Principale, Info, Pausa, Risultato).
+    * Gestire la visualizzazione e l'interazione con i menu.
 
 ## Requisiti non funzionali
 
@@ -220,17 +216,18 @@ Il sistema dovrà occuparsi di:
 ### Requisiti interni
 
 * **Scalabilità**:
-    * Facilità di aggiungere nuovi tipi di maghi e troll modificando principalmente le configurazioni (`EntityFactory`) e eventualmente aggiungendo nuovi `Component` o logica specifica nei `System`.
-    * Capacità di introdurre nuove meccaniche tramite nuovi `System` e `Component`.
+    * Facilità di aggiungere nuovi tipi di maghi e troll modificando principalmente le configurazioni.
+    * Aggiungere nuove caratterisitche e funzionalità per le entità di gioco.
+    * Capacità di introdurre nuove meccaniche.
 
 * **Manutenibilità**:
-    * Separazione netta tra logica di gioco (Model/ECS) e interfaccia grafica (View).
-    * Codice modulare (ogni `System` ha una responsabilità chiara).
-    * Utilizzo di immutabilità (`World`, `Component`, stati dei `System`) per ridurre effetti collaterali.
+    * Separazione netta tra logica di gioco e interfaccia grafica.
+    * Codice modulare.
+    * Utilizzo di immutabilità per ridurre effetti collaterali.
     * Codice ben documentato e con nomi descrittivi.
 
 * **Testabilità**:
-    * Logica di gioco (Systems) testabile in isolamento dal rendering.
+    * Logica di gioco testabile in isolamento dal rendering.
     * Comportamento deterministico facilitato dall'immutabilità e dal game loop fisso.
     * Utilizzo di DSL per creare scenari di test specifici.
     * Buona copertura dei test sulle logiche critiche.
