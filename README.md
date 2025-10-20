@@ -1,6 +1,6 @@
 # 🧙‍♂️ Wizards vs Trolls 👹
 
-[![Scala Version](https://img.shields.io/badge/scala-3.3.0-red.svg)](https://www.scala-lang.org/)
+[![Scala Version](https://img.shields.io/badge/scala-3.3.6-red.svg)](https://www.scala-lang.org/)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Coverage](https://img.shields.io/badge/coverage-85%25-green.svg)](https://github.com/)
@@ -25,120 +25,75 @@
 
 ### Prerequisiti
 
-- **Scala** 3.3.0+
-- **SBT** 1.9.0+
 - **Java** 11+
-
-### Installazione
-
-```bash
-# Clona il repository
-git clone https://github.com/yourusername/Wizards_vs_Trolls_PPS.git
-cd PPS-24-mnt
-
-# Compila il progetto
-sbt compile
-
-# Esegui i test
-sbt test
-
-# Avvia il gioco
-sbt run
-```
 
 ### 🎮 Come Giocare
 
-1. **Avvia il gioco** dal menu principale
-2. **Posiziona i maghi** sulla griglia usando l'elisir disponibile
-3. **Respingi le ondate** di trolls impedendo loro di raggiungere il castello
-4. **Gestisci le risorse** generando elisir con i maghi generatori
-5. **Progredisci** attraverso ondate sempre più difficili
+1.  **Scarica il gioco**: Vai alla [sezione Releases](https://github.com/giacomofoschii/PPS-24-WvT/releases) del repository GitHub e scarica l'ultimo file `WizardVsTrolls.jar`.
+2.  **Avvia il gioco**: Apri un terminale o prompt dei comandi, naviga nella cartella dove hai scaricato il file JAR ed esegui il comando:
+    ```bash
+    java -jar WizardVsTrolls.jar
+    ```
+3.  **Inizia a giocare**:
+    * Seleziona "Start Game" dal menu principale.
+    * **Posiziona i maghi** sulla griglia usando l'elisir disponibile dallo shop laterale.
+    * **Respingi le ondate** di trolls impedendo loro di raggiungere il castello sulla sinistra.
+    * **Gestisci le risorse**: I Maghi Generatori producono elisir aggiuntivo. L'elisir si rigenera anche automaticamente.
+    * **Progredisci** attraverso ondate sempre più difficili. Il gioco termina se un troll raggiunge il lato sinistro della griglia.
 
 ## 🧙‍♂️ I Maghi
 
-| 🧙‍♂️ Mago               | 💎 Costo | ❤️ Vita | ⚔️ Danno | 🎯 Abilità Speciale |
-|--------------------------|---------|---------|----------|-------------------|
-| **🔮 Generatore**        | 50 | Bassa | - | Genera 25 elisir ogni 2 secondi |
-| **💨 Mago del Vento**    | 100 | Media | Basso | Attacchi rapidi a distanza |
-| **🛡️ Mago Barriera**    | 50 | Molto Alta | - | Blocca l'avanzata dei trolls |
-| **🔥 Mago del Fuoco**    | 150 | Media | Alto | Danni devastanti ad area |
-| **❄️ Mago del Ghiaccio** | 175 | Media | Basso | Rallenta i nemici colpiti |
+| 🧙‍♂️ Mago            | 💎 Costo | ❤️ Vita | ⚔️ Danno | 🎯 Gittata | ⏳ Cooldown | 📜 Abilità Speciale                     |
+| :------------------- | :------- | :------ | :------- | :--------- | :--------- | :-------------------------------------- |
+| **🔮 Generatore** | 100      | 150     | -        | -          | 10s        | Genera 25 elisir ogni 10 secondi      |
+| **💨 Mago del Vento** | 150      | 100     | 25       | 3.0        | 3s         | Attacco base a distanza             |
+| **🛡️ Mago Barriera** | 200      | 300     | -        | -          | -          | Blocca l'avanzata dei trolls          |
+| **🔥 Mago del Fuoco** | 250      | 100     | 50       | 2.0        | 2.5s       | Attacco potente a corto raggio        |
+| **❄️ Mago del Ghiaccio**| 200      | 150     | 25       | 2.5        | 4s         | Rallenta i nemici colpiti             |
 
-### 🔓 Progressione Sblocco Maghi
-- **Ondata 1**: 🔮 Generatore, 💨 Vento
-- **Ondata 2**: 🛡️ Barriera
-- **Ondata 3**: 🔥 Fuoco
-- **Ondata 4+**: ❄️ Ghiaccio
+_Fonte Dati: GameConstants.scala, EntityFactory.scala_
 
 ## 👹 I Trolls
 
-| 👹Troll | ❤️ Vita | 🏃 Velocità | ⚔️ Danno | 🎯 Caratteristica |
-|-------|---------|------------|----------|------------------|
-| **👤 Base** | Normale | Normale | Basso | Troll standard bilanciato |
-| **⚔️ Guerriero** | Alta | Bassa | Medio | Tank resistente |
-| **🗡️ Sicario** | Molto Bassa | Molto Alta | Alto | Assassino veloce |
-| **🏹 Lanciatore** | Bassa | Ferma | Medio | Attacca dalla distanza |
+| 👹 Troll        | ❤️ Vita | 🏃 Velocità | ⚔️ Danno | 🎯 Gittata | ⏳ Cooldown | 📜 Caratteristica                |
+| :-------------- | :------ | :---------- | :------- | :--------- | :--------- | :------------------------------- |
+| **👤 Base** | 100     | 0.10        | 20       | 1.0        | 1s         | Troll standard bilanciato      |
+| **⚔️ Guerriero** | 130     | 0.15        | 30       | 0.5        | 1.5s       | Tank resistente, attacco ravvicinato |
+| **🗡️ Sicario** | 70      | 0.20        | 60       | 1.5        | 0.8s       | Veloce, attacca in mischia, si muove a zigzag |
+| **🏹 Lanciatore**| 40      | 0.10        | 10       | 5.0        | 3s         | Attacca dalla distanza         |
 
-### 🔓 Progressione Apparizione Trolls
-- **Ondata 1**: 👤 Base, ⚔️ Guerriero
-- **Ondata 2**: 🏹 Lanciatore
-- **Ondata 3+**: 🗡️ Sicario
+_Fonte Dati: GameConstants.scala, EntityFactory.scala, MovementSystem.scala_
 
 ## 💎 Sistema Economico
 
 ### Generazione Elisir
-- **⏰ Automatica**: +100 elisir ogni 10 secondi
-- **🔮 Maghi Generatori**: +25 elisir ogni 2 secondi
-- **💰 Capitale iniziale**: Quantità predefinita per ondata
+
+-   **⏰ Automatica**: +100 elisir ogni 10 secondi.
+-   **🔮 Maghi Generatori**: +25 elisir ogni 10 secondi.
+-   **💰 Capitale iniziale**: 200 elisir.
+-   **上限 Massimo**: 1000 elisir.
 
 ### Gestione Risorse
-- Pianifica attentamente i tuoi investimenti
-- Bilancia difesa e generazione di risorse
-- Adatta la strategia in base all'ondata
 
-## 🎮 Controlli
-
-## TODO correctly
-
-Example:
-
-| Tasto/Azione | Funzione |
-|--------------|----------|
-| **Click sinistro** | Seleziona/Posiziona mago |
-| **Click destro** | Annulla selezione |
-| **P** | Pausa/Riprendi |
-| **ESC** | Menu pausa |
-| **1-5** | Selezione rapida maghi |
-
-## 📦 Build & Deploy
-
-### Crea JAR Eseguibile
-```bash
-sbt assembly
-# Il JAR sarà in target/scala-3.3.0/
-```
-
-### Esegui il JAR
-```bash
-java -jar magicians-vs-trolls.jar
-```
+-   Pianifica attentamente i tuoi investimenti.
+-   Bilancia difesa e generazione di risorse.
+-   Adatta la strategia in base all'ondata.
 
 ## 👥 Team di Sviluppo
 
 | Ruolo                | Membro               | GitHub                                                           |
-|----------------------|----------------------|------------------------------------------------------------------|
-| 💡 **Commissioner**  | [Giovanni Pisoni]    | [@GiovanniPisoni](https://github.com/GiovanniPisoni)             |
+| :------------------- | :------------------- | :--------------------------------------------------------------- |
+| 💡 **Commissioner** | [Giovanni Pisoni]    | [@GiovanniPisoni](https://github.com/GiovanniPisoni)             |
 | 🎯 **Product Owner** | [Giovanni Rinchiuso] | [@giovannirinchiuso02](https://github.com/giovannirinchiuso02)   |
-| ⚙️ **Developer**     | [Giacomo Foschi]     | [@giacomofoschii](https://github.com/giacomofoschii)             |
+| ⚙️ **Developer** | [Giacomo Foschi]     | [@giacomofoschii](https://github.com/giacomofoschii)             |
 
 ## 📚 Documentazione
 
-- 📖 [Requisiti di Sistema](docs/requisiti.md)
-- 🏗️ [Architettura](docs/architettura.md)
-- 🎮 [Game Design Document](docs/gdd.md)
-- 📊 [Relazione Tecnica](docs/relazione/)
-- 🔄 [Sprint Reports](process/)
-
+-   📖 [Sito Web Documentazione](https://giacomofoschii.github.io/PPS-24-WvT/)
+-   🏗️ Architettura (incluso nel sito)
+-   🎮 Game Design Document (incluso nel sito)
+-   📊 Relazione Tecnica (incluso nel sito)
+-   🔄 Sprint Reports (incluso nel sito)
 
 ## 📄 Licenza
 
@@ -148,9 +103,9 @@ Questo progetto è distribuito sotto licenza MIT - vedi il file [LICENSE](LICENS
 
 <div align="center">
 
-**[🎮 Gioca Ora](https://github.com/)**
+**[🎮 Scarica l'Ultima Release](https://github.com/giacomofoschii/PPS-24-WvT/releases)**
 
-Made with ❤️ and ☕ by Piso, Jack and Gino. 
+Made with ❤️ and ☕ by Piso, Jack and Gino.
 
 *"La magia è l'unica difesa contro l'invasione!"* ✨
 
