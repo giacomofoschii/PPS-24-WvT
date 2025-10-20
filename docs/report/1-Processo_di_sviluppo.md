@@ -70,4 +70,3 @@ L'intero progetto è stato gestito tramite **GitHub**. In particolare, per autom
 * **Build e test**: il codice viene compilato e testato automaticamente su diverse piattaforme (Ubuntu, Windows, macOS) e versioni di Java (17, 21), per assicurare la compatibilità cross-platform e prevenire regressioni. Questo processo viene avviato ad ogni push, consentendo un controllo continuo dello stato del software.
 * **Controllo della formattazione**: si verifica che il codice rispetti gli standard di formattazione stabiliti dal team, utilizzando `scalafmtCheckAll` per mantenere una codebase coerente e leggibile.
 * **Validazione dei commit**: per garantire chiarezza e coerenza nella cronologia dei commit, è stato implementato un workflow che valida i messaggi di commit, rispettando le specifiche di **Conventional Commits**.
-* **Test coverage**: viene generato un report sulla copertura dei test per monitorare la qualità del codice e identificare aree non testate.
