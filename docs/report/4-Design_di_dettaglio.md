@@ -291,79 +291,77 @@ La **View** si occupa della presentazione grafica dello stato del gioco e dell'i
 ```mermaid
 classDiagram
     namespace View {
-class ViewController {
-<<object>>
-+updateView(ViewState)
-+requestMainMenu()
-+requestGameView()
-+render()
-+drawPlacementGrid()
-+hidePlacementGrid()
-}
-class GameView {
-<<object>>
-+apply(): Parent
-+renderEntities()
-+renderHealthBars()
-+drawGrid()
-}
-class MainMenu { <<object>> }
-class InfoMenu { <<object>> }
-class PauseMenu { <<object>> }
-class GameResultPanel { <<object>> }
-class ShopPanel { <<object>> }
-class WavePanel { <<object>> }
-class ButtonFactory { <<object>> }
-class ImageFactory { <<object>> }
-class ViewState { <<Sealed Trait>> }
-}
-namespace Utilities {
-class GridMapper { <<object>> }
-class Position
-}
-namespace Controller {
-class GameController
-}
+        class ViewController {
+            +updateView(ViewState)
+            +requestMainMenu()
+            +requestGameView()
+            +render()
+            +drawPlacementGrid()
+            +hidePlacementGrid()
+        }
+        class GameView {
+            +apply(): Parent
+            +renderEntities()
+            +renderHealthBars()
+            +drawGrid()
+        }
+        class MainMenu
+        class InfoMenu
+        class PauseMenu
+        class GameResultPanel
+        class ShopPanel
+        class WavePanel
+        class ButtonFactory
+        class ImageFactory
+        class ViewState
+    }
+    namespace Utilities {
+        class GridMapper
+        class Position
+    }
+    namespace Controller {
+        class GameController
+    }
 
-ViewController --> GameController : uses
-ViewController --> GameView : creates/updates
-ViewController --> MainMenu : creates
-ViewController --> InfoMenu : creates
-ViewController --> PauseMenu : creates
-ViewController --> GameResultPanel : creates
-ViewController --> ViewState : manages
+View.ViewController -- Controller.GameController : uses
+View.ViewController -- View.GameView : creates/updates
+View.ViewController -- View.MainMenu : creates
+View.ViewController -- View.InfoMenu : creates
+View.ViewController -- View.PauseMenu : creates
+View.ViewController -- View.GameResultPanel : creates
+View.ViewController -- View.ViewState : manages
 
-GameView ..> ViewController : calls requests
-GameView *-- ShopPanel : creates/uses
-GameView *-- WavePanel : creates/uses
-GameView ..> ButtonFactory : uses
-GameView ..> ImageFactory : uses
-GameView ..> GridMapper : uses
-GameView ..> Position : uses
+View.GameView ..> View.ViewController : calls requests
+View.GameView *-- View.ShopPanel : creates/uses
+View.GameView *-- View.WavePanel : creates/uses
+View.GameView ..> View.ButtonFactory : uses
+View.GameView ..> View.ImageFactory : uses
+View.GameView ..> Utilities.GridMapper : uses
+View.GameView ..> Utilities.Position : uses
 
-MainMenu ..> ButtonFactory : uses
-MainMenu ..> ImageFactory : uses
-MainMenu ..> ViewController : calls requests
+View.MainMenu ..> View.ButtonFactory : uses
+View.MainMenu ..> View.ImageFactory : uses
+View.MainMenu ..> View.ViewController : calls requests
 
-InfoMenu ..> ButtonFactory : uses
-InfoMenu ..> ImageFactory : uses
-InfoMenu ..> ViewController : calls requests
+View.InfoMenu ..> View.ButtonFactory : uses
+View.InfoMenu ..> View.ImageFactory : uses
+View.InfoMenu ..> View.ViewController : calls requests
 
-PauseMenu ..> ButtonFactory : uses
-PauseMenu ..> ImageFactory : uses
-PauseMenu ..> ViewController : calls requests
+View.PauseMenu ..> View.ButtonFactory : uses
+View.PauseMenu ..> View.ImageFactory : uses
+View.PauseMenu ..> View.ViewController : calls requests
 
-GameResultPanel ..> ButtonFactory : uses
-GameResultPanel ..> ImageFactory : uses
-GameResultPanel ..> ViewController : calls requests
+View.GameResultPanel ..> View.ButtonFactory : uses
+View.GameResultPanel ..> View.ImageFactory : uses
+View.GameResultPanel ..> View.ViewController : calls requests
 
-ShopPanel ..> ButtonFactory : uses
-ShopPanel ..> ImageFactory : uses
-ShopPanel ..> ViewController : calls requests / gets state
+View.ShopPanel ..> View.ButtonFactory : uses
+View.ShopPanel ..> View.ImageFactory : uses
+View.ShopPanel ..> View.ViewController : calls requests / gets state
 
-WavePanel ..> ViewController : gets state
+View.WavePanel ..> View.ViewController : gets state
 
-ButtonFactory ..> ViewController : calls requests
+View.ButtonFactory ..> View.ViewController : calls requests
 ```
 
 ## Controller
@@ -405,7 +403,7 @@ sequenceDiagram
     participant GL as GameLoop
     participant GE as GameEngine
     participant GC as GameController
-    participant GSS as GameSystemsState
+    participant GSS as SystemsState
     participant W as World
     participant EH as EventHandler
     participant V as View
@@ -415,12 +413,12 @@ sequenceDiagram
     GE->>GC: update()
     GC->>GSS: updateAll(currentWorld)
     GSS->>W: Reads state
-    Note right of GSS: Executes MovementSystem, CombatSystem, etc. updates...
+    Note right of GSS: Executes System updates...
     GSS-->>GC: (newWorld, newSystemsState)
-    GC->>GC: Updates internal World & State refs
+    GC->>GC: Updates internal refs
     GC->>EH: checkGameConditions(newWorld)
-    alt Win/Loss Condition Met
-        EH->>GC: postEvent(GameWon/GameLost)
+    alt Win/Loss Condition
+        EH->>GC: postEvent(GameWon / GameLost)
     end
     GC->>V: render()
 
