@@ -1,5 +1,5 @@
 ---
-title: Giovanni Pisoni
+title: Giovanni Rinchiuso
 nav_order: 2
 parent: Implementazione
 ---
