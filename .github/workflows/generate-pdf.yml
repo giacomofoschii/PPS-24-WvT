@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'docs/report/**.md'
+      - 'docs/assets/img/**'
       - '.github/workflows/generate-pdf.yml'
   workflow_dispatch:
 
@@ -26,10 +27,19 @@ jobs:
             texlive-fonts-recommended \
             texlive-latex-extra \
             latexmk \
-            lmodern # Font spesso utile
+            lmodern
 
-      - name: Set output PDF filename
-        run: echo "PDF_FILENAME=docs/report.pdf" >> $GITHUB_ENV
+      - name: Fix image paths in markdown files
+        run: |
+          mkdir -p temp_docs
+          for file in docs/report/*.md docs/report/implementazione/*.md; do
+            if [ -f "$file" ]; then
+              # Crea la struttura delle directory
+              mkdir -p "temp_docs/$(dirname "$file" | sed 's|docs/||')"
+              # Sostituisce i path relativi delle immagini con path assoluti dalla root
+              sed 's|\.\./assets/img/|docs/assets/img/|g' "$file" > "temp_docs/$(echo "$file" | sed 's|docs/||')"
+            fi
+          done
 
       - name: Generate PDF using Pandoc
         run: |
@@ -37,23 +47,33 @@ jobs:
             --pdf-engine=xelatex \
             --toc \
             --listings \
-            --resource-path=.:docs \
+            --resource-path=.:docs:docs/assets:docs/assets/img \
             -V geometry:"margin=1in" \
-            docs/report/0-Introduzione.md \
-            docs/report/1-Processo_di_sviluppo.md \
-            docs/report/2-Requisiti.md \
-            docs/report/3-Design_architetturale.md \
-            docs/report/4-Design_di_dettaglio.md \
-            docs/report/5-Implementazione.md \
-            docs/report/implementazione/foschi.md \
-            docs/report/implementazione/pisoni.md \
-            docs/report/implementazione/rinchiuso.md \
-            docs/report/6-Testing.md \
-            docs/report/7-Retrospettiva.md \
-            -o ${{ env.PDF_FILENAME }}
+            -V linkcolor:blue \
+            -V urlcolor:blue \
+            temp_docs/report/0-Introduzione.md \
+            temp_docs/report/1-Processo_di_sviluppo.md \
+            temp_docs/report/2-Requisiti.md \
+            temp_docs/report/3-Design_architetturale.md \
+            temp_docs/report/4-Design_di_dettaglio.md \
+            temp_docs/report/5-Implementazione.md \
+            temp_docs/report/implementazione/foschi.md \
+            temp_docs/report/implementazione/pisoni.md \
+            temp_docs/report/implementazione/rinchiuso.md \
+            temp_docs/report/6-Testing.md \
+            temp_docs/report/7-Retrospettiva.md \
+            -o docs/report.pdf
+
+      - name: Commit PDF to repository
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add docs/report.pdf
+          git diff --staged --quiet || git commit -m "docs: Update generated PDF report [skip ci]"
+          git push
 
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
         with:
           name: report-pdf
-          path: ${{ env.PDF_FILENAME }}
+          path: docs/report.pdf
