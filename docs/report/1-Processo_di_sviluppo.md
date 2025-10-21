@@ -62,11 +62,12 @@ Al termine di ogni sprint, durante la Sprint Review, il codice consolidato nel b
 * una cronologia pulita e organizzata del progetto
 
 ## Scelta degli strumenti di test, build e Continuous Integration (CI)
-
 Per il testing si è scelto di utilizzare **ScalaTest** come framework di automazione, essendo una tecnologia matura e ben integrata nell'ecosistema Scala, mentre come build tool è stato scelto **sbt**, in quanto nasce specificatamente per Scala e offre un'ottima gestione delle dipendenze. Inoltre, è stato utilizzato **scalafmt** per formattare automaticamente il codice sorgente rendendolo coerente e standardizzato all'interno del team.
 
-L'intero progetto è stato gestito tramite **GitHub**. In particolare, per automatizzare i processi di test e controllo qualità, è stata implementata una pipeline di **continuous integration** su **GitHub Actions**. Questa pipeline si attiva automaticamente a ogni nuova push sui branch di sviluppo, garantendo che il codice rispetti gli standard prefissati prima di essere integrato. I workflow sono stati configurati per eseguire le seguenti azioni:
+L'intero progetto è stato gestito tramite **GitHub**. Per automatizzare i processi di test e controllo qualità, è stata implementata una pipeline di **continuous integration** (CI) su **GitHub Actions**. Questa pipeline si attiva automaticamente a ogni nuova push o pull request sui branch principali (escluso il contenuto della cartella docs), garantendo che il codice rispetti gli standard prefissati prima di essere integrato.
 
-* **Build e test**: il codice viene compilato e testato automaticamente su diverse piattaforme (Ubuntu, Windows, macOS) e versioni di Java (17, 21), per assicurare la compatibilità cross-platform e prevenire regressioni. Questo processo viene avviato ad ogni push, consentendo un controllo continuo dello stato del software.
-* **Controllo della formattazione**: si verifica che il codice rispetti gli standard di formattazione stabiliti dal team, utilizzando `scalafmtCheckAll` per mantenere una codebase coerente e leggibile.
-* **Validazione dei commit**: per garantire chiarezza e coerenza nella cronologia dei commit, è stato implementato un workflow che valida i messaggi di commit, rispettando le specifiche di **Conventional Commits**.
+Il workflow configurato esegue le seguenti azioni principali:
+
+* **Controllo della formattazione**: Verifica che il codice sorgente rispetti gli standard di formattazione definiti nel file _.scalafmt.conf_, utilizzando il comando sbt `scalafmtCheckAll` per mantenere una codebase coerente e leggibile.
+
+* **Build e test**: Compila il codice ed esegue la suite di test automatici (sbt test) per prevenire regressioni e assicurare la correttezza del software. Questo processo viene eseguito su diverse piattaforme (Ubuntu, Windows, macOS) utilizzando JDK 21 per garantire la compatibilità cross-platform.
