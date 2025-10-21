@@ -23,7 +23,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Install Pandoc and essential LaTeX packages
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y \
@@ -33,30 +38,134 @@ jobs:
             texlive-fonts-recommended \
             texlive-latex-extra \
             latexmk \
-            lmodern
+            lmodern \
+            librsvg2-bin \
+            chromium-browser
+          
+          npm install -g @mermaid-js/mermaid-cli
+          
+          export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+          export PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-      - name: Fix image paths in markdown files
+      - name: Create metadata file
         run: |
-          mkdir -p temp_docs
-          for file in docs/report/*.md docs/report/implementazione/*.md; do
-            if [ -f "$file" ]; then
-              # Crea la struttura delle directory
-              mkdir -p "temp_docs/$(dirname "$file" | sed 's|docs/||')"
-              # Sostituisce i path relativi delle immagini con path assoluti dalla root
-              sed 's|\.\./assets/img/|docs/assets/img/|g' "$file" > "temp_docs/$(echo "$file" | sed 's|docs/||')"
-            fi
-          done
+          cat > docs/metadata.yaml << 'EOF'
+          ---
+          title: "Wizards vs Trolls"
+          subtitle: "PPS-24-WvT"
+          author:
+            - "Giacomo Foschi - giacomo.foschi3@studio.unibo.it - 0001179137"
+            - "Giovanni Pisoni - giovanni.pisoni@studio.unibo.it - 0001189814"
+            - "Giovanni Rinchiuso - giovanni.rinchiuso@studio.unibo.it - 0001195145"
+          date: \today
+          toc-title: "Indice"
+          lang: it
+          geometry: "margin=1in"
+          linkcolor: blue
+          urlcolor: blue
+          fontsize: 11pt
+          header-includes: |
+            \usepackage{listings}
+            \usepackage{fancyhdr}
+            \lstset{
+              breaklines=true,
+              breakatwhitespace=true,
+              basicstyle=\ttfamily\small,
+              columns=flexible,
+              keepspaces=true,
+              showstringspaces=false,
+              prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}}
+            }
+            \pagestyle{fancy}
+            \fancyhead{}
+            \fancyfoot{}
+            \fancyfoot[C]{\thepage}
+            \renewcommand{\headrulewidth}{0pt}
+            \let\oldtableofcontents\tableofcontents
+            \renewcommand{\tableofcontents}{\oldtableofcontents\newpage\thispagestyle{empty}\mbox{}\newpage}
+          ---
+          EOF
 
-      - name: Generate PDF using Pandoc
+      - name: Extract and convert Mermaid diagrams
+        run: |
+          mkdir -p docs/mermaid_diagrams
+          counter=0
+          
+          python3 << 'PYTHON_SCRIPT'
+          import re
+          import glob
+          import subprocess
+          
+          counter = 0
+          for filepath in sorted(glob.glob('docs/report/*.md') + glob.glob('docs/report/implementazione/*.md')):
+              with open(filepath, 'r', encoding='utf-8') as f:
+                  content = f.read()
+          
+              pattern = r'```mermaid\n(.*?)```'
+              matches = re.findall(pattern, content, re.DOTALL)
+          
+              for match in matches:
+                  counter += 1
+                  mmd_file = f'/tmp/mermaid_{counter}.mmd'
+                  png_file = f'docs/mermaid_diagrams/diagram_{counter}.png'
+          
+                  with open(mmd_file, 'w', encoding='utf-8') as mf:
+                      mf.write(match.strip())
+          
+                  try:
+                      subprocess.run([
+                          'mmdc', 
+                          '-i', mmd_file, 
+                          '-o', png_file,
+                          '-b', 'transparent',
+                          '-w', '800',
+                          '-H', '600'
+                      ], check=True, capture_output=True)
+                      print(f"Converted diagram {counter}")
+                  except subprocess.CalledProcessError as e:
+                      print(f"Error converting diagram {counter}: {e.stderr.decode()}")
+          
+          print(f"Total diagrams converted: {counter}")
+          PYTHON_SCRIPT
+
+      - name: Fix image paths and replace Mermaid blocks
+        run: |
+          mkdir -p temp_docs/report/implementazione
+          
+          python3 << 'PYTHON_SCRIPT'
+          import re
+          import glob
+          import os
+          
+          counter = 0
+          
+          for filepath in sorted(glob.glob('docs/report/*.md') + glob.glob('docs/report/implementazione/*.md')):
+              with open(filepath, 'r', encoding='utf-8') as f:
+                  content = f.read()
+          
+              content = content.replace('../assets/img/', 'assets/img/')
+          
+              def replace_mermaid(match):
+                  global counter
+                  counter += 1
+                  return f'\n![Diagramma {counter}](mermaid_diagrams/diagram_{counter}.png)\n'
+          
+              content = re.sub(r'```mermaid\n.*?```', replace_mermaid, content, flags=re.DOTALL)
+          
+              # Scrivi il file processato
+              output_path = filepath.replace('docs/', 'temp_docs/')
+              os.makedirs(os.path.dirname(output_path), exist_ok=True)
+          
+              with open(output_path, 'w', encoding='utf-8') as f:
+                  f.write(content)
+          
+              print(f"Processed: {filepath}")
+          PYTHON_SCRIPT
+
+      - name: Generate PDF
         run: |
           pandoc \
-            --pdf-engine=xelatex \
-            --toc \
-            --listings \
-            --resource-path=.:docs:docs/assets:docs/assets/img \
-            -V geometry:"margin=1in" \
-            -V linkcolor:blue \
-            -V urlcolor:blue \
+            docs/metadata.yaml \
             temp_docs/report/0-Introduzione.md \
             temp_docs/report/1-Processo_di_sviluppo.md \
             temp_docs/report/2-Requisiti.md \
@@ -68,6 +177,12 @@ jobs:
             temp_docs/report/implementazione/rinchiuso.md \
             temp_docs/report/6-Testing.md \
             temp_docs/report/7-Retrospettiva.md \
+            --pdf-engine=xelatex \
+            --toc \
+            --toc-depth=3 \
+            --number-sections \
+            --listings \
+            --resource-path=.:docs:docs/assets:docs/assets/img:docs/mermaid_diagrams \
             -o docs/report.pdf
 
       - name: Commit and Push PDF
@@ -82,9 +197,7 @@ jobs:
           fi
           
           git commit -m "docs: Update generated PDF report [skip ci]"
-          
           git pull --rebase origin ${{ github.ref_name }}
-          
           git push origin HEAD:${{ github.ref_name }}
 
       - name: Upload PDF artifact
