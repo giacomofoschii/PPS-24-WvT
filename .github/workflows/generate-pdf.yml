@@ -6,6 +6,7 @@ on:
     paths:
       - 'docs/report/**.md'
       - '.github/workflows/generate-pdf.yml'
+  workflow_dispatch:
 
 jobs:
   build_pdf:
@@ -15,16 +16,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Pandoc and LaTeX dependencies
+      - name: Install Pandoc and TeX Live Full
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y \
-            pandoc \
-            texlive-latex-base \
-            texlive-latex-extra \
-            texlive-fonts-recommended \
-            lmodern \
-            latexmk
+          sudo apt-get install --no-install-recommends -y pandoc texlive-full
 
       - name: Set output PDF filename
         run: echo "PDF_FILENAME=docs/report.pdf" >> $GITHUB_ENV
@@ -35,6 +30,7 @@ jobs:
             --pdf-engine=xelatex \
             --toc \
             --listings \
+            --resource-path=.:docs/assets/img \
             -V geometry:"margin=1in" \
             docs/report/0-Introduzione.md \
             docs/report/1-Processo_di_sviluppo.md \
