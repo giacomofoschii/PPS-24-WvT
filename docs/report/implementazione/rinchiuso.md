@@ -6,8 +6,6 @@ parent: Implementazione
 
 # Implementazione - Giovanni Rinchiuso
 
----
-
 ## Panoramica dei Contributi
 
 Il mio contributo al progetto si è focalizzato sulle seguenti aree:
@@ -17,8 +15,6 @@ Il mio contributo al progetto si è focalizzato sulle seguenti aree:
 * **Sistema di input**: `InputProcessor`, `InputSystem`, `InputTypes` con validazione.
 * **Interfaccia utente**: `InfoMenu`, `ShopPanel`, `WavePanel` con gestione stato reattiva.
 * **Testing**: DSL per `ElixirSystemTest`, `HealthSystemTest`, `InputProcessorTest`, `InputSystemTest`.
-
----
 
 ## Gestione dell'Economia: ElixirSystem
 
@@ -114,8 +110,6 @@ private def updateGeneratorWizardElixir(world: World): (World, ElixirSystem) =
 ```
 
 Il `foldLeft` accumula sia il `World` aggiornato che l'`ElixirSystem` aggiornato, propagando lo stato attraverso l'elaborazione di ogni entità. Questo pattern è utile nella programmazione funzionale per gestire sequenze di trasformazioni mantenendo l'immutabilità.
-
----
 
 ### Gestione della Salute: HealthSystem
 

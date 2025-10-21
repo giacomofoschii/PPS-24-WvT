@@ -6,8 +6,6 @@ parent: Implementazione
 
 # Implementazione - Giacomo Foschi
 
----
-
 ## Panoramica dei Contributi
 
 Il mio contributo al progetto si è concentrato sulla progettazione e implementazione di diversi aspetti chiave del sistema, con un focus particolare sull'architettura ECS (Entity-Component-System) e sul rendering grafico. Le aree principali di cui mi sono occupato sono:
@@ -19,8 +17,6 @@ Il mio contributo al progetto si è concentrato sulla progettazione e implementa
 * **Utility per la Griglia**: Implementazione del `GridMapper` per la conversione tra coordinate logiche e fisiche.
 * **Movimento dei Proiettili**: Definizione della logica di movimento per i proiettili all'interno del `MovementSystem`.
 * **Sistema di Rendering**: Creazione del `RenderSystem` per la visualizzazione delle entità a schermo.
-
----
 
 ## Architettura del `World` in ECS
 

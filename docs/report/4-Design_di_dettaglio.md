@@ -6,13 +6,9 @@ parent: Report
 
 # Design di Dettaglio
 
----
-
 ## Panoramica
 
 In questa sezione verrà approfondito il design delle componenti chiave del progetto *Wizards vs Trolls*, illustrando le principali responsabilità funzionali, le scelte implementative e le interazioni tra i moduli. L'analisi segue il pattern **Model-View-Controller (MVC)**, con un focus sull'implementazione del **Model** tramite l'architettura **Entity-Component-System (ECS)**, ispirandosi alla struttura descrittiva vista nel documento di esempio.
-
----
 
 ## Model (ECS)
 
@@ -95,8 +91,6 @@ classDiagram
 ### Logica di Gioco (Systems)
 
 Tutta la logica comportamentale è incapsulata nei **`System`**. Ogni `System` è una `case class` (stateless) che implementa il trait `System`, definendo un metodo `update(world: World): (World, System)`. Questo metodo prende lo stato attuale del mondo e restituisce il nuovo stato modificato e, potenzialmente, una nuova istanza del sistema (anche se spesso restituisce `this` essendo stateless).
-
----
 
 #### Strategie di Movimento (MovementSystem)
 
@@ -267,8 +261,6 @@ classDiagram
     SpawnSystem ..> Position : uses
 ```
 
----
-
 ### Gestione Risorse ed Effetti (ElixirSystem, HealthSystem)
 
 #### ElixirSystem:
@@ -324,16 +316,12 @@ classDiagram
 
 La **View** si occupa della presentazione grafica dello stato del gioco e dell'interazione diretta con l'utente, utilizzando **ScalaFX**.
 
----
-
 ### Gestione delle Schermate
 
 * **Responsabilità**: Mostrare la schermata appropriata (Menu Principale, Gioco, Info, Pausa, Vittoria, Sconfitta) in base allo stato dell'applicazione.
 * **Componenti**:
     * `ViewController`: Gestisce le transizioni tra stati (`ViewState`) e aggiorna la `Scene` della `PrimaryStage`.
     * `MainMenu`, `InfoMenu`, `PauseMenu`, `GameResultPanel`: `object` che definiscono la struttura e i controlli di ciascuna schermata statica.
-
----
 
 ### Rendering della Scena di Gioco
 
@@ -345,8 +333,6 @@ La **View** si occupa della presentazione grafica dello stato del gioco e dell'i
     * `GridMapper`: Utility `object` utilizzato da `GameView` per convertire le coordinate fisiche (click del mouse) in logiche (cella della griglia) e viceversa, per disegnare la griglia (`drawGrid`) e posizionare le entità (`renderEntities`).
     * `Position`: `case class` che rappresenta le coordinate fisiche (pixel), utilizzata da `GameView` per posizionare gli elementi grafici.
 
----
-
 ### Creazione Componenti UI
 
 * **Responsabilità**: Standardizzare la creazione e l'aspetto degli elementi UI riutilizzabili, simile ai factory pattern visti nell'esempio.
@@ -356,17 +342,13 @@ La **View** si occupa della presentazione grafica dello stato del gioco e dell'i
     * `ShopPanel`, `WavePanel`: Creano e gestiscono i pannelli specifici dell'HUD (negozio e informazioni sull'ondata).
 
 
-![View Diagram](../assets/img/view.png)   
- 
----
+![View Diagram](../assets/img/view.png)
 
 ## Controller
 
 Il **Controller** agisce come collante, orchestrando il flusso di dati e la logica applicativa tra il Model e la View.
 
 ![Controller Diagram](../assets/img/controller.png)
-
----
 
 ### Orchestrazione del Flusso di Gioco
 
@@ -381,16 +363,12 @@ Il **Controller** agisce come collante, orchestrando il flusso di dati e la logi
       frequenza di rendering (frame rate), assicurando un comportamento consistente indipendentemente dalle prestazioni dell'hardware. 
       Sebbene operino a un livello architetturale superiore e siano esterni al GameController, ne governano l'esecuzione.
 
----
-
 ### Gestione degli Eventi
 
 * **Responsabilità**: Disaccoppiare i componenti e gestire la comunicazione e le transizioni di stato in modo centralizzato.
 * **Componenti**:
     * `EventHandler`: Mantiene una coda thread-safe (`EventQueue`) di `GameEvent`. Riceve eventi da View (input utente), `GameEngine` (cambiamenti di stato globali), `GameController` (condizioni di gioco). Processa gli eventi in base alla loro priorità, invocando handler registrati o gestendo direttamente le transizioni di stato del `GameEngine` e della `ViewController` (es. passaggio da `Playing` a `Paused`).
     * `GameEvent`: ADT (`sealed trait`) che definisce tutti i tipi di eventi possibili, con una priorità associata.
-
----
 
 ``` mermaid
 classDiagram

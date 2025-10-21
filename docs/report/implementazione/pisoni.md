@@ -6,8 +6,6 @@ parent: Implementazione
 
 # Implementazione - Giovanni Pisoni
 
----
-
 ## Panoramica dei contributi
 
 Il mio contributo al progetto si è focalizzato sulle seguenti aree:
@@ -26,8 +24,6 @@ e dell'`HealthBarRenderSystem` per il rendering delle barre della salute delle e
 * **Interfaccia utente**: Sviluppo dei menu di pausa e delle schermate di vittoria/sconfitta.
 
 * **Testing**: Scrittura di test per i sistemi implementati, come `MovementSystemTest` e `SpawnSystemTest`.
-
----
 
 ## Principali sfide implementative
 
@@ -60,8 +56,6 @@ richiesto un'attenta analisi e soluzioni innovative.
     La gestione della pausa richiedeva che gli eventi di spawn schedulati venissero "spostati nel tempo"
     di una durata pari alla pausa stessa. Ho implementato un meccanismo che traccia il momento della pausa
     (`pausedAt`) e, alla ripresa, ricalcola tutti i timestamp degli spawn pendenti.
-
----
 
 ## Implementazione - GameEngine e GameLoop
 
@@ -130,8 +124,6 @@ private def processAccumulatedFrames(): Unit =
     updateState(_.consumeTimeStep(fixedTimeStep))
     processAccumulatedFrames()
 ```
-
----
 
 ## Implementazione - GameController e gestione degli eventi
 
@@ -250,8 +242,6 @@ mantenendo l'immutabilità della coda.
 
 Questa architettura a eventi permette di avere un controllo centralizzato e prevedibile sul flusso del gioco, 
 rendendo il sistema più robusto e facile da estendere con nuove funzionalità e interazioni.
-
----
 
 ## Implementazione - Logica delle entità
 
@@ -406,8 +396,6 @@ Questo approccio garantisce che il feedback visivo sullo stato di salute sia non
 ma anche performante, contribuendo a un'esperienza di gioco fluida anche in presenza di un 
 numero elevato di entità a schermo.
 
----
-
 ## Interfaccia Utente
 
 Oltre alla logica di gioco, il mio contributo si è esteso all'implementazione di componenti cruciali 
@@ -465,8 +453,6 @@ In sintesi, l'implementazione di questi componenti dell'interfaccia utente ha se
 programmazione funzionale e della separazione delle responsabilità, portando a un codice modulare, 
 efficiente e facilmente estensibile.
 
----
-
 ## Testing e Validazione
 
 La validazione della correttezza e della robustezza del software è stata una componente integrante del processo di 
@@ -477,8 +463,6 @@ facilitare le fasi di refactoring e prevenire l'introduzione di regressioni.
 
 Per la stesura e l'esecuzione dei test è stato utilizzato **ScalaTest**, 
 un framework ampiamente diffuso nell'ecosistema Scala, che ha permesso di scrivere test chiari e leggibili.
-
----
 
 ### Domain-Specific Language (DSL) per Scenari di Test
 
