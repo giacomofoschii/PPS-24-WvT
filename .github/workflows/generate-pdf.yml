@@ -37,7 +37,7 @@ jobs:
             --pdf-engine=xelatex \
             --toc \
             --listings \
-            --resource-path=.:docs/assets/img \
+            --resource-path=.:docs \
             -V geometry:"margin=1in" \
             docs/report/0-Introduzione.md \
             docs/report/1-Processo_di_sviluppo.md \
