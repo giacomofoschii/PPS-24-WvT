@@ -1,0 +1,56 @@
+name: Generate Report PDF
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/report/**.md'
+      - '.github/workflows/generate-pdf.yml'
+
+jobs:
+  build_pdf:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Pandoc and LaTeX dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            pandoc \
+            texlive-latex-base \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            lmodern \
+            latexmk
+
+      - name: Set output PDF filename
+        run: echo "PDF_FILENAME=docs/report.pdf" >> $GITHUB_ENV
+
+      - name: Generate PDF using Pandoc
+        run: |
+          pandoc \
+            --pdf-engine=xelatex \
+            --toc \
+            --listings \
+            -V geometry:"margin=1in" \
+            docs/report/0-Introduzione.md \
+            docs/report/1-Processo_di_sviluppo.md \
+            docs/report/2-Requisiti.md \
+            docs/report/3-Design_architetturale.md \
+            docs/report/4-Design_di_dettaglio.md \
+            docs/report/5-Implementazione.md \
+            docs/report/implementazione/foschi.md \
+            docs/report/implementazione/pisoni.md \
+            docs/report/implementazione/rinchiuso.md \
+            docs/report/6-Testing.md \
+            docs/report/7-Retrospettiva.md \
+            -o ${{ env.PDF_FILENAME }}
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-pdf
+          path: ${{ env.PDF_FILENAME }}
