@@ -418,11 +418,11 @@ Il `WavePanel` mostra informazioni sull'ondata corrente e si aggiorna automatica
 
 Lo stato del pannello mantiene l'ultimo numero di ondata renderizzato (per evitare aggiornamenti ridondanti), un riferimento opzionale al componente `Text` che mostra il numero e un riferimento opzionale al pannello stesso. Il metodo `updateWaveNumber`  garantisce che l'interfaccia venga aggiornata solo quando il numero dell'ondata effettivamente cambia, evitando rendering inutili e migliorando le performance.
 
-## Testing: DSL Personalizzati
+## Testing
 
 Ho sviluppato test per i principali sistemi di cui mi sono occupato: ElixirSystem, HealthSystem, InputProcessor e InputSystem. Anche se non ho seguito rigorosamente il Test-Driven Development, ho scritto i test in modo sistematico parallelamente o immediatamente dopo l’implementazione di ogni funzionalità. Per semplificare la scrittura dei test e renderli più leggibili, ho sviluppato quattro DSL specializzati per testare i sistemi implementati, utilizzando pattern funzionali per garantire immutabilità e type-safety.
 
-### ElixirSystemDSL
+### ElixirSystemTest
 
 L'`ElixirSystem` richiede la gestione di timing, generazione periodica e interazioni con il mondo di gioco. Ho quindi, progettato un DSL che mantiene lo stato attraverso `Option`, permettendo di memorizzare valori tra le diverse fasi del test senza ricorrere a variabili mutabili.
 
@@ -455,7 +455,7 @@ case class ElixirAmountComparison(dsl: ElixirSystemDSL, amount: Int, comparisonT
     dsl
 ```
 
-### HealthSystemDSL
+### HealthSystemTest
 
 In `HealthSystem` i test devono creare entità, applicare danni e verificare sia lo stato di salute che le ricompense. Ho modellato queste operazioni attraverso tre case class che rappresentano diverse fasi del test.
 
@@ -485,7 +485,7 @@ def withTroll(trollType: TrollType): EntityBuilder =
   EntityBuilder(this.copy(world = worldWithComponent, entities = entities :+ entity), entity)
 ```
 
-### InputProcessorDSL e InputSystemDSL
+### InputProcessorTest e InputSystemTest
 
 Per i sistemi di input ho progettato DSL che separano la fase di setup delle coordinate dalla fase di verifica dei risultati.
 
