@@ -392,6 +392,141 @@ Il **Controller** agisce come collante, orchestrando il flusso di dati e la logi
 
 ---
 
+``` mermaid
+classDiagram
+    class GameController {
+        -world: World
+        -gameEngine: GameEngine
+        -eventHandler: EventHandler
+        -inputSystem: InputSystem
+        -pendingActions: ConcurrentLinkedQueue[StateTransformation]
+        -state: GameSystemsState
+        -isInitialized: Boolean
+        +initialize(): Unit
+        +update(): Unit
+        +postEvent(event: GameEvent): Unit
+        +handleMouseClick(x: Double, y: Double): Unit
+        +placeWizard(wizardType: WizardType, position: Position): Unit
+        +selectWizard(wizardType: WizardType): Unit
+        +handleContinueBattle(): Unit
+        +handleNewGame(): Unit
+        +getCurrentElixir(): Int
+        +getRenderSystem(): RenderSystem
+        +getCurrentWaveInfo(): (Int, Int, Int)
+        +start(): Unit
+        +stop(): Unit
+        +pause(): Unit
+        +resume(): Unit
+        +getEngine(): GameEngine
+        +getInputSystem(): InputSystem
+        +getEventHandler(): EventHandler
+        +getWorld(): World
+    }
+
+    class GameSystemsState {
+        <<private[controller]>>
+        +movement: MovementSystem
+        +collision: CollisionSystem
+        +combat: CombatSystem
+        +elixir: ElixirSystem
+        +health: HealthSystem
+        +spawn: SpawnSystem
+        +render: RenderSystem
+        +selectedWizardType: Option[WizardType]
+        +currentWave: Int
+        +updateAll(world: World): (World, GameSystemsState)
+        +spendElixir(amount: Int): Option[GameSystemsState]
+        +selectWizard(wizardType: WizardType): GameSystemsState
+        +clearWizardSelection(): GameSystemsState
+        +handleVictory(): GameSystemsState
+        +handleDefeat(): GameSystemsState
+        +reset(): GameSystemsState
+        +getTrollsSpawned(): Int
+        +getMaxTrolls(): Int
+        +getCurrentElixir(): Int
+        +canAfford(cost: Int): Boolean
+        +getCurrentWave(): Int
+    }
+
+    class EventHandler {
+        <<trait>>
+        +postEvent(event: GameEvent): Unit
+        +processEvents(): List[GameEvent]
+        +registerHandler~T~(eventClass: Class[T])(handler: T => Unit): Unit
+        +getCurrentPhase(): GamePhase
+        +clearQueue(): Unit
+    }
+
+    class EventHandlerImpl {
+    }
+
+    class EventHandlerState {
+        +eventQueue: EventQueue
+        +eventHandlers: Map[Class[_], GameEvent => Unit]
+        +currentPhase: GamePhase
+    }
+
+    class GameEvent {
+        <<trait>>
+        +priority(): Int
+    }
+
+    class EventQueue {
+    }
+
+    class GameEngine {
+        <<trait>>
+        +initialize(controller: GameController): Unit
+        +start(): Unit
+        +stop(): Unit
+        +pause(): Unit
+        +resume(): Unit
+        +update(deltaTime: Long): Unit
+        +isRunning(): Boolean
+        +isPaused(): Boolean
+        +currentState(): GameState
+        +updatePhase(phase: GamePhase): Unit
+        +getController(): Option[GameController]
+    }
+
+    class GameEngineImpl {
+    }
+
+    class EngineState {
+    }
+
+    class GameLoop {
+        <<trait>>
+        +start(): Unit
+        +stop(): Unit
+        +isRunning(): Boolean
+        +getCurrentFps(): Int
+    }
+
+    class GameLoopImpl {
+    }
+
+    class LoopState {
+    }
+
+    GameController --> GameSystemsState : uses
+    GameController --> EventHandler : uses
+    GameController --> GameEngine : uses
+    EventHandler <|.. EventHandlerImpl : implements
+    EventHandlerImpl --> EventHandlerState : uses
+    EventHandlerImpl --> GameEngine : uses
+    EventHandlerState --> EventQueue : contains
+    EventHandlerState --> GameEvent : handles
+    EventQueue --> GameEvent : stores
+    GameEngine <|.. GameEngineImpl : implements
+    GameEngineImpl --> EngineState : uses
+    EngineState --> GameLoop : contains
+    EngineState --> GameController : contains
+    GameLoop <|.. GameLoopImpl : implements
+    GameLoopImpl --> LoopState : uses
+    GameLoopImpl --> GameEngine : uses
+```
+
 ### Gestione dell'Input
 
 * **Responsabilità**: Validare e interpretare l'input grezzo dell'utente.
