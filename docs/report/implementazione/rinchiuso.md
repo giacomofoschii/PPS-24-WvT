@@ -257,7 +257,7 @@ def calculateTrollDistribution(wave: Int): Map[TrollType, Double] =
 
 Ogni pattern definisce una distribuzione di probabilità che determina quali tipi di troll appaiono in quella fase del gioco. Questo approccio offre numerosi vantaggi in termini di leggibilità: osservando i pattern, la progressione della difficoltà emerge naturalmente, mostrando come nelle prime ondate dominino i troll base per poi introdurre gradualmente le varianti più pericolose. L'estensibilità è altrettanto semplice: se volessimo aggiungere nuovi livelli di difficoltà, basterebbe inserire ulteriori case senza toccare la logica esistente.
 
-Inoltre il compilatore verifica automaticamente che tutti i casi siano gestiti, e il case `_` finale garantisce un fallback sicuro per tutte le ondate oltre la quarta. Inoltre, ogni Map restituita è immutabile e la funzione è completamente pura, senza side-effects.
+Il compilatore verifica automaticamente che tutti i casi siano gestiti, e il case `_` finale garantisce un fallback sicuro per tutte le ondate oltre la quarta. Inoltre, ogni Map restituita è immutabile e la funzione è completamente pura, senza side-effects.
 
 L'uso di guards nel pattern matching (`if w <= 1`, `if w <= 2`, etc.) Permette di definire range di ondate piuttosto che valori singoli, rendendo la configurazione più flessibile rispetto a un approccio basato su uguaglianza esatta. Ad esempio, tutte le ondate dalla quinta in poi usano la stessa distribuzione finale, che rappresenta il massimo livello di difficoltà del gioco.
 
@@ -327,7 +327,7 @@ Il livello più alto fornisce un'interfaccia per l'utilizzo del sistema. Utilizz
 
 Un elemento centrale di questa implementazione è `ClickResult`, che ho implementato seguendo il pattern delle monadi per comporre validazioni. Questo approccio permette di concatenare multiple validazioni. 
 
-Come mostrato nella sezione precedente, `ClickResult` incapsula il risultato di un click del mouse, memorizzando la posizione, un flag di validità e un messaggio di errore opzionale. Ho implementato le tre operazioni monadiche fondamentali (`map`, `flatMap` e `filter`).
+`ClickResult` incapsula il risultato di un click del mouse, memorizzando la posizione, un flag di validità e un messaggio di errore opzionale. Ho implementato le tre operazioni monadiche fondamentali (`map`, `flatMap` e `filter`).
 
 L'operazione `map` permette di trasformare la posizione contenuta se il risultato è valido, lasciando inalterati i risultati invalidi. `flatMap` consente di concatenare validazioni che a loro volta producono `ClickResult`, implementando così il pattern della "railway-oriented programming" dove un errore in qualsiasi punto della catena cortocircuita le operazioni successive. `filter` aggiunge la capacità di validare predicati sulla posizione, convertendo un risultato valido in invalido se il predicato fallisce.
 
@@ -416,7 +416,7 @@ Lo stato del pannello è modellato attraverso una struttura dati immutabile che 
 
 Il `WavePanel` mostra informazioni sull'ondata corrente e si aggiorna automaticamente quando il gioco progredisce. 
 
-Lo stato del pannello mantiene l'ultimo numero di ondata renderizzato (per evitare aggiornamenti ridondanti), un riferimento opzionale al componente `Text` che mostra il numero e un riferimento opzionale al pannello stesso. Il metodo `updateWaveNumber` implementa un pattern di aggiornamento ottimizzato che garantisce che l'interfaccia venga aggiornata solo quando il numero dell'ondata effettivamente cambia, evitando rendering inutili e migliorando le performance.
+Lo stato del pannello mantiene l'ultimo numero di ondata renderizzato (per evitare aggiornamenti ridondanti), un riferimento opzionale al componente `Text` che mostra il numero e un riferimento opzionale al pannello stesso. Il metodo `updateWaveNumber`  garantisce che l'interfaccia venga aggiornata solo quando il numero dell'ondata effettivamente cambia, evitando rendering inutili e migliorando le performance.
 
 ## Testing: DSL Personalizzati
 
