@@ -418,43 +418,88 @@ Il `WavePanel` mostra informazioni sull'ondata corrente e si aggiorna automatica
 
 Lo stato del pannello mantiene l'ultimo numero di ondata renderizzato (per evitare aggiornamenti ridondanti), un riferimento opzionale al componente `Text` che mostra il numero e un riferimento opzionale al pannello stesso. Il metodo `updateWaveNumber` implementa un pattern di aggiornamento ottimizzato che garantisce che l'interfaccia venga aggiornata solo quando il numero dell'ondata effettivamente cambia, evitando rendering inutili e migliorando le performance.
 
-## Testing: Validazione dei Sistemi Implementati
+## Testing: DSL Personalizzati
 
-La validazione della correttezza delle implementazioni è stata una componente fondamentale del mio lavoro. Ho sviluppato test per i principali sistemi di cui mi sono occupato: `ElixirSystem`, `HealthSystem`, `InputProcessor` e `InputSystem`.
-Anche se non ho seguito rigorosamente il Test-Driven Development, ho scritto i test in modo sistematico parallelamente o immediatamente dopo l'implementazione di ogni funzionalità. Per semplificare la scrittura dei test e renderli più leggibili, ho utilizzato il DSL creato da Giovanni Pisoni che permette di definire scenari di test in modo dichiarativo.
+La validazione della correttezza delle implementazioni è stata una componente fondamentale del mio lavoro. Ho sviluppato test per i principali sistemi di cui mi sono occupato: ElixirSystem, HealthSystem, InputProcessor e InputSystem. Anche se non ho seguito rigorosamente il Test-Driven Development, ho scritto i test in modo sistematico parallelamente o immediatamente dopo l’implementazione di ogni funzionalità. Per semplificare la scrittura dei test e renderli più leggibili, ho sviluppato quattro DSL specializzati per testare i sistemi implementati, utilizzando pattern funzionali per garantire immutabilità e type-safety.
 
-Un esempio significativo dai test dell'`ElixirSystem` mostra come il DSL semplifichi la configurazione degli scenari:
+### ElixirSystemDSL
+
+L'`ElixirSystem` presenta una sfida particolare per il testing: richiede la gestione di timing, generazione periodica e interazioni con il mondo di gioco. Per affrontare questa complessità, ho progettato un DSL che mantiene lo stato attraverso `Option`, permettendo di memorizzare valori tra le diverse fasi del test senza ricorrere a variabili mutabili.
+
+Questo esempio di test mostra come il DSL renda espressivo il testing temporale:
 ```scala
 "ElixirSystem" should "generate elixir from generator wizards" in {
-  val (world, state) = scenario { builder =>
-    builder
-      .withWizard(WizardType.Generator).at(2, 0)
-      .withElixir(INITIAL_ELIXIR)
-  }
-  
-  val elixirSystem = state.elixir.activateGeneration()
-  Thread.sleep(GENERATOR_WIZARD_COOLDOWN + 100)
-  
-  val (_, updatedSystem) = elixirSystem.update(world)
-  updatedSystem.getCurrentElixir should be > INITIAL_ELIXIR
+  givenAnElixirSystem
+    .activated
+    .withWorld
+    .andGeneratorWizardAt(Position(2, 3))
+    .rememberingInitialElixir
+    .afterWaiting(GENERATOR_WIZARD_COOLDOWN + ELIXIR_WAIT_MARGIN)
+    .whenUpdated
+    .shouldHaveAtLeast(PERIODIC_ELIXIR).moreElixirThanInitial
 }
 ```
 
-Questo test verifica che i maghi generatori producano elisir correttamente. Il DSL nasconde la complessità della creazione manuale di entità e componenti, permettendo al test di concentrarsi sul comportamento da verificare.
-
-Un altro esempio dai test dell'`InputSystem` mostra la validazione delle operazioni monadiche:
+Ho implementato una enum `ComparisonType` e una case class `ElixirAmountComparison` che permettono di esprimere asserzioni come `shouldHaveAtLeast(50).moreElixirThanInitial` o `shouldHaveExactly(100).moreElixirThanInitial`:
 ```scala
-"InputSystem" should "chain validations using monadic operations" in {
-  val system = InputSystem()
-  val validClick = (GRID_OFFSET_X + 10, GRID_OFFSET_Y + 10)
-  
-  val result = system.handleMouseClick(validClick._1, validClick._2)
-    .filter(_.isValid, "Position not valid")
-    .map(pos => Position(pos.x + 10, pos.y + 10))
-  
-  result.isValid shouldBe true
-  result.pos.x shouldBe validClick._1 + 10
+enum ComparisonType:
+  case AtLeast, Exactly
+
+case class ElixirAmountComparison(dsl: ElixirSystemDSL, amount: Int, comparisonType: ComparisonType):
+  def moreElixirThanInitial: ElixirSystemDSL =
+    dsl.initialElixir.foreach: initial =>
+      val diff = dsl.system.getCurrentElixir - initial
+      comparisonType match
+        case ComparisonType.AtLeast => diff should be >= amount
+        case ComparisonType.Exactly => diff shouldBe amount
+    dsl
+```
+
+### HealthSystemDSL
+
+In `HealthSystem` i test devono creare entità, applicare danni e verificare sia lo stato di salute che le ricompense. Ho modellato queste operazioni attraverso tre case class che rappresentano diverse fasi del test.
+
+Il flusso tipico di un test si presenta così:
+```scala
+"HealthSystem" should "kill entity and reward elixir" in {
+  aHealthSystem
+    .withTroll(TrollType.Base)
+    .havingHealth(50, 100)
+    .takingDamage(60)
+    .done
+    .whenUpdated
+    .entity(0).shouldBeDead
+    .systemShouldHaveElixir(INITIAL_ELIXIR + BASE_TROLL_REWARD)
 }
 ```
 
+Le tre case class che compongono il DSL sono `HealthSystemDSL` per il contesto principale, `EntityBuilder` per la configurazione delle entità, e `EntityAssertions` per le verifiche. Le transizioni avvengono attraverso i tipi di ritorno: chiamare `withEntity` restituisce un `EntityBuilder` che permette di configurare l'entità, `done` riporta al contesto principale, e `entity(n)` fornisce un `EntityAssertions` per le verifiche.
 
+Questa struttura sfrutta il sistema di tipi di Scala per prevenire errori a compile-time. Ad esempio, non è possibile verificare lo stato di un'entità prima di averla configurata, perché il compilatore non permetterebbe di chiamare `entity(0)` prima di aver chiamato `done`.
+
+L'accumulo delle entità avviene in modo immutabile: ogni operazione restituisce una nuova istanza del DSL con il world aggiornato e l'entità aggiunta alla lista attraverso `entities :+ entity`:
+```scala
+def withTroll(trollType: TrollType): EntityBuilder =
+  val (updatedWorld, entity) = world.createEntity()
+  val worldWithComponent = updatedWorld.addComponent(entity, TrollTypeComponent(trollType))
+  EntityBuilder(this.copy(world = worldWithComponent, entities = entities :+ entity), entity)
+```
+
+### InputProcessorDSL e InputSystemDSL
+
+Per i sistemi di input, la sfida principale era rendere naturale il testing di coordinate e validazioni. Ho progettato DSL che separano chiaramente la fase di setup delle coordinate dalla fase di verifica dei risultati.
+
+Un esempio di test:
+```scala
+"InputProcessor" should "validate grid coordinates" in {
+  aClick
+    .atOffset(10, 10)
+    .whenProcessed
+    .shouldBeValid
+    .andShouldBeInCell
+}
+```
+
+La struttura si basa su due case class: `ClickBuilder` accumula le coordinate, mentre `ClickResultAssertions` gestisce le verifiche. Il metodo `whenProcessed` fa da ponte tra le due fasi, eseguendo la validazione e restituendo le asserzioni.
+
+Questa architettura trasforma i test in documentazione eseguibile: leggendo un test è immediatamente chiaro cosa viene configurato, quale operazione viene eseguita e quale risultato ci si aspetta, il tutto mantenendo le garanzie di type-safety e immutabilità tipiche della programmazione funzionale.
