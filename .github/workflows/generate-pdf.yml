@@ -16,10 +16,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Pandoc and TeX Live Full
+      - name: Install Pandoc and essential LaTeX packages
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y pandoc texlive-full
+          sudo apt-get install --no-install-recommends -y \
+            pandoc \
+            texlive-xetex \
+            texlive-latex-recommended \
+            texlive-fonts-recommended \
+            texlive-latex-extra \
+            latexmk \
+            lmodern # Font spesso utile
 
       - name: Set output PDF filename
         run: echo "PDF_FILENAME=docs/report.pdf" >> $GITHUB_ENV
