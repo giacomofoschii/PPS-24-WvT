@@ -424,7 +424,7 @@ Ho sviluppato test per i principali sistemi di cui mi sono occupato: ElixirSyste
 
 ### ElixirSystemDSL
 
-L'`ElixirSystem` presenta una sfida particolare per il testing: richiede la gestione di timing, generazione periodica e interazioni con il mondo di gioco. Per affrontare questa complessità, ho progettato un DSL che mantiene lo stato attraverso `Option`, permettendo di memorizzare valori tra le diverse fasi del test senza ricorrere a variabili mutabili.
+L'`ElixirSystem` richiede la gestione di timing, generazione periodica e interazioni con il mondo di gioco. Ho quindi, progettato un DSL che mantiene lo stato attraverso `Option`, permettendo di memorizzare valori tra le diverse fasi del test senza ricorrere a variabili mutabili.
 
 Questo esempio di test mostra come il DSL renda espressivo il testing temporale:
 ```scala
@@ -487,7 +487,7 @@ def withTroll(trollType: TrollType): EntityBuilder =
 
 ### InputProcessorDSL e InputSystemDSL
 
-Per i sistemi di input, la sfida principale era rendere naturale il testing di coordinate e validazioni. Ho progettato DSL che separano chiaramente la fase di setup delle coordinate dalla fase di verifica dei risultati.
+Per i sistemi di input ho progettato DSL che separano la fase di setup delle coordinate dalla fase di verifica dei risultati.
 
 Un esempio di test:
 ```scala
@@ -501,5 +501,3 @@ Un esempio di test:
 ```
 
 La struttura si basa su due case class: `ClickBuilder` accumula le coordinate, mentre `ClickResultAssertions` gestisce le verifiche. Il metodo `whenProcessed` fa da ponte tra le due fasi, eseguendo la validazione e restituendo le asserzioni.
-
-Questa architettura trasforma i test in documentazione eseguibile: leggendo un test è immediatamente chiaro cosa viene configurato, quale operazione viene eseguita e quale risultato ci si aspetta, il tutto mantenendo le garanzie di type-safety e immutabilità tipiche della programmazione funzionale.
