@@ -395,14 +395,6 @@ Il **Controller** agisce come collante, orchestrando il flusso di dati e la logi
 ``` mermaid
 classDiagram
     class GameController {
-        -world: World
-        -gameEngine: GameEngine
-        -eventHandler: EventHandler
-        -inputSystem: InputSystem
-        -pendingActions: ConcurrentLinkedQueue[StateTransformation]
-        -state: GameSystemsState
-        -isInitialized: Boolean
-        +initialize(): Unit
         +update(): Unit
         +postEvent(event: GameEvent): Unit
         +handleMouseClick(x: Double, y: Double): Unit
@@ -410,17 +402,10 @@ classDiagram
         +selectWizard(wizardType: WizardType): Unit
         +handleContinueBattle(): Unit
         +handleNewGame(): Unit
-        +getCurrentElixir(): Int
-        +getRenderSystem(): RenderSystem
-        +getCurrentWaveInfo(): (Int, Int, Int)
         +start(): Unit
         +stop(): Unit
         +pause(): Unit
         +resume(): Unit
-        +getEngine(): GameEngine
-        +getInputSystem(): InputSystem
-        +getEventHandler(): EventHandler
-        +getWorld(): World
     }
 
     class GameSystemsState {
@@ -436,16 +421,6 @@ classDiagram
         +currentWave: Int
         +updateAll(world: World): (World, GameSystemsState)
         +spendElixir(amount: Int): Option[GameSystemsState]
-        +selectWizard(wizardType: WizardType): GameSystemsState
-        +clearWizardSelection(): GameSystemsState
-        +handleVictory(): GameSystemsState
-        +handleDefeat(): GameSystemsState
-        +reset(): GameSystemsState
-        +getTrollsSpawned(): Int
-        +getMaxTrolls(): Int
-        +getCurrentElixir(): Int
-        +canAfford(cost: Int): Boolean
-        +getCurrentWave(): Int
     }
 
     class EventHandler {
@@ -453,7 +428,6 @@ classDiagram
         +postEvent(event: GameEvent): Unit
         +processEvents(): List[GameEvent]
         +registerHandler~T~(eventClass: Class[T])(handler: T => Unit): Unit
-        +getCurrentPhase(): GamePhase
         +clearQueue(): Unit
     }
 
@@ -486,7 +460,6 @@ classDiagram
         +isPaused(): Boolean
         +currentState(): GameState
         +updatePhase(phase: GamePhase): Unit
-        +getController(): Option[GameController]
     }
 
     class GameEngineImpl {
