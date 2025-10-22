@@ -142,7 +142,7 @@ jobs:
             exit 0
           fi
           
-          git commit -m "docs: Update generated PDF report"
+          git commit -m "[DOC] Updated generated PDF report"
           git pull --rebase origin ${{ github.ref_name }}
           git push origin HEAD:${{ github.ref_name }}
 
