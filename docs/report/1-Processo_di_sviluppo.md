@@ -69,5 +69,5 @@ L'intero progetto è stato gestito tramite **GitHub**. Per automatizzare i proce
 Il workflow configurato esegue le seguenti azioni principali:
 
 * **Controllo della formattazione**: Verifica che il codice sorgente rispetti gli standard di formattazione definiti nel file _.scalafmt.conf_, utilizzando il comando sbt `scalafmtCheckAll` per mantenere una codebase coerente e leggibile.
-
+* **Generazione report PDF**: Questa pipeline si attiva specificatamente quando vengono modificati i file markdown del report nella cartella `docs/report` (o le immagini associate). Utilizza *Pandoc* per convertire i file markdown aggiornati in un unico file PDF (`docs/report.pdf`). Se il PDF generato è diverso dalla versione precedente presente nel repository, il workflow effettua automaticamente il commit del nuovo file PDF nel branch principale, mantenendo così la documentazione PDF sempre allineata con i sorgenti markdown.
 * **Build e test**: Compila il codice ed esegue la suite di test automatici (sbt test) per prevenire regressioni e assicurare la correttezza del software. Questo processo viene eseguito su diverse piattaforme (Ubuntu, Windows, macOS) utilizzando JDK 21 per garantire la compatibilità cross-platform.

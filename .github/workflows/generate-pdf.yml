@@ -91,9 +91,7 @@ jobs:
             --toc \
             --listings \
             --resource-path=.:docs:docs/assets:docs/assets/img \
-            -V geometry:"margin=1in" \
-            -V linkcolor:blue \
-            -V urlcolor:blue \
+            docs/metadata.yaml \
             temp_docs/report/0-Introduzione.md \
             temp_docs/report/1-Processo_di_sviluppo.md \
             temp_docs/report/2-Requisiti.md \
