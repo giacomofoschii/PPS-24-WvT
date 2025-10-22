@@ -7,12 +7,14 @@ on:
       - 'docs/**'
       - 'README.md'
       - 'LICENSE'
+      - '.github/workflows/generate-pdf.yml'
   pull_request:
     branches: [ "main" ]
     paths-ignore:
       - 'docs/**'
       - 'README.md'
       - 'LICENSE'
+      - '.github/workflows/generate-pdf.yml'
 
 jobs:
   build-and-test:

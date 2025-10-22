@@ -24,34 +24,8 @@ Il nucleo del Model è rappresentato dal `World`, una `case class` **immutabile*
     * Fornire API funzionali per creare/distruggere entità e aggiungere/rimuovere/aggiornare/recuperare componenti (es. `createEntity()`, `addComponent()`, `getComponent()`, `getEntitiesWithComponent()`).
     * Permettere query specifiche sullo stato (es. `getEntitiesByType()`, `getEntityAt()`, `hasWizardAt()`).
 
-```mermaid
-classDiagram
-    class World {
-        <<Immutable>>
-        -entities: Set~EntityId~
-        -components: Map~Class[_], Map~EntityId, Component~~
-        -entitiesByType: Map~String, Set~EntityId~~
-        +createEntity(): World
-        +destroyEntity(EntityId): World
-        +addComponent(EntityId, Component): World
-        +removeComponent(EntityId): World
-        +updateComponent(EntityId, Function): World
-        +getComponent(EntityId): Option~Component~
-        +getEntitiesWithComponent(Class): Set~EntityId~
-        +getEntitiesByType(String): Set~EntityId~
-        +getEntityAt(Position): Option~EntityId~
-        +hasWizardAt(Position): Boolean
-    }
-    class EntityId {
-        <<Opaque Type>>
-        +value: Long
-    }
-    class Component {
-        <<Sealed Trait>>
-    }
-    World *-- EntityId
-    World *-- Component
-```
+![World Diagram](../assets/img/world.png)
+
 ### Creazione delle Entità (EntityFactory)
 
 La creazione delle diverse entità del gioco (Maghi, Troll, Proiettili) è centralizzata nell'object **`EntityFactory`**. Questo approccio utilizza il pattern **Factory Method** combinato con **Type Classes** (`EntityBuilder`) per assemblare le entità in modo componibile e type-safe.
@@ -62,32 +36,8 @@ La creazione delle diverse entità del gioco (Maghi, Troll, Proiettili) è centr
   * Fornire **metodi specifici** (es. `createFireWizard`, `createBaseTroll`, `createProjectile`) che prendono il `World` corrente, la posizione e il tipo di entità, restituendo il `World` aggiornato con la nuova entità e il suo `EntityId`.
   * Astrarre i dettagli dell'aggiunta dei singoli componenti al `World`.
 
-```mermaid
-classDiagram
-    class EntityFactory {
-        <<object>>
-        +createProjectile(World, Position, ProjectileType): Tuple2~World, EntityId~
-        +createGeneratorWizard(World, Position): Tuple2~World, EntityId~
-        +createBaseTroll(World, Position): Tuple2~World, EntityId~
-        #createEntity~T: EntityBuilder~(World, Position, T): Tuple2~World, EntityId~
-    }
-    class EntityBuilder~T~ {
-        <<trait>>
-        +buildComponents(T, Position): List~Component~
-    }
-    class ProjectileConfig
-    class WizardConfig
-    class TrollConfig
+![EntityFactory Diagram](../assets/img/entity_factory.png)
 
-    EntityFactory ..> World : modifies
-    EntityFactory ..> EntityBuilder : uses
-    EntityFactory ..> ProjectileConfig : uses
-    EntityFactory ..> WizardConfig : uses
-    EntityFactory ..> TrollConfig : uses
-    EntityBuilder <|.. ImplicitProjectileBuilder
-    EntityBuilder <|.. ImplicitWizardBuilder
-    EntityBuilder <|.. ImplicitTrollBuilder
-```
 ### Logica di Gioco (Systems)
 
 Tutta la logica comportamentale è incapsulata nei **`System`**. Ogni `System` è una `case class` (stateless) che implementa il trait `System`, definendo un metodo `update(world: World): (World, System)`. Questo metodo prende lo stato attuale del mondo e restituisce il nuovo stato modificato e, potenzialmente, una nuova istanza del sistema (anche se spesso restituisce `this` essendo stateless).
@@ -106,25 +56,7 @@ Questo sistema gestisce lo spostamento di tutte le entità mobili.
   * Considerare gli effetti di stato come il rallentamento (`FreezedComponent`).
   * Rimuovere i proiettili che escono dai limiti dello schermo.
 
-```mermaid
-classDiagram
-    class MovementSystem {
-        +update(World): Tuple2~World, System~
-        #selectMovementStrategy(EntityId, World): MovementStrategy
-        -linearLeftMovement(...) : Position
-        -projectileRightMovement(...) : Position
-        -zigzagMovement(...) : Position
-    }
-    class PositionComponent { +position: Position }
-    class MovementComponent { +speed: Double }
-    class ZigZagStateComponent { +currentPhase: ZigZagPhase }
-    class FreezedComponent { +speedModifier: Double }
-    MovementSystem ..> World : reads/updates
-    MovementSystem ..> PositionComponent : updates
-    MovementSystem ..> MovementComponent : reads
-    MovementSystem ..> ZigZagStateComponent : reads/updates
-    MovementSystem ..> FreezedComponent : reads
-```
+![MovementSystem Diagram](../assets/img/movement_system.png)
 
 ### Gestione del Combattimento e Collisioni (CombatSystem, CollisionSystem)
 
@@ -140,47 +72,8 @@ Il combattimento è diviso in due fasi gestite da sistemi distinti:
     * **Proiettili**: Verifica se la cella di un proiettile coincide con quella di un bersaglio valido. Se sì, distrugge il proiettile e aggiunge un `CollisionComponent` (con il danno) al bersaglio. Applica l'effetto `FreezedComponent` se il proiettile era di ghiaccio.
     * **Mischia**: Verifica se un Troll (non Lanciatore) è nella stessa cella di un Mago. Se sì, aggiunge un `BlockedComponent` al Troll, e se non è in cooldown, aggiunge un `CollisionComponent` al Mago e imposta il cooldown sul Troll.
 
-```mermaid
-classDiagram
-    direction LR
-    class CombatSystem {
-        +update(World): Tuple2~World, System~
-        -processWizardProjectiles(World): World
-        -processThrowerProjectiles(World): World
-        -findClosestTarget(...): Option~EntityId~
-        -spawnProjectileAndSetCooldown(...): World
-        -updateComponentTimer~C~(...): World
-    }
-    class CollisionSystem {
-        +update(World): Tuple2~World, System~
-        -processProjectileCollisions(World): World
-        -processMeleeCollisions(World): World
-        -findCollidingEntity(...): Option~EntityId~
-    }
-    class AttackComponent { +damage: Int; +range: Double; +cooldown: Long }
-    class CooldownComponent { +remainingTime: Long }
-    class BlockedComponent { +blockedBy: EntityId }
-    class DamageComponent { +amount: Int }
-    class CollisionComponent { +amount: Int }
-    class FreezedComponent { +remainingTime: Long }
-    class ProjectileTypeComponent
+![Combat and Collision Systems Diagram](../assets/img/combat_collision.png)
 
-    CombatSystem ..> World : reads/updates
-    CombatSystem ..> AttackComponent : reads
-    CombatSystem ..> CooldownComponent : reads/updates
-    CombatSystem ..> BlockedComponent : adds
-    CombatSystem ..> EntityFactory : uses
-    CombatSystem ..> FreezedComponent : updates timer
-
-    CollisionSystem ..> World : reads/updates
-    CollisionSystem ..> AttackComponent : reads (for melee)
-    CollisionSystem ..> DamageComponent : reads (for projectile)
-    CollisionSystem ..> CollisionComponent : adds
-    CollisionSystem ..> FreezedComponent : adds
-    CollisionSystem ..> BlockedComponent : adds
-    CollisionSystem ..> CooldownComponent : adds (for melee)
-    CollisionSystem ..> ProjectileTypeComponent : reads
-```
 ### Generazione Nemici (SpawnSystem)
 
 Questo sistema gestisce l'apparizione dei Troll sulla mappa.
@@ -193,73 +86,7 @@ Questo sistema gestisce l'apparizione dei Troll sulla mappa.
   * Applicare lo scaling delle statistiche ai Troll creati in base all'ondata corrente.
   * Gestire la pausa del gioco sospendendo e riprendendo correttamente la generazione.
 
-```mermaid
-classDiagram
-    direction LR
-    class SpawnSystem {
-        <<System>>
-        +isActive: Boolean
-        +getPendingSpawnsCount(): Int
-        +getNextSpawnTime(): Option~Long~
-        +getTrollsSpawned(): Int
-        +getMaxTrolls(): Int
-        +update(World): Tuple2~World, System~
-        #handlePauseResume(Long): SpawnSystem
-        #hasWizardBeenPlaced(World): Boolean
-        #getFirstWizardRow(World): Option~Int~
-        #processScheduledSpawns(World, Long): Tuple2~World, SpawnSystem~
-        #generateNewSpawnsIfNeeded(World, Long): Tuple2~World, SpawnSystem~
-        #shouldGenerateNewSpawn(Long): Boolean
-        #generateSpawnBatch(Long, Option~Int~, Int): List~SpawnEvent~
-        #generateSingleSpawn(Long, Boolean, Option~Int~): SpawnEvent
-        #spawnTroll(SpawnEvent, World): Tuple2~World, EntityId~
-        #applyWaveScaling(World, EntityId, TrollType): World
-    }
-    class SpawnEvent {
-        +trollType: TrollType
-        +position: Position
-        +scheduledTime: Long
-    }
-    class World
-    class EntityFactory
-    class WaveLevel {
-        <<object>>
-        +calculateSpawnInterval(Int): Long
-        +calculateTrollDistribution(Int): Map~TrollType, Double~
-        +selectRandomTrollType(Map~TrollType, Double~): TrollType
-        +applyMultipliers(Int, Double, Int, Int): Tuple3~Int, Double, Int~
-        +maxTrollsPerWave(Int): Int
-    }
-    class GameEngine {
-        +isPaused(): Boolean
-    }
-    class GridMapper {
-        <<object>>
-        +logicalToPhysical(Int, Int): Option~Position~
-        +physicalToLogical(Position): Option~Tuple2~Int,Int~~
-    }
-    class Random
-    class PositionComponent
-    class TrollTypeComponent
-    class HealthComponent
-    class MovementComponent
-    class AttackComponent
-    class Position
-
-    SpawnSystem *-- SpawnEvent : manages
-    SpawnSystem ..> World : reads/updates
-    SpawnSystem ..> EntityFactory : uses
-    SpawnSystem ..> WaveLevel : uses configuration
-    SpawnSystem ..> GameEngine : checks status
-    SpawnSystem ..> GridMapper : uses for positioning
-    SpawnSystem ..> Random : uses for randomization
-    SpawnSystem ..> PositionComponent : reads
-    SpawnSystem ..> TrollTypeComponent : reads
-    SpawnSystem ..> HealthComponent : reads/updates
-    SpawnSystem ..> MovementComponent : reads/updates
-    SpawnSystem ..> AttackComponent : reads/updates
-    SpawnSystem ..> Position : uses
-```
+![SpawnSystem Diagram](../assets/img/spawn_system.png)
 
 ### Gestione Risorse ed Effetti (ElixirSystem, HealthSystem)
 
@@ -275,42 +102,7 @@ classDiagram
     * Rimuove fisicamente le entità marcate dal `World` (`destroyEntity`).
     * Gestisce la rimozione a cascata dei `BlockedComponent` quando l'entità bloccante muore.
 
-```mermaid
-classDiagram
-    class ElixirSystem {
-        +update(World): Tuple2~World, System~
-        +spendElixir(Int): Tuple2~ElixirSystem, Boolean~
-        +addElixir(Int): ElixirSystem
-        +getCurrentElixir(): Int
-        +canAfford(Int): Boolean
-        +activateGeneration(): ElixirSystem
-    }
-    class HealthSystem {
-        +update(World): Tuple2~World, System~
-        -processCollisionComponents(World): Tuple2~World, HealthSystem~
-        -applyCollisionToEntity(...): Tuple2~World, HealthSystem~
-        -handlePossibleDeath(...): Tuple2~World, HealthSystem~
-        -giveElixirReward(...): Tuple2~World, HealthSystem~
-        -removeDeadEntities(World): Tuple2~World, HealthSystem~
-    }
-    class HealthComponent { +currentHealth: Int; +maxHealth: Int }
-    class CollisionComponent { +amount: Int }
-    class ElixirGeneratorComponent { +elixirPerSecond: Int }
-    class CooldownComponent
-
-    ElixirSystem ..> World : reads (Generators)
-    ElixirSystem ..> ElixirGeneratorComponent : reads
-    ElixirSystem ..> CooldownComponent : reads/updates (Generators)
-
-    HealthSystem ..> World : reads/updates
-    HealthSystem ..> HealthComponent : reads/updates
-    HealthSystem ..> CollisionComponent : reads/removes
-    HealthSystem ..> ElixirSystem : updates (reward)
-    HealthSystem ..> TrollTypeComponent : reads (reward)
-    HealthSystem ..> BlockedComponent : removes (cascade)
-
-    HealthSystem *-- ElixirSystem : uses
-```
+![Elixir and Health Systems Diagram](../assets/img/health_elixir.png)
 
 ## View
 
@@ -369,114 +161,6 @@ Il **Controller** agisce come collante, orchestrando il flusso di dati e la logi
 * **Componenti**:
     * `EventHandler`: Mantiene una coda thread-safe (`EventQueue`) di `GameEvent`. Riceve eventi da View (input utente), `GameEngine` (cambiamenti di stato globali), `GameController` (condizioni di gioco). Processa gli eventi in base alla loro priorità, invocando handler registrati o gestendo direttamente le transizioni di stato del `GameEngine` e della `ViewController` (es. passaggio da `Playing` a `Paused`).
     * `GameEvent`: ADT (`sealed trait`) che definisce tutti i tipi di eventi possibili, con una priorità associata.
-
-``` mermaid
-classDiagram
-    class GameController {
-        +update(): Unit
-        +postEvent(event: GameEvent): Unit
-        +handleMouseClick(x: Double, y: Double): Unit
-        +placeWizard(wizardType: WizardType, position: Position): Unit
-        +selectWizard(wizardType: WizardType): Unit
-        +handleContinueBattle(): Unit
-        +handleNewGame(): Unit
-        +start(): Unit
-        +stop(): Unit
-        +pause(): Unit
-        +resume(): Unit
-    }
-
-    class GameSystemsState {
-        <<private[controller]>>
-        +movement: MovementSystem
-        +collision: CollisionSystem
-        +combat: CombatSystem
-        +elixir: ElixirSystem
-        +health: HealthSystem
-        +spawn: SpawnSystem
-        +render: RenderSystem
-        +selectedWizardType: Option[WizardType]
-        +currentWave: Int
-        +updateAll(world: World): (World, GameSystemsState)
-        +spendElixir(amount: Int): Option[GameSystemsState]
-    }
-
-    class EventHandler {
-        <<trait>>
-        +postEvent(event: GameEvent): Unit
-        +processEvents(): List[GameEvent]
-        +registerHandler~T~(eventClass: Class[T])(handler: T => Unit): Unit
-        +clearQueue(): Unit
-    }
-
-    class EventHandlerImpl {
-    }
-
-    class EventHandlerState {
-        +eventQueue: EventQueue
-        +eventHandlers: Map[Class[_], GameEvent => Unit]
-        +currentPhase: GamePhase
-    }
-
-    class GameEvent {
-        <<trait>>
-        +priority(): Int
-    }
-
-    class EventQueue {
-    }
-
-    class GameEngine {
-        <<trait>>
-        +initialize(controller: GameController): Unit
-        +start(): Unit
-        +stop(): Unit
-        +pause(): Unit
-        +resume(): Unit
-        +update(deltaTime: Long): Unit
-        +isRunning(): Boolean
-        +isPaused(): Boolean
-        +currentState(): GameState
-        +updatePhase(phase: GamePhase): Unit
-    }
-
-    class GameEngineImpl {
-    }
-
-    class EngineState {
-    }
-
-    class GameLoop {
-        <<trait>>
-        +start(): Unit
-        +stop(): Unit
-        +isRunning(): Boolean
-        +getCurrentFps(): Int
-    }
-
-    class GameLoopImpl {
-    }
-
-    class LoopState {
-    }
-
-    GameController --> GameSystemsState : uses
-    GameController --> EventHandler : uses
-    GameController --> GameEngine : uses
-    EventHandler <|.. EventHandlerImpl : implements
-    EventHandlerImpl --> EventHandlerState : uses
-    EventHandlerImpl --> GameEngine : uses
-    EventHandlerState --> EventQueue : contains
-    EventHandlerState --> GameEvent : handles
-    EventQueue --> GameEvent : stores
-    GameEngine <|.. GameEngineImpl : implements
-    GameEngineImpl --> EngineState : uses
-    EngineState --> GameLoop : contains
-    EngineState --> GameController : contains
-    GameLoop <|.. GameLoopImpl : implements
-    GameLoopImpl --> LoopState : uses
-    GameLoopImpl --> GameEngine : uses
-```
 
 ### Gestione dell'Input
 
