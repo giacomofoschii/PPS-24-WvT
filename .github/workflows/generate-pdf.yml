@@ -40,12 +40,12 @@ jobs:
           cat > docs/metadata.yaml << 'EOF'
           ---
           title: "Wizards vs Trolls"
-          subtitle: "PPS-24-WvT"
+          subtitle: "Paradigmi di Programmazione e Sviluppo"
           author:
             - "Giacomo Foschi - giacomo.foschi3@studio.unibo.it - 0001179137"
             - "Giovanni Pisoni - giovanni.pisoni@studio.unibo.it - 0001189814"
             - "Giovanni Rinchiuso - giovanni.rinchiuso@studio.unibo.it - 0001195145"
-          date: \today
+          date: "24 Ottobre 2025"
           toc-title: "Indice"
           lang: it
           geometry: "margin=1in"
@@ -65,10 +65,11 @@ jobs:
               prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}}
             }
             \pagestyle{fancy}
-            \fancyhead{}
-            \fancyfoot{}
+            \fancyhead[L,C,R]{}
+            \fancyfoot[L,C,R]{}
             \fancyfoot[C]{\thepage}
             \renewcommand{\headrulewidth}{0pt}
+            \renewcommand{\footrulewidth}{0pt}
             \let\oldtableofcontents\tableofcontents
             \renewcommand{\tableofcontents}{\oldtableofcontents\newpage\thispagestyle{empty}\mbox{}\newpage}
           ---
