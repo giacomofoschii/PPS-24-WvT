@@ -96,16 +96,27 @@ jobs:
         run: |
           mkdir -p temp_docs
           
-          # Process each markdown file and remove the title header
+          # Process each markdown file
           for file in docs/report/*.md docs/report/implementazione/*.md; do
             if [ -f "$file" ]; then
               mkdir -p "temp_docs/$(dirname "$file" | sed 's|docs/||')"
           
-              # Remove YAML front matter and first-level headers, fix image paths
-              sed -e '/^---$/,/^---$/d' \
-                  -e '/^# /d' \
-                  -e 's|\.\./assets/img/|docs/assets/img/|g' \
-                  "$file" > "temp_docs/$(echo "$file" | sed 's|docs/||')"
+              # Remove YAML front matter, then remove ONLY the first # heading after front matter
+              # Fix image paths
+              awk '
+                BEGIN { in_yaml=0; yaml_ended=0; first_heading_removed=0 }
+                /^---$/ && !yaml_ended { 
+                  if (!in_yaml) { in_yaml=1 } 
+                  else { in_yaml=0; yaml_ended=1 }
+                  next
+                }
+                in_yaml { next }
+                /^# / && yaml_ended && !first_heading_removed { 
+                  first_heading_removed=1
+                  next
+                }
+                { gsub(/\.\.\/assets\/img\//, "docs/assets/img/"); print }
+              ' "$file" > "temp_docs/$(echo "$file" | sed 's|docs/||')"
             fi
           done
 
