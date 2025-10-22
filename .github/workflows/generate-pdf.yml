@@ -70,18 +70,42 @@ jobs:
             \fancyfoot[C]{\thepage}
             \renewcommand{\headrulewidth}{0pt}
             \renewcommand{\footrulewidth}{0pt}
+            \AtBeginDocument{%
+              \let\oldmaketitle\maketitle
+              \renewcommand{\maketitle}{%
+                \oldmaketitle
+                \thispagestyle{empty}%
+                \newpage
+                \thispagestyle{empty}%
+                \mbox{}%
+                \newpage
+              }%
+            }
             \let\oldtableofcontents\tableofcontents
-            \renewcommand{\tableofcontents}{\oldtableofcontents\newpage\thispagestyle{empty}\mbox{}\newpage}
+            \renewcommand{\tableofcontents}{%
+              \oldtableofcontents
+              \newpage
+              \thispagestyle{empty}%
+              \mbox{}%
+              \newpage
+            }
           ---
           EOF
 
-      - name: Fix image paths in markdown files
+      - name: Fix image paths and prepare markdown files
         run: |
           mkdir -p temp_docs
+          
+          # Process each markdown file and remove the title header
           for file in docs/report/*.md docs/report/implementazione/*.md; do
             if [ -f "$file" ]; then
               mkdir -p "temp_docs/$(dirname "$file" | sed 's|docs/||')"
-              sed 's|\.\./assets/img/|docs/assets/img/|g' "$file" > "temp_docs/$(echo "$file" | sed 's|docs/||')"
+          
+              # Remove YAML front matter and first-level headers, fix image paths
+              sed -e '/^---$/,/^---$/d' \
+                  -e '/^# /d' \
+                  -e 's|\.\./assets/img/|docs/assets/img/|g' \
+                  "$file" > "temp_docs/$(echo "$file" | sed 's|docs/||')"
             fi
           done
 
@@ -90,6 +114,7 @@ jobs:
           pandoc \
             --pdf-engine=xelatex \
             --toc \
+            --toc-depth=3 \
             --listings \
             --resource-path=.:docs:docs/assets:docs/assets/img \
             docs/metadata.yaml \

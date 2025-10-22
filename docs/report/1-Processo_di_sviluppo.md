@@ -46,6 +46,7 @@ In una prima fase di analisi e modellazione, il gruppo ha partecipato a un meeti
 Il team ha deciso di adottare **sprint settimanali** per permettere un rilascio rapido di funzionalità e ottenere un feedback frequente sullo stato di avanzamento del progetto.
 
 La decisione di organizzare sprint brevi è stata motivata dall'esigenza di:
+
 * sviluppare funzionalità in tempi brevi e mantenerle verificabili
 * ottenere feedback rapido dal committente
 * mantenere alta la reattività del team di fronte a eventuali problemi o cambiamenti nei requisiti
@@ -57,6 +58,7 @@ Oltre alle riunioni settimanali di pianificazione, il team ha previsto brevi con
 Per la gestione del codice, è stato adottato un approccio basato su **branch dedicati per sprint**. All'inizio di ogni sprint veniva creato un branch specifico (ad esempio `sprint-1`, `sprint-2`, ecc.) sul quale tutti i membri del team lavoravano in parallelo alle diverse funzionalità previste per quella iterazione.
 
 Al termine di ogni sprint, durante la Sprint Review, il codice consolidato nel branch dello sprint veniva integrato nel branch `main` tramite merge, dopo aver verificato che tutte le funzionalità fossero completate secondo la Definition of Done e che i test automatici fossero superati con successo. Questo approccio ha permesso di avere:
+
 * una chiara separazione tra il codice in sviluppo e quello stabile in produzione
 * milestone ben definite corrispondenti ai vari sprint
 * una cronologia pulita e organizzata del progetto

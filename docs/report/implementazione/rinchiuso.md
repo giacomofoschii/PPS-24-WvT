@@ -10,11 +10,11 @@ parent: Implementazione
 
 Il mio contributo al progetto si è focalizzato sulle seguenti aree:
 
-* **Sistemi di gioco**: `ElixirSystem`, `HealthSystem`, gestione economia e salute delle entità.
-* **Configurazione e bilanciamento**: `WaveLevel`, calcolo parametri ondate e distribuzione troll.
-* **Sistema di input**: `InputProcessor`, `InputSystem`, `InputTypes` con validazione.
-* **Interfaccia utente**: `InfoMenu`, `ShopPanel`, `WavePanel` con gestione stato reattiva.
-* **Testing**: DSL per `ElixirSystemTest`, `HealthSystemTest`, `InputProcessorTest`, `InputSystemTest`.
+* **Sistemi di gioco**: `ElixirSystem`, `HealthSystem`, gestione economia e salute delle entità
+* **Configurazione e bilanciamento**: `WaveLevel`, calcolo parametri ondate e distribuzione troll
+* **Sistema di input**: `InputProcessor`, `InputSystem`, `InputTypes` con validazione
+* **Interfaccia utente**: `InfoMenu`, `ShopPanel`, `WavePanel` con gestione stato reattiva
+* **Testing**: DSL per `ElixirSystemTest`, `HealthSystemTest`, `InputProcessorTest`, `InputSystemTest`
 
 ## Gestione dell'Economia: ElixirSystem
 
@@ -92,6 +92,7 @@ private def processGeneratorEntity(
 ```
 
 Questa implementazione verifica che:
+
 1. L'entità abbia un componente `WizardTypeComponent`
 2. Il tipo di mago sia effettivamente `Generator`
 3. L'entità abbia un componente `ElixirGeneratorComponent`
@@ -113,7 +114,7 @@ Il `foldLeft` accumula sia il `World` aggiornato che l'`ElixirSystem` aggiornato
 
 ### Gestione della Salute: HealthSystem
 
-`HealthSystem` è responsabile della gestione delle collisioni, dei danni, della morte delle entità e delle ricompense. 
+`HealthSystem` è responsabile della gestione delle collisioni, dei danni, della morte delle entità e delle ricompense.
 
 L'update del sistema segue un pattern di pipeline funzionale, dove ogni fase trasforma lo stato e lo passa alla successiva:
 ```scala
@@ -125,6 +126,7 @@ override def update(world: World): (World, System) =
 ```
 
 Ogni funzione nella pipeline:
+
 1. Riceve il mondo e il sistema correnti
 2. Esegue una trasformazione specifica
 3. Restituisce il nuovo mondo e sistema
@@ -192,6 +194,7 @@ private def getNewlyDeadEntities(world: World): List[EntityId] =
 ```
 
 In questo modo:
+
 1. Itera su tutte le entità con `HealthComponent`
 2. Filtra quelle non già marcate per rimozione
 3. Estrae il componente salute
@@ -204,6 +207,7 @@ Il risultato è una lista di entità che sono morte ma non ancora rimosse. La si
 `WaveLevel` è l'oggetto che gestisce la progressione della difficoltà attraverso le ondate di troll. Determina quindi, come il gioco diventa progressivamente più sfidante mantenendo un equilibrio tra sfida e giocabilità.
 
 `WaveLevel` deve risolvere diverse problematiche:
+
 - **Varietà progressiva**: nelle prime ondate appaiono solo troll base, mentre ondate successive introducono gradualmente nemici più specializzati e pericolosi
 - **Distribuzione probabilistica**: ogni ondata ha una specifica composizione di tipi di troll, definita tramite probabilità che determinano la frequenza di apparizione di ciascun tipo
 - **Scalabilità**: i parametri dei troll (salute, velocità, danno) aumentano con le ondate per rendere il gioco sempre più sfidante
@@ -294,7 +298,7 @@ Il pattern matching nei case del `foldLeft` implementa un "early exit" funzional
 ```scala
 case ((cumulative, Some(selected)), _) => (cumulative, Some(selected))
 ```
-Una volta che un tipo è stato selezionato (l'Option diventa `Some`), questo pattern mantiene la selezione ignorando tutte le iterazioni successive. 
+Una volta che un tipo è stato selezionato (l'Option diventa `Some`), questo pattern mantiene la selezione ignorando tutte le iterazioni successive.
 
 Il caso alternativo:
 ```scala
@@ -325,12 +329,11 @@ Il livello più alto fornisce un'interfaccia per l'utilizzo del sistema. Utilizz
 
 ### ClickResult
 
-Un elemento centrale di questa implementazione è `ClickResult`, che ho implementato seguendo il pattern delle monadi per comporre validazioni. Questo approccio permette di concatenare multiple validazioni. 
+Un elemento centrale di questa implementazione è `ClickResult`, che ho implementato seguendo il pattern delle monadi per comporre validazioni. Questo approccio permette di concatenare multiple validazioni.
 
 `ClickResult` incapsula il risultato di un click del mouse, memorizzando la posizione, un flag di validità e un messaggio di errore opzionale. Ho implementato le tre operazioni monadiche fondamentali (`map`, `flatMap` e `filter`).
 
 L'operazione `map` permette di trasformare la posizione contenuta se il risultato è valido, lasciando inalterati i risultati invalidi. `flatMap` consente di concatenare validazioni che a loro volta producono `ClickResult`, implementando così il pattern della "railway-oriented programming" dove un errore in qualsiasi punto della catena cortocircuita le operazioni successive. `filter` aggiunge la capacità di validare predicati sulla posizione, convertendo un risultato valido in invalido se il predicato fallisce.
-
 ```scala
 result
   .map(pos => pos.normalize())
@@ -394,7 +397,7 @@ Questa catena di operazioni valida il click, filtra per verificare che sia in un
 
 ## Interfaccia Utente: InfoMenu, ShopPanel e WavePanel
 
-Ho sviluppato diversi componenti dell'interfaccia utente che costituiscono l'esperienza visiva e interattiva del gioco. 
+Ho sviluppato diversi componenti dell'interfaccia utente che costituiscono l'esperienza visiva e interattiva del gioco.
 
 ### InfoMenu
 
@@ -414,13 +417,13 @@ Lo stato del pannello è modellato attraverso una struttura dati immutabile che 
 
 ### WavePanel
 
-Il `WavePanel` mostra informazioni sull'ondata corrente e si aggiorna automaticamente quando il gioco progredisce. 
+Il `WavePanel` mostra informazioni sull'ondata corrente e si aggiorna automaticamente quando il gioco progredisce.
 
 Lo stato del pannello mantiene l'ultimo numero di ondata renderizzato (per evitare aggiornamenti ridondanti), un riferimento opzionale al componente `Text` che mostra il numero e un riferimento opzionale al pannello stesso. Il metodo `updateWaveNumber`  garantisce che l'interfaccia venga aggiornata solo quando il numero dell'ondata effettivamente cambia, evitando rendering inutili e migliorando le performance.
 
 ## Testing
 
-Ho sviluppato test per i principali sistemi di cui mi sono occupato: ElixirSystem, HealthSystem, InputProcessor e InputSystem. Anche se non ho seguito rigorosamente il Test-Driven Development, ho scritto i test in modo sistematico parallelamente o immediatamente dopo l’implementazione di ogni funzionalità. Per semplificare la scrittura dei test e renderli più leggibili, ho sviluppato quattro DSL specializzati per testare i sistemi implementati, utilizzando pattern funzionali per garantire immutabilità e type-safety.
+Ho sviluppato test per i principali sistemi di cui mi sono occupato: ElixirSystem, HealthSystem, InputProcessor e InputSystem. Anche se non ho seguito rigorosamente il Test-Driven Development, ho scritto i test in modo sistematico parallelamente o immediatamente dopo l'implementazione di ogni funzionalità. Per semplificare la scrittura dei test e renderli più leggibili, ho sviluppato quattro DSL specializzati per testare i sistemi implementati, utilizzando pattern funzionali per garantire immutabilità e type-safety.
 
 ### ElixirSystemTest
 
