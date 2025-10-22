@@ -104,15 +104,14 @@ jobs:
               # Remove YAML front matter, then remove ONLY the first # heading after front matter
               # Fix image paths
               awk '
-                BEGIN { in_yaml=0; yaml_ended=0; first_heading_removed=0 }
+                BEGIN { in_yaml=0; yaml_ended=0 }
                 /^---$/ && !yaml_ended { 
                   if (!in_yaml) { in_yaml=1 } 
                   else { in_yaml=0; yaml_ended=1 }
                   next
                 }
                 in_yaml { next }
-                /^# / && yaml_ended && !first_heading_removed { 
-                  first_heading_removed=1
+                /^# / && yaml_ended { 
                   next
                 }
                 { gsub(/\.\.\/assets\/img\//, "docs/assets/img/"); print }
