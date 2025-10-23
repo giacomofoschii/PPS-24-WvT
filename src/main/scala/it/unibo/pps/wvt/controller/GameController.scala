@@ -15,6 +15,7 @@ import it.unibo.pps.wvt.utilities.{GridMapper, Position}
 import scalafx.application.Platform
 
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicBoolean
 import scala.annotation.tailrec
 
 /** The GameController class manages the game state, processes events, and coordinates between the game engine,
@@ -30,6 +31,8 @@ class GameController(private var world: World):
   private val eventHandler: EventHandler                                 = createAndSetupEventHandler()
   private val inputSystem: InputSystem                                   = InputSystem()
   private val pendingActions: ConcurrentLinkedQueue[StateTransformation] = new ConcurrentLinkedQueue()
+  private val gameTransitionLock                                         = new Object()
+  private val isTransitioning                                            = new AtomicBoolean(false)
 
   private var state: GameSystemsState = GameSystemsState.initial()
   private var isInitialized: Boolean  = false
@@ -141,43 +144,47 @@ class GameController(private var world: World):
         ViewController.showError("No wizard selected for placement, please select one from the shop first.")
         ViewController.hidePlacementGrid()
 
-  /** Attempts to place a wizard of the specified type at the given position.
-    * It checks for sufficient resources and cell occupancy before placing the wizard.
-    * If placement is successful, it updates the game state and hides the placement grid.
-    * If placement fails, it shows an appropriate error message.
-    *
-    * @param wizardType The type of wizard to place.
-    * @param position The position where the wizard should be placed.
-    */
-  def placeWizard(wizardType: WizardType, position: Position): Unit =
-    val cost     = ShopPanel.getWizardCost(wizardType)
-    val canPlace = Option.when(!world.hasWizardAt(position) && state.canAfford(cost))(())
+    /** Attempts to place a wizard of the specified type at the given position.
+      * It checks for sufficient resources and cell occupancy before placing the wizard.
+      * If placement is successful, it updates the game state and hides the placement grid.
+      * If placement fails, it shows an appropriate error message.
+      *
+      * @param wizardType The type of wizard to place.
+      * @param position The position where the wizard should be placed.
+      */
+    def placeWizard(wizardType: WizardType, position: Position): Unit =
+      Option.when(!isInTransition):
+        val cost     = ShopPanel.getWizardCost(wizardType)
+        val canPlace = Option.when(!world.hasWizardAt(position) && state.canAfford(cost))(())
 
-    canPlace match
-      case Some(_) =>
-        val (newWorld, _) = createWizardEntity(wizardType, position)
-        world = newWorld
+        canPlace match
+          case Some(_) =>
+            val (newWorld, _) = createWizardEntity(wizardType, position)
+            world = newWorld
 
-        val isFirstWizard = !state.elixir.firstWizardPlaced
-        val transformation: StateTransformation = currentState =>
-          currentState.spendElixir(cost).map { stateAfterSpending =>
-            Option.when(isFirstWizard)(stateAfterSpending).fold(
-              stateAfterSpending.clearWizardSelection
-            ) { _ =>
-              val activatedElixir = stateAfterSpending.elixir.activateGeneration()
-              stateAfterSpending.copy(
-                elixir = activatedElixir,
-                health = stateAfterSpending.health.copy(elixirSystem = activatedElixir)
-              ).clearWizardSelection
-            }
-          }.getOrElse(currentState.clearWizardSelection)
-        pendingActions.add(transformation)
-        ViewController.hidePlacementGrid()
-      case None =>
-        val errorMessage = world.getEntityAt(position)
-          .map(_ => s"Cannot place $wizardType: cell occupied.")
-          .getOrElse(s"Cannot place $wizardType: insufficient elixir.")
-        ViewController.showError(errorMessage)
+            val isFirstWizard = !state.elixir.firstWizardPlaced
+            val transformation: StateTransformation = currentState =>
+              currentState.spendElixir(cost).map { stateAfterSpending =>
+                Option.when(isFirstWizard)(stateAfterSpending).fold(
+                  stateAfterSpending.clearWizardSelection
+                ) { _ =>
+                  val activatedElixir = stateAfterSpending.elixir.activateGeneration()
+                  stateAfterSpending.copy(
+                    elixir = activatedElixir,
+                    health = stateAfterSpending.health.copy(elixirSystem = activatedElixir)
+                  ).clearWizardSelection
+                }
+              }.getOrElse(currentState.clearWizardSelection)
+            pendingActions.add(transformation)
+            ViewController.hidePlacementGrid()
+          case None =>
+            val errorMessage = world.getEntityAt(position)
+              .map(_ => s"Cannot place $wizardType: cell occupied.")
+              .getOrElse(s"Cannot place $wizardType: insufficient elixir.")
+            ViewController.showError(errorMessage)
+            ViewController.hidePlacementGrid()
+      .getOrElse:
+        ViewController.showError("Please wait for the game to finish loading")
         ViewController.hidePlacementGrid()
 
   /** Selects a wizard type for placement and updates the placement grid accordingly.
@@ -185,12 +192,15 @@ class GameController(private var world: World):
     * @param wizardType The type of wizard to select.
     */
   def selectWizard(wizardType: WizardType): Unit =
-    pendingActions.add: currentState =>
-      currentState.selectedWizardType
-        .filter(_ == wizardType)
-        .fold(currentState.selectWizard(wizardType))(_ => currentState)
+    Option.when(!isInTransition):
+      pendingActions.add: currentState =>
+        currentState.selectedWizardType
+          .filter(_ == wizardType)
+          .fold(currentState.selectWizard(wizardType))(_ => currentState)
 
-    repaintGrid()
+      repaintGrid()
+    .getOrElse:
+      ViewController.showError("Please wait for the game to finish loading")
 
   /** Deselects any currently selected wizard type and hides the placement grid. */
   private def repaintGrid(): Unit =
@@ -233,21 +243,28 @@ class GameController(private var world: World):
     * The placement grid is hidden and the view is re-rendered.
     */
   def handleContinueBattle(): Unit =
-    Option.when(gameEngine.isRunning):
-      gameEngine.resume()
+    gameTransitionLock.synchronized:
+      if !isTransitioning.compareAndSet(false, true) then
+        return
 
-    Thread.sleep(50)
+      try
+        Option.when(gameEngine.isRunning && gameEngine.isPaused):
+          gameEngine.resume()
 
-    synchronized:
-      world = World.empty
-      state = state.handleVictory()
-      pendingActions.clear()
+        Thread.sleep(100)
 
-    ViewController.hidePlacementGrid()
-    ViewController.render()
+        synchronized:
+          world = World.empty
+          state = state.handleVictory()
+          pendingActions.clear()
 
-    Option.when(gameEngine.isRunning):
-      gameEngine.start()
+        ViewController.hidePlacementGrid()
+        ViewController.render()
+
+        Option.when(!gameEngine.isRunning):
+          gameEngine.start()
+      finally
+        isTransitioning.set(false)
 
   /** Handles the initiation of a new game.
     * It stops the game engine if it was running, resets the world and state,
@@ -255,20 +272,39 @@ class GameController(private var world: World):
     * The placement grid is hidden and the view is re-rendered.
     */
   def handleNewGame(): Unit =
-    synchronized:
-      Option.when(gameEngine.isRunning):
-        gameEngine.stop()
+    gameTransitionLock.synchronized:
+      if !isTransitioning.compareAndSet(false, true) then
+        return
 
-      Thread.sleep(100)
+      try
+        synchronized:
+          Option.when(gameEngine.isRunning):
+            gameEngine.stop()
 
-      world = World.empty
-      state = state.reset()
-      pendingActions.clear()
-      eventHandler.clearQueue()
+          var maxWaitTime = 500
+          while gameEngine.isRunning && maxWaitTime > 0 do
+            Thread.sleep(10)
+            maxWaitTime -= 10
 
-    notifyWaveChange(state.getCurrentWave)
-    ViewController.hidePlacementGrid()
-    ViewController.render()
+          // Reset game state
+          world = World.empty
+          state = state.reset()
+          pendingActions.clear()
+          eventHandler.clearQueue()
+
+        notifyWaveChange(state.getCurrentWave)
+        ViewController.hidePlacementGrid()
+        ViewController.render()
+
+        Thread.sleep(50)
+      finally
+        isTransitioning.set(false)
+
+  /** Checks if the game is currently in a transition state (e.g., between waves or game states).
+    *
+    * @return True if the game is in transition, false otherwise.
+    */
+  private def isInTransition: Boolean = isTransitioning.get()
 
   /** Notifies the wave panel of a change in the current wave number.
     * This method ensures that the update occurs on the JavaFX Application Thread.

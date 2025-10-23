@@ -3,9 +3,11 @@ package it.unibo.pps.wvt.controller
 import it.unibo.pps.wvt.controller.GameEvent.*
 import it.unibo.pps.wvt.engine.{GamePhase, *}
 import it.unibo.pps.wvt.engine.GamePhase.*
+import it.unibo.pps.wvt.utilities.ViewConstants.DEBOUNCE_MS
 import it.unibo.pps.wvt.view.{ViewController, ViewState}
 import scalafx.application.Platform
 
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import scala.util.{Failure, Success, Try}
 
@@ -14,11 +16,13 @@ import scala.util.{Failure, Success, Try}
   * @param eventQueue the queue of events to be processed.
   * @param eventHandlers a map of event classes to their corresponding handler functions.
   * @param currentPhase the current phase of the game.
+  * @param lastEventTimes a map to track the last processed time for debounced events.
   */
 case class EventHandlerState(
     eventQueue: EventQueue = EventQueue.empty,
     eventHandlers: Map[Class[_], GameEvent => Unit] = Map.empty,
-    currentPhase: GamePhase = GamePhase.MainMenu
+    currentPhase: GamePhase = GamePhase.MainMenu,
+    lastEventTimes: ConcurrentHashMap[String, Long] = new ConcurrentHashMap()
 )
 
 /** Interface defining the contract for an event handler. */
@@ -174,6 +178,28 @@ class EventHandlerImpl(private val engine: GameEngine) extends EventHandler:
     updateState(_.copy(currentPhase = newPhase))
     engine.updatePhase(newPhase)
     viewState.foreach(ViewController.updateView)
+
+  /** Determines if the given event should be debounced to prevent rapid repeated processing.
+    *
+    * @param event the event to check for debouncing.
+    * @return true if the event should be debounced, false otherwise.
+    */
+  private def shouldDebounce(event: GameEvent): Boolean =
+    val debounceKey = event match
+      case ContinueBattle  => "ContinueBattle"
+      case NewGame         => "NewGame"
+      case SelectWizard(_) => "SelectWizard"
+      case _               => return false
+
+    val currentTime        = System.currentTimeMillis()
+    val lastTime           = Option(stateRef.get().lastEventTimes.get(debounceKey)).getOrElse(0L)
+    val timeSinceLastEvent = currentTime - lastTime
+
+    if timeSinceLastEvent < DEBOUNCE_MS then
+      true
+    else
+      stateRef.get().lastEventTimes.put(debounceKey, currentTime)
+      false
 
   /** Checks if the given game phase is a menu phase.
     *

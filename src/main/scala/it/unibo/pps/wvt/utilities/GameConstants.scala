@@ -116,6 +116,8 @@ object ViewConstants:
   val HEALTH_BAR_WIDTH: Double = 40.0
   val HEALTH_BAR_OFFSET_Y: Int = -5
 
+  val DEBOUNCE_MS: Long = 200L
+
   val SHOP_PANEL_WIDTH: Int                  = 250
   val SHOP_PANEL_TOP_PADDING: Int            = 120
   val SHOP_PANEL_SIDE_PADDING: Int           = 20
