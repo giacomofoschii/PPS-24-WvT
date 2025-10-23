@@ -6,19 +6,15 @@ parent: Implementazione
 
 # Implementazione - Giovanni Rinchiuso
 
----
-
 ## Panoramica dei Contributi
 
 Il mio contributo al progetto si è focalizzato sulle seguenti aree:
 
-* **Sistemi di gioco**: `ElixirSystem`, `HealthSystem`, gestione economia e salute delle entità.
-* **Configurazione e bilanciamento**: `WaveLevel`, calcolo parametri ondate e distribuzione troll.
-* **Sistema di input**: `InputProcessor`, `InputSystem`, `InputTypes` con validazione.
-* **Interfaccia utente**: `InfoMenu`, `ShopPanel`, `WavePanel` con gestione stato reattiva.
-* **Testing**: DSL per `ElixirSystemTest`, `HealthSystemTest`, `InputProcessorTest`, `InputSystemTest`.
-
----
+* **Sistemi di gioco**: `ElixirSystem`, `HealthSystem`, gestione economia e salute delle entità
+* **Configurazione e bilanciamento**: `WaveLevel`, calcolo parametri ondate e distribuzione troll
+* **Sistema di input**: `InputProcessor`, `InputSystem`, `InputTypes` con validazione
+* **Interfaccia utente**: `InfoMenu`, `ShopPanel`, `WavePanel` con gestione stato reattiva
+* **Testing**: DSL per `ElixirSystemTest`, `HealthSystemTest`, `InputProcessorTest`, `InputSystemTest`
 
 ## Gestione dell'Economia: ElixirSystem
 
@@ -96,6 +92,7 @@ private def processGeneratorEntity(
 ```
 
 Questa implementazione verifica che:
+
 1. L'entità abbia un componente `WizardTypeComponent`
 2. Il tipo di mago sia effettivamente `Generator`
 3. L'entità abbia un componente `ElixirGeneratorComponent`
@@ -115,11 +112,9 @@ private def updateGeneratorWizardElixir(world: World): (World, ElixirSystem) =
 
 Il `foldLeft` accumula sia il `World` aggiornato che l'`ElixirSystem` aggiornato, propagando lo stato attraverso l'elaborazione di ogni entità. Questo pattern è utile nella programmazione funzionale per gestire sequenze di trasformazioni mantenendo l'immutabilità.
 
----
-
 ### Gestione della Salute: HealthSystem
 
-`HealthSystem` è responsabile della gestione delle collisioni, dei danni, della morte delle entità e delle ricompense. 
+`HealthSystem` è responsabile della gestione delle collisioni, dei danni, della morte delle entità e delle ricompense.
 
 L'update del sistema segue un pattern di pipeline funzionale, dove ogni fase trasforma lo stato e lo passa alla successiva:
 ```scala
@@ -131,6 +126,7 @@ override def update(world: World): (World, System) =
 ```
 
 Ogni funzione nella pipeline:
+
 1. Riceve il mondo e il sistema correnti
 2. Esegue una trasformazione specifica
 3. Restituisce il nuovo mondo e sistema
@@ -198,6 +194,7 @@ private def getNewlyDeadEntities(world: World): List[EntityId] =
 ```
 
 In questo modo:
+
 1. Itera su tutte le entità con `HealthComponent`
 2. Filtra quelle non già marcate per rimozione
 3. Estrae il componente salute
@@ -210,6 +207,7 @@ Il risultato è una lista di entità che sono morte ma non ancora rimosse. La si
 `WaveLevel` è l'oggetto che gestisce la progressione della difficoltà attraverso le ondate di troll. Determina quindi, come il gioco diventa progressivamente più sfidante mantenendo un equilibrio tra sfida e giocabilità.
 
 `WaveLevel` deve risolvere diverse problematiche:
+
 - **Varietà progressiva**: nelle prime ondate appaiono solo troll base, mentre ondate successive introducono gradualmente nemici più specializzati e pericolosi
 - **Distribuzione probabilistica**: ogni ondata ha una specifica composizione di tipi di troll, definita tramite probabilità che determinano la frequenza di apparizione di ciascun tipo
 - **Scalabilità**: i parametri dei troll (salute, velocità, danno) aumentano con le ondate per rendere il gioco sempre più sfidante
@@ -263,7 +261,7 @@ def calculateTrollDistribution(wave: Int): Map[TrollType, Double] =
 
 Ogni pattern definisce una distribuzione di probabilità che determina quali tipi di troll appaiono in quella fase del gioco. Questo approccio offre numerosi vantaggi in termini di leggibilità: osservando i pattern, la progressione della difficoltà emerge naturalmente, mostrando come nelle prime ondate dominino i troll base per poi introdurre gradualmente le varianti più pericolose. L'estensibilità è altrettanto semplice: se volessimo aggiungere nuovi livelli di difficoltà, basterebbe inserire ulteriori case senza toccare la logica esistente.
 
-Inoltre il compilatore verifica automaticamente che tutti i casi siano gestiti, e il case `_` finale garantisce un fallback sicuro per tutte le ondate oltre la quarta. Inoltre, ogni Map restituita è immutabile e la funzione è completamente pura, senza side-effects.
+Il compilatore verifica automaticamente che tutti i casi siano gestiti, e il case `_` finale garantisce un fallback sicuro per tutte le ondate oltre la quarta. Inoltre, ogni Map restituita è immutabile e la funzione è completamente pura, senza side-effects.
 
 L'uso di guards nel pattern matching (`if w <= 1`, `if w <= 2`, etc.) Permette di definire range di ondate piuttosto che valori singoli, rendendo la configurazione più flessibile rispetto a un approccio basato su uguaglianza esatta. Ad esempio, tutte le ondate dalla quinta in poi usano la stessa distribuzione finale, che rappresenta il massimo livello di difficoltà del gioco.
 
@@ -300,7 +298,7 @@ Il pattern matching nei case del `foldLeft` implementa un "early exit" funzional
 ```scala
 case ((cumulative, Some(selected)), _) => (cumulative, Some(selected))
 ```
-Una volta che un tipo è stato selezionato (l'Option diventa `Some`), questo pattern mantiene la selezione ignorando tutte le iterazioni successive. 
+Una volta che un tipo è stato selezionato (l'Option diventa `Some`), questo pattern mantiene la selezione ignorando tutte le iterazioni successive.
 
 Il caso alternativo:
 ```scala
@@ -331,12 +329,11 @@ Il livello più alto fornisce un'interfaccia per l'utilizzo del sistema. Utilizz
 
 ### ClickResult
 
-Un elemento centrale di questa implementazione è `ClickResult`, che ho implementato seguendo il pattern delle monadi per comporre validazioni. Questo approccio permette di concatenare multiple validazioni. 
+Un elemento centrale di questa implementazione è `ClickResult`, che ho implementato seguendo il pattern delle monadi per comporre validazioni. Questo approccio permette di concatenare multiple validazioni.
 
-Come mostrato nella sezione precedente, `ClickResult` incapsula il risultato di un click del mouse, memorizzando la posizione, un flag di validità e un messaggio di errore opzionale. Ho implementato le tre operazioni monadiche fondamentali (`map`, `flatMap` e `filter`).
+`ClickResult` incapsula il risultato di un click del mouse, memorizzando la posizione, un flag di validità e un messaggio di errore opzionale. Ho implementato le tre operazioni monadiche fondamentali (`map`, `flatMap` e `filter`).
 
 L'operazione `map` permette di trasformare la posizione contenuta se il risultato è valido, lasciando inalterati i risultati invalidi. `flatMap` consente di concatenare validazioni che a loro volta producono `ClickResult`, implementando così il pattern della "railway-oriented programming" dove un errore in qualsiasi punto della catena cortocircuita le operazioni successive. `filter` aggiunge la capacità di validare predicati sulla posizione, convertendo un risultato valido in invalido se il predicato fallisce.
-
 ```scala
 result
   .map(pos => pos.normalize())
@@ -400,7 +397,7 @@ Questa catena di operazioni valida il click, filtra per verificare che sia in un
 
 ## Interfaccia Utente: InfoMenu, ShopPanel e WavePanel
 
-Ho sviluppato diversi componenti dell'interfaccia utente che costituiscono l'esperienza visiva e interattiva del gioco. 
+Ho sviluppato diversi componenti dell'interfaccia utente che costituiscono l'esperienza visiva e interattiva del gioco.
 
 ### InfoMenu
 
@@ -420,47 +417,90 @@ Lo stato del pannello è modellato attraverso una struttura dati immutabile che 
 
 ### WavePanel
 
-Il `WavePanel` mostra informazioni sull'ondata corrente e si aggiorna automaticamente quando il gioco progredisce. 
+Il `WavePanel` mostra informazioni sull'ondata corrente e si aggiorna automaticamente quando il gioco progredisce.
 
-Lo stato del pannello mantiene l'ultimo numero di ondata renderizzato (per evitare aggiornamenti ridondanti), un riferimento opzionale al componente `Text` che mostra il numero e un riferimento opzionale al pannello stesso. Il metodo `updateWaveNumber` implementa un pattern di aggiornamento ottimizzato che garantisce che l'interfaccia venga aggiornata solo quando il numero dell'ondata effettivamente cambia, evitando rendering inutili e migliorando le performance.
+Lo stato del pannello mantiene l'ultimo numero di ondata renderizzato (per evitare aggiornamenti ridondanti), un riferimento opzionale al componente `Text` che mostra il numero e un riferimento opzionale al pannello stesso. Il metodo `updateWaveNumber`  garantisce che l'interfaccia venga aggiornata solo quando il numero dell'ondata effettivamente cambia, evitando rendering inutili e migliorando le performance.
 
-## Testing: Validazione dei Sistemi Implementati
+## Testing
 
-La validazione della correttezza delle implementazioni è stata una componente fondamentale del mio lavoro. Ho sviluppato test per i principali sistemi di cui mi sono occupato: `ElixirSystem`, `HealthSystem`, `InputProcessor` e `InputSystem`.
-Anche se non ho seguito rigorosamente il Test-Driven Development, ho scritto i test in modo sistematico parallelamente o immediatamente dopo l'implementazione di ogni funzionalità. Per semplificare la scrittura dei test e renderli più leggibili, ho utilizzato il DSL creato da Giovanni Pisoni che permette di definire scenari di test in modo dichiarativo.
+Ho sviluppato test per i principali sistemi di cui mi sono occupato: ElixirSystem, HealthSystem, InputProcessor e InputSystem. Anche se non ho seguito rigorosamente il Test-Driven Development, ho scritto i test in modo sistematico parallelamente o immediatamente dopo l'implementazione di ogni funzionalità. Per semplificare la scrittura dei test e renderli più leggibili, ho sviluppato quattro DSL specializzati per testare i sistemi implementati, utilizzando pattern funzionali per garantire immutabilità e type-safety.
 
-Un esempio significativo dai test dell'`ElixirSystem` mostra come il DSL semplifichi la configurazione degli scenari:
+### ElixirSystemTest
+
+L'`ElixirSystem` richiede la gestione di timing, generazione periodica e interazioni con il mondo di gioco. Ho quindi, progettato un DSL che mantiene lo stato attraverso `Option`, permettendo di memorizzare valori tra le diverse fasi del test senza ricorrere a variabili mutabili.
+
+Questo esempio di test mostra come il DSL renda espressivo il testing temporale:
 ```scala
 "ElixirSystem" should "generate elixir from generator wizards" in {
-  val (world, state) = scenario { builder =>
-    builder
-      .withWizard(WizardType.Generator).at(2, 0)
-      .withElixir(INITIAL_ELIXIR)
-  }
-  
-  val elixirSystem = state.elixir.activateGeneration()
-  Thread.sleep(GENERATOR_WIZARD_COOLDOWN + 100)
-  
-  val (_, updatedSystem) = elixirSystem.update(world)
-  updatedSystem.getCurrentElixir should be > INITIAL_ELIXIR
+  givenAnElixirSystem
+    .activated
+    .withWorld
+    .andGeneratorWizardAt(Position(2, 3))
+    .rememberingInitialElixir
+    .afterWaiting(GENERATOR_WIZARD_COOLDOWN + ELIXIR_WAIT_MARGIN)
+    .whenUpdated
+    .shouldHaveAtLeast(PERIODIC_ELIXIR).moreElixirThanInitial
 }
 ```
 
-Questo test verifica che i maghi generatori producano elisir correttamente. Il DSL nasconde la complessità della creazione manuale di entità e componenti, permettendo al test di concentrarsi sul comportamento da verificare.
-
-Un altro esempio dai test dell'`InputSystem` mostra la validazione delle operazioni monadiche:
+Ho implementato una enum `ComparisonType` e una case class `ElixirAmountComparison` che permettono di esprimere asserzioni come `shouldHaveAtLeast(50).moreElixirThanInitial` o `shouldHaveExactly(100).moreElixirThanInitial`:
 ```scala
-"InputSystem" should "chain validations using monadic operations" in {
-  val system = InputSystem()
-  val validClick = (GRID_OFFSET_X + 10, GRID_OFFSET_Y + 10)
-  
-  val result = system.handleMouseClick(validClick._1, validClick._2)
-    .filter(_.isValid, "Position not valid")
-    .map(pos => Position(pos.x + 10, pos.y + 10))
-  
-  result.isValid shouldBe true
-  result.pos.x shouldBe validClick._1 + 10
+enum ComparisonType:
+  case AtLeast, Exactly
+
+case class ElixirAmountComparison(dsl: ElixirSystemDSL, amount: Int, comparisonType: ComparisonType):
+  def moreElixirThanInitial: ElixirSystemDSL =
+    dsl.initialElixir.foreach: initial =>
+      val diff = dsl.system.getCurrentElixir - initial
+      comparisonType match
+        case ComparisonType.AtLeast => diff should be >= amount
+        case ComparisonType.Exactly => diff shouldBe amount
+    dsl
+```
+
+### HealthSystemTest
+
+In `HealthSystem` i test devono creare entità, applicare danni e verificare sia lo stato di salute che le ricompense. Ho modellato queste operazioni attraverso tre case class che rappresentano diverse fasi del test.
+
+Il flusso tipico di un test si presenta così:
+```scala
+"HealthSystem" should "kill entity and reward elixir" in {
+  aHealthSystem
+    .withTroll(TrollType.Base)
+    .havingHealth(50, 100)
+    .takingDamage(60)
+    .done
+    .whenUpdated
+    .entity(0).shouldBeDead
+    .systemShouldHaveElixir(INITIAL_ELIXIR + BASE_TROLL_REWARD)
 }
 ```
 
+Le tre case class che compongono il DSL sono `HealthSystemDSL` per il contesto principale, `EntityBuilder` per la configurazione delle entità, e `EntityAssertions` per le verifiche. Le transizioni avvengono attraverso i tipi di ritorno: chiamare `withEntity` restituisce un `EntityBuilder` che permette di configurare l'entità, `done` riporta al contesto principale, e `entity(n)` fornisce un `EntityAssertions` per le verifiche.
 
+Questa struttura sfrutta il sistema di tipi di Scala per prevenire errori a compile-time. Ad esempio, non è possibile verificare lo stato di un'entità prima di averla configurata, perché il compilatore non permetterebbe di chiamare `entity(0)` prima di aver chiamato `done`.
+
+L'accumulo delle entità avviene in modo immutabile: ogni operazione restituisce una nuova istanza del DSL con il world aggiornato e l'entità aggiunta alla lista attraverso `entities :+ entity`:
+```scala
+def withTroll(trollType: TrollType): EntityBuilder =
+  val (updatedWorld, entity) = world.createEntity()
+  val worldWithComponent = updatedWorld.addComponent(entity, TrollTypeComponent(trollType))
+  EntityBuilder(this.copy(world = worldWithComponent, entities = entities :+ entity), entity)
+```
+
+### InputProcessorTest e InputSystemTest
+
+Per i sistemi di input ho progettato DSL che separano la fase di setup delle coordinate dalla fase di verifica dei risultati.
+
+Un esempio di test:
+```scala
+"InputProcessor" should "validate grid coordinates" in {
+  aClick
+    .atOffset(10, 10)
+    .whenProcessed
+    .shouldBeValid
+    .andShouldBeInCell
+}
+```
+
+La struttura si basa su due case class: `ClickBuilder` accumula le coordinate, mentre `ClickResultAssertions` gestisce le verifiche. Il metodo `whenProcessed` fa da ponte tra le due fasi, eseguendo la validazione e restituendo le asserzioni.

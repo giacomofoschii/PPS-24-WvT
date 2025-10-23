@@ -5,8 +5,12 @@ on:
     branches: [ main ]
     paths:
       - 'docs/report/**.md'
+      - 'docs/assets/img/**'
       - '.github/workflows/generate-pdf.yml'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build_pdf:
@@ -15,6 +19,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Install Pandoc and essential LaTeX packages
         run: |
@@ -26,34 +33,125 @@ jobs:
             texlive-fonts-recommended \
             texlive-latex-extra \
             latexmk \
-            lmodern # Font spesso utile
+            lmodern
 
-      - name: Set output PDF filename
-        run: echo "PDF_FILENAME=docs/report.pdf" >> $GITHUB_ENV
+      - name: Create metadata file
+        run: |
+          cat > docs/metadata.yaml << 'EOF'
+          ---
+          title: "Wizards vs Trolls"
+          subtitle: "Paradigmi di Programmazione e Sviluppo"
+          author:
+            - "Giacomo Foschi - giacomo.foschi3@studio.unibo.it - 0001179137"
+            - "Giovanni Pisoni - giovanni.pisoni@studio.unibo.it - 0001189814"
+            - "Giovanni Rinchiuso - giovanni.rinchiuso@studio.unibo.it - 0001195145"
+          date: "24 Ottobre 2025"
+          toc-title: "Indice"
+          lang: it
+          geometry: "margin=1in"
+          linkcolor: blue
+          urlcolor: blue
+          fontsize: 11pt
+          header-includes: |
+            \usepackage{listings}
+            \usepackage{fancyhdr}
+            \lstset{
+              breaklines=true,
+              breakatwhitespace=true,
+              basicstyle=\ttfamily\small,
+              columns=flexible,
+              keepspaces=true,
+              showstringspaces=false,
+              prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}}
+            }
+            \pagestyle{fancy}
+            \fancyhead[L,C,R]{}
+            \fancyfoot[L,C,R]{}
+            \fancyfoot[C]{\thepage}
+            \renewcommand{\headrulewidth}{0pt}
+            \renewcommand{\footrulewidth}{0pt}
+            \AtBeginDocument{%
+              \let\oldmaketitle\maketitle
+              \renewcommand{\maketitle}{%
+                \oldmaketitle
+                \thispagestyle{empty}%
+                \newpage
+                \thispagestyle{empty}%
+                \mbox{}%
+                \newpage
+              }%
+            }
+            \let\oldtableofcontents\tableofcontents
+            \renewcommand{\tableofcontents}{%
+              \oldtableofcontents
+              \newpage
+              \thispagestyle{empty}%
+              \mbox{}%
+              \newpage
+            }
+          ---
+          EOF
+
+      - name: Fix image paths and prepare markdown files
+        run: |
+          mkdir -p temp_docs
+          
+          # Process each markdown file
+          for file in docs/report/*.md docs/report/implementazione/*.md; do
+            if [ -f "$file" ]; then
+              mkdir -p "temp_docs/$(dirname "$file" | sed 's|docs/||')"
+              awk '
+                BEGIN { in_yaml=0; yaml_ended=0 }
+                /^---$/ && !yaml_ended { 
+                  if (!in_yaml) { in_yaml=1 } 
+                  else { in_yaml=0; yaml_ended=1 }
+                  next
+                }
+                in_yaml { next }
+                { gsub(/\.\.\/assets\/img\//, "docs/assets/img/"); print }
+              ' "$file" > "temp_docs/$(echo "$file" | sed 's|docs/||')"
+            fi
+          done
 
       - name: Generate PDF using Pandoc
         run: |
           pandoc \
             --pdf-engine=xelatex \
             --toc \
+            --toc-depth=3 \
             --listings \
-            --resource-path=.:docs \
-            -V geometry:"margin=1in" \
-            docs/report/0-Introduzione.md \
-            docs/report/1-Processo_di_sviluppo.md \
-            docs/report/2-Requisiti.md \
-            docs/report/3-Design_architetturale.md \
-            docs/report/4-Design_di_dettaglio.md \
-            docs/report/5-Implementazione.md \
-            docs/report/implementazione/foschi.md \
-            docs/report/implementazione/pisoni.md \
-            docs/report/implementazione/rinchiuso.md \
-            docs/report/6-Testing.md \
-            docs/report/7-Retrospettiva.md \
-            -o ${{ env.PDF_FILENAME }}
+            --resource-path=.:docs:docs/assets:docs/assets/img \
+            docs/metadata.yaml \
+            temp_docs/report/0-Introduzione.md \
+            temp_docs/report/1-Processo_di_sviluppo.md \
+            temp_docs/report/2-Requisiti.md \
+            temp_docs/report/3-Design_architetturale.md \
+            temp_docs/report/4-Design_di_dettaglio.md \
+            temp_docs/report/5-Implementazione.md \
+            temp_docs/report/implementazione/foschi.md \
+            temp_docs/report/implementazione/pisoni.md \
+            temp_docs/report/implementazione/rinchiuso.md \
+            temp_docs/report/6-Testing.md \
+            temp_docs/report/7-Retrospettiva.md \
+            -o docs/report.pdf
+
+      - name: Commit and Push PDF
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add docs/report.pdf
+          
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          
+          git commit -m "[DOC] Updated generated PDF report"
+          git pull --rebase origin ${{ github.ref_name }}
+          git push origin HEAD:${{ github.ref_name }}
 
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
         with:
           name: report-pdf
-          path: ${{ env.PDF_FILENAME }}
+          path: docs/report.pdf

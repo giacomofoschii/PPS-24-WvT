@@ -7,12 +7,14 @@ on:
       - 'docs/**'
       - 'README.md'
       - 'LICENSE'
+      - '.github/workflows/generate-pdf.yml'
   pull_request:
     branches: [ "main" ]
     paths-ignore:
       - 'docs/**'
       - 'README.md'
       - 'LICENSE'
+      - '.github/workflows/generate-pdf.yml'
 
 jobs:
   build-and-test:
@@ -23,11 +25,9 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      # 1. Fa il checkout del codice
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Imposta l'ambiente Java 21 (usando il metodo robusto)
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -35,7 +35,6 @@ jobs:
           distribution: 'temurin'
           cache: 'sbt'
 
-      # 3. Installa sbt su ogni sistema operativo
       - name: Install sbt (macOS)
         if: runner.os == 'macOS'
         run: brew install sbt
@@ -53,17 +52,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install sbt
 
-      # 4. Imposta un ambiente grafico virtuale per ScalaFX (solo su Linux)
       - name: Set up headless GUI for Linux
         if: runner.os == 'Linux'
         run: |
           sudo apt-get install -y libgtk-3-0 libxtst6 libxrender1 libasound2t64 libgl1 libglx-mesa0 xvfb
 
-      # 5. Controlla la formattazione del codice
       - name: Check Scala Formatting
         run: sbt scalafmtCheckAll
 
-      # 6. Esegui i test
       - name: Run tests on Linux
         if: runner.os == 'Linux'
         run: xvfb-run sbt test

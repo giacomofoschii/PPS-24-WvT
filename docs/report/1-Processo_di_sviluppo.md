@@ -46,6 +46,7 @@ In una prima fase di analisi e modellazione, il gruppo ha partecipato a un meeti
 Il team ha deciso di adottare **sprint settimanali** per permettere un rilascio rapido di funzionalità e ottenere un feedback frequente sullo stato di avanzamento del progetto.
 
 La decisione di organizzare sprint brevi è stata motivata dall'esigenza di:
+
 * sviluppare funzionalità in tempi brevi e mantenerle verificabili
 * ottenere feedback rapido dal committente
 * mantenere alta la reattività del team di fronte a eventuali problemi o cambiamenti nei requisiti
@@ -57,16 +58,18 @@ Oltre alle riunioni settimanali di pianificazione, il team ha previsto brevi con
 Per la gestione del codice, è stato adottato un approccio basato su **branch dedicati per sprint**. All'inizio di ogni sprint veniva creato un branch specifico (ad esempio `sprint-1`, `sprint-2`, ecc.) sul quale tutti i membri del team lavoravano in parallelo alle diverse funzionalità previste per quella iterazione.
 
 Al termine di ogni sprint, durante la Sprint Review, il codice consolidato nel branch dello sprint veniva integrato nel branch `main` tramite merge, dopo aver verificato che tutte le funzionalità fossero completate secondo la Definition of Done e che i test automatici fossero superati con successo. Questo approccio ha permesso di avere:
+
 * una chiara separazione tra il codice in sviluppo e quello stabile in produzione
 * milestone ben definite corrispondenti ai vari sprint
 * una cronologia pulita e organizzata del progetto
 
 ## Scelta degli strumenti di test, build e Continuous Integration (CI)
-
 Per il testing si è scelto di utilizzare **ScalaTest** come framework di automazione, essendo una tecnologia matura e ben integrata nell'ecosistema Scala, mentre come build tool è stato scelto **sbt**, in quanto nasce specificatamente per Scala e offre un'ottima gestione delle dipendenze. Inoltre, è stato utilizzato **scalafmt** per formattare automaticamente il codice sorgente rendendolo coerente e standardizzato all'interno del team.
 
-L'intero progetto è stato gestito tramite **GitHub**. In particolare, per automatizzare i processi di test e controllo qualità, è stata implementata una pipeline di **continuous integration** su **GitHub Actions**. Questa pipeline si attiva automaticamente a ogni nuova push sui branch di sviluppo, garantendo che il codice rispetti gli standard prefissati prima di essere integrato. I workflow sono stati configurati per eseguire le seguenti azioni:
+L'intero progetto è stato gestito tramite **GitHub**. Per automatizzare i processi di test e controllo qualità, è stata implementata una pipeline di **continuous integration** (CI) su **GitHub Actions**. Questa pipeline si attiva automaticamente a ogni nuova push o pull request sui branch principali (escluso il contenuto della cartella docs), garantendo che il codice rispetti gli standard prefissati prima di essere integrato.
 
-* **Build e test**: il codice viene compilato e testato automaticamente su diverse piattaforme (Ubuntu, Windows, macOS) e versioni di Java (17, 21), per assicurare la compatibilità cross-platform e prevenire regressioni. Questo processo viene avviato ad ogni push, consentendo un controllo continuo dello stato del software.
-* **Controllo della formattazione**: si verifica che il codice rispetti gli standard di formattazione stabiliti dal team, utilizzando `scalafmtCheckAll` per mantenere una codebase coerente e leggibile.
-* **Validazione dei commit**: per garantire chiarezza e coerenza nella cronologia dei commit, è stato implementato un workflow che valida i messaggi di commit, rispettando le specifiche di **Conventional Commits**.
+Il workflow configurato esegue le seguenti azioni principali:
+
+* **Controllo della formattazione**: Verifica che il codice sorgente rispetti gli standard di formattazione definiti nel file _.scalafmt.conf_, utilizzando il comando sbt `scalafmtCheckAll` per mantenere una codebase coerente e leggibile.
+* **Generazione report PDF**: Questa pipeline si attiva specificatamente quando vengono modificati i file markdown del report nella cartella `docs/report` (o le immagini associate). Utilizza *Pandoc* per convertire i file markdown aggiornati in un unico file PDF (`docs/report.pdf`). Se il PDF generato è diverso dalla versione precedente presente nel repository, il workflow effettua automaticamente il commit del nuovo file PDF nel branch principale, mantenendo così la documentazione PDF sempre allineata con i sorgenti markdown.
+* **Build e test**: Compila il codice ed esegue la suite di test automatici (sbt test) per prevenire regressioni e assicurare la correttezza del software. Questo processo viene eseguito su diverse piattaforme (Ubuntu, Windows, macOS) utilizzando JDK 21 per garantire la compatibilità cross-platform.
