@@ -433,11 +433,19 @@ Questo pattern non solo rende il codice più leggibile e manutenibile, ma garant
 correttamente al contesto, offrendo azioni pertinenti all'utente (ad esempio, "Prossima ondata" dopo una vittoria
 e "Nuova partita" dopo una sconfitta)
 
-* **Caricamento efficiente delle risorse**: Per ottimizzare le performance, il caricamento delle immagini
-  di sfondo e dei titoli è stato implementato utilizzando `lazy val`. In questo modo, le risorse grafiche
-  vengono caricate dal disco solo al momento del loro primo utilizzo effettivo, riducendo il tempo di
-  avvio e il consumo di memoria dell'applicazione. La logica di caricamento e caching è stata incapsulata
-  nell'`ImageFactory`, promuovendo ulteriormente il riuso del codice
+Per migliorare la robustezza dell'interfaccia in queste schermate, è stata implementata una logica di debouncing per i 
+pulsanti "Next wave" e "New game". Questa modifica previene comportamenti anomali o race condition che potrebbero 
+verificarsi a causa di click ripetuti e rapidi da parte dell'utente. La soluzione, implementata nel
+`GameResultPanel` attraverso il metodo `createDebouncedButton`, utilizza un `AtomicBoolean` per garantire che 
+l'azione associata al pulsante venga eseguita una sola volta. Una volta premuto, il pulsante viene temporaneamente 
+disabilitato per una breve durata (definita dalla costante DEBOUNCE_MS), impedendo l'invio di eventi `ContinueBattle`
+o `NewGame` duplicati all'`EventHandler`. Questo accorgimento assicura una transizione di stato pulita e 
+controllata, gestita dal `GameController`.
+
+Per ottimizzare le performance, il caricamento delle immagini di sfondo e dei titoli è stato implementato 
+utilizzando `lazy val`. In questo modo, le risorse grafiche vengono caricate dal disco solo al momento del loro primo 
+utilizzo effettivo, riducendo il tempo di avvio e il consumo di memoria dell'applicazione. La logica di 
+caricamento e caching è stata incapsulata nell'`ImageFactory`, promuovendo ulteriormente il riuso del codice.
 
 In sintesi, l'implementazione di questi componenti dell'interfaccia utente ha seguito i principi della
 programmazione funzionale e della separazione delle responsabilità, portando a un codice modulare,
