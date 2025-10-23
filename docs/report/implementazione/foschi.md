@@ -125,15 +125,16 @@ Il combattimento è gestito da `CombatSystem` e `CollisionSystem`, entrambi case
 
 Questo sistema inizia gli attacchi a distanza. Il metodo `update` prende il `World` corrente e restituisce un nuovo `World` modificato. La logica interna utilizza ampiamente costrutti funzionali:
 
-- **Iterazione Funzionale**: Usa `foldLeft` sulle liste di entità (ottenute tramite `world.getEntitiesByType`) per processare attaccanti maghi e troll lanciatori in modo immutabile.
-
-- **Gestione dell'Assenza (Monadi)**: La ricerca del bersaglio (`findClosestTarget`) usa `flatMap`, `filter`, `minByOption` su `Option` e collezioni per trovare il bersaglio più vicino sulla stessa riga, restituendo `Option[EntityId]` per gestire il caso in cui non ci siano bersagli validi.
+- **Iterazione Funzionale**: Usa `foldLeft` sulle liste di entità (ottenute tramite `world.getEntitiesByType`) per processare attaccanti maghi e troll lanciatori in modo immutabile
+- **Gestione dell'Assenza (Monadi)**: La ricerca del bersaglio (`findClosestTarget`) usa `flatMap`, `filter`, `minByOption` su `Option` e collezioni per trovare il bersaglio più vicino sulla stessa riga, restituendo `Option[EntityId]` per gestire il caso in cui non ci siano bersagli validi
 
 In particolare, il system si occupa di:
+
 * **Scansionare le entità**: Itera su tutte le entità che possono attaccare (maghi e troll lanciatori)
 * **Ricercare dei bersagli**: Per ogni attaccante, cerca un bersaglio valido all'interno del suo raggio d'attacco (`findClosestTarget`). La ricerca è ottimizzata per controllare solo le entità sulla stessa riga
 * **Gestire i Cooldown**: Verifica che l'attaccante non sia in fase di cooldown
 * **Creare dei Proiettili**: Se tutte le condizioni sono soddisfatte, utilizza l'`EntityFactory` per creare un'entità proiettile nella posizione dell'attaccante e aggiunge un `CooldownComponent` all'attaccante per prevenire attacchi troppo ravvicinati
+
 ```scala
 // In CombatSystem.scala
 private def spawnProjectileAndSetCooldown(
