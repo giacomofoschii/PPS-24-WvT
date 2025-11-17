@@ -102,7 +102,7 @@ assicurando che il gioco si comporti allo stesso modo su hardware diversi.
 
 Il game loop a timestep fisso garantisce:
 
-- **Determinismo**: il gioco si comporta identicamente su hardware diverso
+- **Determinismo**: il gioco si comporta in maniera identica su hardware diversi
 - **Stabilità fisica**: la simulazione rimane coerente indipendentemente dal frame rate
 - **Prevedibilità**: facilita il testing e il debugging del comportamento di gioco
 
@@ -245,7 +245,7 @@ all'interno dell'architettura Entity-Component-System (ECS): lo `SpawnSystem` e 
 Questi moduli sono responsabili, rispettivamente, della generazione procedurale delle ondate di nemici e
 della gestione del loro comportamento di movimento sulla plancia di gioco.
 
-### SpawnSystem: Generazione Procedurale delle Ordate
+### SpawnSystem: Generazione Procedurale delle orde
 
 Lo `SpawnSystem` orchestra la comparsa dei troll, introducendo una curva di difficoltà progressiva e un
 elemento di imprevedibilità. Una scelta progettuale chiave è stata quella di attivare il sistema solo dopo il
